@@ -20,4 +20,22 @@ model Quiz {
   description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  questions   Question[]
+}
+
+model Question {
+  id        String   @id @default(uuid())
+  quizId    String
+  quiz      Quiz     @relation(fields: [quizId], references: [id])
+  text   String
+  type QuestionType
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([quizId])
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  TRUE_FALSE
 }
