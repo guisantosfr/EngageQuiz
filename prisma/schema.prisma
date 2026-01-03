@@ -27,15 +27,39 @@ model Question {
   id        String   @id @default(uuid())
   quizId    String
   quiz      Quiz     @relation(fields: [quizId], references: [id])
+
   text   String
   type QuestionType
+  timeLimit   QuestionTimeLimit
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  options Option[]
+
   @@index([quizId])
+}
+
+model Option {
+  id          String    @id @default(uuid())
+  questionId  String
+  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  text        String
+  isCorrect   Boolean   @default(false)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 enum QuestionType {
   MULTIPLE_CHOICE
   TRUE_FALSE
+}
+
+enum QuestionTimeLimit {
+  SECONDS_15
+  SECONDS_30
+  SECONDS_45
+  SECONDS_60
 }
