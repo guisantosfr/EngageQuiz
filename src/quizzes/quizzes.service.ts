@@ -1,10 +1,39 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateQuizDto, UpdateQuizDto } from './dto';
+import { QuestionType } from 'generated/prisma/enums';
+import { createTrueFalseAlternatives } from './factories/true-false.factory';
 
 @Injectable()
 export class QuizzesService {
     constructor(private readonly prisma: PrismaService) { }
+
+    private validateQuestionRules(question: {
+        type: QuestionType;
+        alternatives?: { isCorrect: boolean; text: string }[];
+    }) {
+        if (question.type === 'TRUE_FALSE') {
+            return;
+        }
+
+        const correctCount = question.alternatives.filter(a => a.isCorrect).length;
+
+        if (correctCount !== 1) {
+            throw new BadRequestException(
+                'Cada questão deve possuir exatamente uma alternativa correta',
+            );
+        }
+
+        if (
+            question.type === 'MULTIPLE_CHOICE' &&
+            question.alternatives.length !== 4
+        ) {
+            throw new BadRequestException(
+                'Questões de múltipla escolha devem ter 4 alternativas',
+            );
+        }
+    }
+
 
     async getAllQuizzes() {
         return this.prisma.quiz.findMany({
@@ -21,15 +50,36 @@ export class QuizzesService {
             );
         }
 
+        data.questions.forEach(q => this.validateQuestionRules(q));
+
         return this.prisma.quiz.create({
             data: {
                 title: data.title,
                 description: data.description,
                 questions: {
-                    create: data.questions.map((q) => ({
-                        text: q.text,
-                        type: q.type,
-                    })),
+                    create: data.questions.map(q => {
+                        const alternatives =
+                            q.type === 'TRUE_FALSE'
+                                ? createTrueFalseAlternatives(q.correctTrueFalse)
+                                : q.alternatives;
+
+                        this.validateQuestionRules({
+                            type: q.type,
+                            alternatives,
+                        });
+
+                        return {
+                            text: q.text,
+                            type: q.type,
+                            timeLimit: q.timeLimit,
+                            alternatives: {
+                                create: alternatives.map(a => ({
+                                    text: a.text,
+                                    isCorrect: a.isCorrect,
+                                })),
+                            },
+                        };
+                    }),
                 },
             },
             include: {
@@ -70,6 +120,10 @@ export class QuizzesService {
             );
         }
 
+        if (data.questions) {
+            data.questions.forEach(q => this.validateQuestionRules(q));
+        }
+
         return this.prisma.quiz.update({
             where: { id },
             data: {
@@ -82,11 +136,31 @@ export class QuizzesService {
                 ...(data.questions && {
                     questions: {
                         deleteMany: {},
-                        create: data.questions.map((q) => ({
-                            text: q.text,
-                            type: q.type,
-                        })),
+                        create: data.questions.map(q => {
+                            const alternatives =
+                                q.type === 'TRUE_FALSE'
+                                    ? createTrueFalseAlternatives(q.correctTrueFalse)
+                                    : q.alternatives;
+
+                            this.validateQuestionRules({
+                                type: q.type,
+                                alternatives,
+                            });
+
+                            return {
+                                text: q.text,
+                                type: q.type,
+                                timeLimit: q.timeLimit,
+                                alternatives: {
+                                    create: alternatives.map(a => ({
+                                        text: a.text,
+                                        isCorrect: a.isCorrect,
+                                    })),
+                                },
+                            };
+                        }),
                     },
+
                 }),
             },
             include: {
@@ -105,5 +179,4 @@ export class QuizzesService {
             where: { id },
         });
     }
-
 }
