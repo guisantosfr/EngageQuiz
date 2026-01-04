@@ -10,13 +10,13 @@ export class QuizzesService {
 
     private validateQuestionRules(question: {
         type: QuestionType;
-        alternatives?: { isCorrect: boolean; text: string }[];
+        options?: { isCorrect: boolean; text: string }[];
     }) {
         if (question.type === 'TRUE_FALSE') {
             return;
         }
 
-        const correctCount = question.alternatives.filter(a => a.isCorrect).length;
+        const correctCount = question.options.filter(a => a.isCorrect).length;
 
         if (correctCount !== 1) {
             throw new BadRequestException(
@@ -26,7 +26,7 @@ export class QuizzesService {
 
         if (
             question.type === 'MULTIPLE_CHOICE' &&
-            question.alternatives.length !== 4
+            question.options.length !== 4
         ) {
             throw new BadRequestException(
                 'Questões de múltipla escolha devem ter 4 alternativas',
@@ -58,22 +58,22 @@ export class QuizzesService {
                 description: data.description,
                 questions: {
                     create: data.questions.map(q => {
-                        const alternatives =
+                        const options =
                             q.type === 'TRUE_FALSE'
                                 ? createTrueFalseAlternatives(q.correctTrueFalse)
-                                : q.alternatives;
+                                : q.options;
 
                         this.validateQuestionRules({
                             type: q.type,
-                            alternatives,
+                            options,
                         });
 
                         return {
                             text: q.text,
                             type: q.type,
                             timeLimit: q.timeLimit,
-                            alternatives: {
-                                create: alternatives.map(a => ({
+                            options: {
+                                create: options.map(a => ({
                                     text: a.text,
                                     isCorrect: a.isCorrect,
                                 })),
@@ -137,22 +137,22 @@ export class QuizzesService {
                     questions: {
                         deleteMany: {},
                         create: data.questions.map(q => {
-                            const alternatives =
+                            const options =
                                 q.type === 'TRUE_FALSE'
                                     ? createTrueFalseAlternatives(q.correctTrueFalse)
-                                    : q.alternatives;
+                                    : q.options;
 
                             this.validateQuestionRules({
                                 type: q.type,
-                                alternatives,
+                                options,
                             });
 
                             return {
                                 text: q.text,
                                 type: q.type,
                                 timeLimit: q.timeLimit,
-                                alternatives: {
-                                    create: alternatives.map(a => ({
+                                options: {
+                                    create: options.map(a => ({
                                         text: a.text,
                                         isCorrect: a.isCorrect,
                                     })),

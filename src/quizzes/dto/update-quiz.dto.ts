@@ -6,7 +6,7 @@ export class UpdateQuestionDto {
   text: string;
   type: QuestionType;
   timeLimit: QuestionTimeLimit;
-  alternatives: UpdateOptionDto[];
+  options: UpdateOptionDto[];
   correctTrueFalse?: boolean; // só usado para questões true_false
 }
 

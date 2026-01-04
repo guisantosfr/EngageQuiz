@@ -5,7 +5,7 @@ export class CreateQuestionDto {
   text: string;
   type: QuestionType;
   timeLimit: QuestionTimeLimit;
-  alternatives: CreateOptionDto[];
+  options: CreateOptionDto[];
   correctTrueFalse?: boolean; // só usado para questões true_false
 }
 
