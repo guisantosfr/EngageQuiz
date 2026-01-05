@@ -5,7 +5,7 @@ export class UpdateQuestionDto {
   id?: string; // se existir, atualiza; se não, cria
   text: string;
   type: QuestionType;
-  timeLimit: Number;
+  timeLimit: number;
   options: UpdateOptionDto[];
   correctAnswer?: boolean; // só usado para questões true_false
 }

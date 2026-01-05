@@ -4,7 +4,7 @@ import { CreateOptionDto } from './create-option.dto';
 export class CreateQuestionDto {
   text: string;
   type: QuestionType;
-  timeLimit: Number;
+  timeLimit: number;
   options: CreateOptionDto[];
   correctAnswer?: boolean; // só usado para questões true_false
 }
