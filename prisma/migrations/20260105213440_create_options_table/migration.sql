@@ -1,15 +1,3 @@
-/*
-  Warnings:
-
-  - Added the required column `timeLimit` to the `Question` table without a default value. This is not possible if the table is not empty.
-
-*/
--- CreateEnum
-CREATE TYPE "QuestionTimeLimit" AS ENUM ('SECONDS_15', 'SECONDS_30', 'SECONDS_45', 'SECONDS_60');
-
--- AlterTable
-ALTER TABLE "Question" ADD COLUMN     "timeLimit" "QuestionTimeLimit" NOT NULL;
-
 -- CreateTable
 CREATE TABLE "Option" (
     "id" TEXT NOT NULL,

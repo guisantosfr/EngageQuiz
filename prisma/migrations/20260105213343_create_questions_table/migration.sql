@@ -7,6 +7,7 @@ CREATE TABLE "Question" (
     "quizId" TEXT NOT NULL,
     "text" TEXT NOT NULL,
     "type" "QuestionType" NOT NULL,
+    "timeLimit" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 

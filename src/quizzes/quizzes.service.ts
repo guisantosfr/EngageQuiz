@@ -60,7 +60,7 @@ export class QuizzesService {
                     create: data.questions.map(q => {
                         const options =
                             q.type === 'TRUE_FALSE'
-                                ? createTrueFalseAlternatives(q.correctTrueFalse)
+                                ? createTrueFalseAlternatives(q.correctAnswer)
                                 : q.options;
 
                         this.validateQuestionRules({
@@ -139,7 +139,7 @@ export class QuizzesService {
                         create: data.questions.map(q => {
                             const options =
                                 q.type === 'TRUE_FALSE'
-                                    ? createTrueFalseAlternatives(q.correctTrueFalse)
+                                    ? createTrueFalseAlternatives(q.correctAnswer)
                                     : q.options;
 
                             this.validateQuestionRules({

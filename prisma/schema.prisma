@@ -20,6 +20,7 @@ model Quiz {
   description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
   questions   Question[]
 }
 
@@ -30,12 +31,12 @@ model Question {
 
   text   String
   type QuestionType
-  timeLimit   QuestionTimeLimit
+  timeLimit Int
+
+  options Option[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  options Option[]
 
   @@index([quizId])
 }
@@ -55,11 +56,4 @@ model Option {
 enum QuestionType {
   MULTIPLE_CHOICE
   TRUE_FALSE
-}
-
-enum QuestionTimeLimit {
-  SECONDS_15
-  SECONDS_30
-  SECONDS_45
-  SECONDS_60
 }
