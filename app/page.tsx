@@ -1,64 +1,87 @@
-import Image from "next/image";
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { PlusCircle, Play, FileText, Pencil } from "lucide-react"
+import { EmptyState } from "@/components/empty-state"
 
-export default function Home() {
+export default async function Home() {
+  let quizzes = [];
+  
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/quizzes`, { 
+      cache: 'no-store' 
+    });
+    quizzes = await res.json();
+  } catch (error) {
+    console.error('Failed to fetch quizzes:', error);
+    quizzes = [];
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="flex min-h-screen flex-col w-9/10 mx-auto">
+      <header className="sticky top-0 z-10 border-b bg-background">
+        <div className="container flex h-16 items-center justify-between py-4">
+            <h1 className="text-2xl font-bold">EngageQuiz</h1>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </header>
+      <main className="flex-1 container py-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-3xl font-bold tracking-tight">Meus Questionários</h2>
+          <div className="flex items-center gap-2">
+            <Button asChild>
+              <Link href="/quizzes/create">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Novo Questionário
+              </Link>
+            </Button>
+          </div>
         </div>
+
+        <Tabs defaultValue="quizzes" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="quizzes" className="flex items-center">
+              <FileText className="mr-2 h-4 w-4" />
+              Questionários
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="quizzes" className="space-y-4">
+            {
+              quizzes.length === 0 ? (
+                <EmptyState />
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {quizzes.map((quiz) => (
+                    <Card key={quiz.id}>
+                      <CardHeader className="pb-2">
+                        <CardTitle>{quiz.title}</CardTitle>
+                        <CardDescription>{quiz.questions} questions</CardDescription>
+                      </CardHeader>
+
+                      <CardFooter className="flex justify-between">
+                        <Button variant="outline" size="sm" asChild>
+                          <Link href={`/quizzes/${quiz.id}`}>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Editar
+                          </Link>
+                        </Button>
+
+                        <Button size="sm" asChild>
+                          <Link href={`/`}>
+                            <Play className="mr-2 h-4 w-4" />
+                            Iniciar
+                          </Link>
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  ))}
+                </div>
+              )
+            }
+
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
