@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PlusCircle, Play, FileText, Pencil } from "lucide-react"
-import { EmptyState } from "@/components/empty-state"
+import { EmptyState } from "./_components/empty-state"
 
 export default async function Home() {
   let quizzes = [];
@@ -30,7 +30,7 @@ export default async function Home() {
           <h2 className="text-3xl font-bold tracking-tight">Meus Questionários</h2>
           <div className="flex items-center gap-2">
             <Button asChild>
-              <Link href="/quizzes/create">
+              <Link href="/quizzes/new">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Novo Questionário
               </Link>
