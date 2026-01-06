@@ -26,10 +26,11 @@ export class QuizzesService {
 
         if (
             question.type === 'MULTIPLE_CHOICE' &&
-            question.options.length !== 4
+            question.options.length < 2 &&
+            question.options.length > 4
         ) {
             throw new BadRequestException(
-                'Questões de múltipla escolha devem ter 4 alternativas',
+                'Questões de múltipla escolha devem ter entre 2 e 4 alternativas',
             );
         }
     }
