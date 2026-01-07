@@ -93,7 +93,11 @@ export class QuizzesService {
         const quiz = await this.prisma.quiz.findUnique({
             where: { id },
             include: {
-                questions: true,
+                questions: {
+                    include: {
+                        options: true,
+                    },
+                },
             },
         });
 
