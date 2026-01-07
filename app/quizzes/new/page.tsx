@@ -17,7 +17,8 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import { ChevronLeft, Plus, Trash2, GripVertical, Check, CheckCircle2, PlayCircle } from "lucide-react"
+import { toast } from "sonner"
+import { ChevronLeft, Plus, Trash2, GripVertical, Check, CheckCircle2, PlayCircle, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 
@@ -30,8 +31,7 @@ export default function NewQuiz() {
     const [description, setDescription] = useState("")
     const [questions, setQuestions] = useState<Question[]>([])
     const [showSuccessModal, setShowSuccessModal] = useState(false)
-    const [savedQuizId, setSavedQuizId] = useState<string>("")
-
+    
     const addQuestion = () => {
         const newQuestion: Question = {
             id: Date.now().toString(),
@@ -62,8 +62,8 @@ export default function NewQuiz() {
             questions.map((q) => {
                 if (q.id === id) {
                     if (field === "type") {
-                        if (value === "true-false") {
-                            return { ...q, [field]: value, options: ["True", "False"], correctAnswer: 0 }
+                        if (value === "TRUE_FALSE") {
+                            return { ...q, [field]: value, options: ["Verdadeiro", "Falso"], correctAnswer: 0 }
                         } else {
                             return { ...q, [field]: value, options: ["", ""], correctAnswer: 0 }
                         }
@@ -88,19 +88,48 @@ export default function NewQuiz() {
         )
     }
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
-        for (const question of questions) {
-            if (question.type === "MULTIPLE_CHOICE") {
-              
-            }
-        }
+        const body = {
+            title,
+            description,
+            questions: questions.map(q => {
+                if (q.type === "TRUE_FALSE") {
+                    return {
+                        text: q.text,
+                        type: q.type,
+                        timeLimit: q.timeLimit,
+                        correctAnswer: q.correctAnswer === 0
+                    };
+                } else if (q.type === "MULTIPLE_CHOICE") {
+                    return {
+                        text: q.text,
+                        type: q.type,
+                        timeLimit: q.timeLimit,
+                        options: q.options.map((optionText, index) => ({
+                            text: optionText,
+                            isCorrect: index === q.correctAnswer
+                        }))
+                    };
+                }
+            })
+        };
 
-        const newQuizId = Date.now().toString()
-        console.log("Quiz created:", { id: newQuizId, title, description, questions })
-        setSavedQuizId(newQuizId)
-        setShowSuccessModal(true)
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/quizzes`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            })
+
+            if (response.status === 201) {
+                setShowSuccessModal(true)
+            }
+        } catch (error) {
+            toast.error('Erro ao salvar questionário.')
+            console.error(error)
+        }
     }
 
     return (
@@ -368,13 +397,14 @@ export default function NewQuiz() {
                             O que você deseja fazer?
                         </DialogDescription>
                     </DialogHeader>
-                    <DialogFooter className="flex-col sm:flex-col gap-2">
-                        <Button onClick={() => router.push(`/quizzes/${savedQuizId}/present`)} className="w-full" size="lg">
+                    <DialogFooter className="flex-col md:flex-row gap-3">
+                        <Button onClick={() => router.push("/")} variant="outline" size="lg">
+                            <ArrowLeft className="h-5 w-5 mr-2" />
+                            Voltar
+                        </Button>
+                        <Button size="lg">
                             <PlayCircle className="h-5 w-5 mr-2" />
                             Iniciar Questionário
-                        </Button>
-                        <Button onClick={() => router.push("/")} variant="outline" className="w-full" size="lg">
-                            Voltar
                         </Button>
                     </DialogFooter>
                 </DialogContent>

@@ -4,15 +4,18 @@ import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/comp
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PlusCircle, Play, FileText, Pencil } from "lucide-react"
 import { EmptyState } from "./_components/empty-state"
+import { Quiz } from "@/types/Quiz"
 
 export default async function Home() {
-  let quizzes = [];
+  let quizzes: Quiz[] = [];
   
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/quizzes`, { 
       cache: 'no-store' 
     });
+
     quizzes = await res.json();
+    console.log(quizzes)
   } catch (error) {
     console.error('Failed to fetch quizzes:', error);
     quizzes = [];
@@ -56,7 +59,9 @@ export default async function Home() {
                     <Card key={quiz.id}>
                       <CardHeader className="pb-2">
                         <CardTitle>{quiz.title}</CardTitle>
-                        <CardDescription>{quiz.questions} questions</CardDescription>
+                        <CardDescription>
+                          {quiz.questions?.length} {quiz.questions?.length === 1 ? 'questão' : 'questões'}
+                        </CardDescription>
                       </CardHeader>
 
                       <CardFooter className="flex justify-between">

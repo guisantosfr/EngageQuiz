@@ -7,4 +7,5 @@ export interface Question {
   options: string[]
   correctAnswer: number
   timeLimit: number
+  questions?: Question[]
 }
