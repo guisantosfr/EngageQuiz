@@ -3,6 +3,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateQuizDto, UpdateQuizDto } from './dto';
 import { QuestionType } from 'generated/prisma/enums';
 import { createTrueFalseAlternatives } from './factories/true-false.factory';
+import { GetQuizDto } from './dto/get-quiz.dto';
+import { QuizMapper } from './mappers/quiz.mapper';
 
 @Injectable()
 export class QuizzesService {
@@ -89,7 +91,7 @@ export class QuizzesService {
         });
     }
 
-    async getQuizById(id: string) {
+    async getQuizById(id: string): Promise<GetQuizDto> {
         const quiz = await this.prisma.quiz.findUnique({
             where: { id },
             include: {
@@ -105,7 +107,7 @@ export class QuizzesService {
             throw new NotFoundException('Quiz não encontrado');
         }
 
-        return quiz;
+        return QuizMapper.toEditDto(quiz);
     }
 
     async updateQuiz(id: string, data: UpdateQuizDto) {
