@@ -3,12 +3,23 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
-import { ChevronLeft, Plus } from "lucide-react"
+import { ChevronLeft, Plus, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { Question } from "@/types/Question"
 import { QuestionCard } from "../_components/question-card"
@@ -34,7 +45,22 @@ export function QuizForm({ mode }: { mode: Mode }) {
 
             setTitle(data.title)
             setDescription(data.description)
-            setQuestions(data.questions)
+
+            //for each question inside data.questions, if is multiple choice and has
+            //less than 4 options, fill with empty options until reach 4 options
+            const updatedQuestions = data.questions.map((q: Question) => {
+                if (q.type === "MULTIPLE_CHOICE" && q.options && q.options.length < 4) {
+                    const optionsToAdd = 4 - q.options.length
+                    const newOptions = [...q.options]
+                    for (let i = 0; i < optionsToAdd; i++) {
+                        newOptions.push({ text: "", isCorrect: false })
+                    }
+                    return { ...q, options: newOptions }
+                }
+                return q
+            })
+
+            setQuestions(updatedQuestions)
         }
 
         fetchQuiz();
@@ -149,22 +175,24 @@ export function QuizForm({ mode }: { mode: Mode }) {
                         text: q.text,
                         type: q.type,
                         timeLimit: q.timeLimit,
-                        options: q.options?.map((option) => ({
-                            text: option.text,
-                            isCorrect: option.isCorrect
-                        }))
+                        options: q.options
+                            ?.filter((option: any) => option.text.trim() !== '')
+                            .map((option: any) => ({
+                                text: option.text,
+                                isCorrect: option.isCorrect
+                            }))
                     }
                 }
             })
         }
 
-        if (mode === 'create'){
+        if (mode === 'create') {
             await createQuiz(body);
-        } else if (mode === 'edit'){
+        } else if (mode === 'edit') {
             await updateQuiz({ ...body, id });
         }
     }
-    
+
     const createQuiz = async (body: Object) => {
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/quizzes`, {
@@ -172,7 +200,7 @@ export function QuizForm({ mode }: { mode: Mode }) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
             })
-    
+
             if (response.status === 201) {
                 setShowSuccessModal(true)
             }
@@ -182,14 +210,14 @@ export function QuizForm({ mode }: { mode: Mode }) {
         }
     }
 
-     const updateQuiz = async (body: Object) => {
+    const updateQuiz = async (body: Object) => {
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
             })
-    
+
             if (response.status === 200) {
                 setShowSuccessModal(true)
             }
@@ -197,7 +225,27 @@ export function QuizForm({ mode }: { mode: Mode }) {
             toast.error('Erro ao editar questionário.')
             console.error(error)
         }
-     }
+    }
+
+    const handleDelete = async () => {
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/${id}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+            })
+
+            if (response.ok) {
+                toast.success('Questionário excluído com sucesso.')
+                router.push("/")
+            } else {
+                toast.error('Erro ao excluir questionário.')
+                console.error('Delete failed with status:', response.status)
+            }
+        } catch (error) {
+            toast.error('Erro ao editar questionário.')
+            console.error(error)
+        }
+    }
 
     return (
         <div className="flex min-h-screen flex-col bg-background mx-auto w-9/10">
@@ -214,9 +262,43 @@ export function QuizForm({ mode }: { mode: Mode }) {
                             mode === 'create' ? 'Novo Questionário' : 'Editar Questionário'}
                         </h1>
                     </div>
-                    <Button onClick={handleSubmit} disabled={questions.length === 0}>
-                        Salvar Questionário
-                    </Button>
+
+                    <div className="flex justify-between items-center gap-10">
+                        {
+                            mode === 'edit' && (
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="destructive" className="cursor-pointer">
+                                            <Trash2 className="h-4 w-4 mr-2" />
+                                            Excluir Questionário
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                Esta ação não pode ser desfeita. Isso excluirá permanentemente este questionário e todas as suas perguntas.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
+                                                Confirmar exclusão
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            )
+                        }
+
+                        <Button
+                            onClick={handleSubmit}
+                            className="cursor-pointer"
+                            disabled={questions.length === 0}
+                        >
+                            Salvar Questionário
+                        </Button>
+                    </div>
                 </div>
             </header>
 
@@ -261,7 +343,7 @@ export function QuizForm({ mode }: { mode: Mode }) {
                                     ({questions.length})
                                 </span>
                             </h2>
-                            <Button type="button" onClick={addQuestion} variant="outline">
+                            <Button type="button" onClick={addQuestion} variant="outline" className="cursor-pointer">
                                 <Plus className="h-4 w-4 mr-2" />
                                 Adicionar questão
                             </Button>
@@ -286,7 +368,7 @@ export function QuizForm({ mode }: { mode: Mode }) {
                         <Button type="button" variant="outline" onClick={() => router.push("/")}>
                             Cancelar
                         </Button>
-                        <Button type="submit" disabled={questions.length === 0}>
+                        <Button type="submit" disabled={questions.length === 0} className="cursor-pointer">
                             Salvar Questionário
                         </Button>
                     </div>

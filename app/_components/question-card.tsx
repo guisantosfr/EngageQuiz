@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { GripVertical, Trash2, Check } from "lucide-react"
+import { ArrowUp, ArrowDown, Trash2, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Question } from "@/types/Question"
 
@@ -42,27 +42,29 @@ export function QuestionCard({
                                 type="button"
                                 variant="ghost"
                                 size="sm"
-                                className="h-4 w-6 p-0"
+                                className="cursor-pointer"
                                 onClick={(e) => {
                                     e.stopPropagation()
                                     onMove(index, "up")
                                 }}
                                 disabled={index === 0}
+                                asChild
                             >
-                                <GripVertical className="h-3 w-3" />
+                                <ArrowUp size="48"/>
                             </Button>
                             <Button
                                 type="button"
                                 variant="ghost"
                                 size="sm"
-                                className="h-4 w-6 p-0"
+                                className="cursor-pointer"
                                 onClick={(e) => {
                                     e.stopPropagation()
                                     onMove(index, "down")
                                 }}
                                 disabled={index === totalQuestions - 1}
+                                asChild
                             >
-                                <GripVertical className="h-3 w-3" />
+                                <ArrowDown size="48" />
                             </Button>
                         </div>
                         <div className="text-left">
