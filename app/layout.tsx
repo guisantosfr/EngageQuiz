@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { Analytics } from '@vercel/analytics/next';
 import { Toaster } from '@/components/ui/sonner'
 
 const geistSans = Geist({
@@ -14,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "EngageQuiz",
-  description: "A platform to create and manage quizzes for your classes.",
+  title: "EngageQuiz - Interactive Classroom Quizzes",
+  description: "Create and present engaging quizzes for your classroom",
 };
 
 export default function RootLayout({
@@ -28,6 +29,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased dark`}
       >
+        <Analytics />
         <Toaster position="top-center" />
         {children}
       </body>
