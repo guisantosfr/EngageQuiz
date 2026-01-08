@@ -12,12 +12,13 @@ import {
 import { CheckCircle2, PlayCircle, ArrowLeft } from "lucide-react"
 
 interface SuccessModalProps {
+    mode: 'create' | 'edit'
     open: boolean
     onOpenChange: (open: boolean) => void
     onBack: () => void
 }
 
-export function SuccessModal({ open, onOpenChange, onBack }: SuccessModalProps) {
+export function SuccessModal({ mode, open, onOpenChange, onBack }: SuccessModalProps) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-md">
@@ -28,7 +29,11 @@ export function SuccessModal({ open, onOpenChange, onBack }: SuccessModalProps) 
                         </div>
                     </div>
                     <DialogTitle className="text-center text-2xl">
-                        Questionário criado com sucesso!
+                        {
+                            mode === 'create' 
+                            ? 'Questionário criado com sucesso!'
+                            : 'Questionário editado com sucesso!'
+                        }
                     </DialogTitle>
                     <DialogDescription className="text-center">
                         O que você deseja fazer?

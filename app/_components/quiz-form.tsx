@@ -133,7 +133,7 @@ export function QuizForm({ mode }: { mode: Mode }) {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
-        const body = {
+        let body = {
             title,
             description,
             questions: questions.map(q => {
@@ -158,13 +158,21 @@ export function QuizForm({ mode }: { mode: Mode }) {
             })
         }
 
+        if (mode === 'create'){
+            await createQuiz(body);
+        } else if (mode === 'edit'){
+            await updateQuiz({ ...body, id });
+        }
+    }
+    
+    const createQuiz = async (body: Object) => {
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/quizzes`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
             })
-
+    
             if (response.status === 201) {
                 setShowSuccessModal(true)
             }
@@ -173,6 +181,23 @@ export function QuizForm({ mode }: { mode: Mode }) {
             console.error(error)
         }
     }
+
+     const updateQuiz = async (body: Object) => {
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            })
+    
+            if (response.status === 200) {
+                setShowSuccessModal(true)
+            }
+        } catch (error) {
+            toast.error('Erro ao editar questionário.')
+            console.error(error)
+        }
+     }
 
     return (
         <div className="flex min-h-screen flex-col bg-background mx-auto w-9/10">
@@ -269,6 +294,7 @@ export function QuizForm({ mode }: { mode: Mode }) {
             </main>
 
             <SuccessModal
+                mode={mode}
                 open={showSuccessModal}
                 onOpenChange={setShowSuccessModal}
                 onBack={() => router.push("/")}
