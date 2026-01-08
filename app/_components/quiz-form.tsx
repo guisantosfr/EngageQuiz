@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -14,13 +14,31 @@ import { Question } from "@/types/Question"
 import { QuestionCard } from "../_components/question-card"
 import { SuccessModal } from "../_components/success-modal"
 
-export function QuizForm() {
+type Mode = 'create' | 'edit'
+
+export function QuizForm({ mode }: { mode: Mode }) {
     const router = useRouter()
+    const { id } = useParams();
 
     const [title, setTitle] = useState("")
     const [description, setDescription] = useState("")
     const [questions, setQuestions] = useState<Question[]>([])
     const [showSuccessModal, setShowSuccessModal] = useState(false)
+
+    useEffect(() => {
+        if (mode === 'create') return;
+
+        const fetchQuiz = async () => {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/${id}`)
+            const data = await response.json()
+
+            setTitle(data.title)
+            setDescription(data.description)
+            setQuestions(data.questions)
+        }
+
+        fetchQuiz();
+    }, [])
 
     const addQuestion = () => {
         const newQuestion: Question = {
@@ -47,7 +65,7 @@ export function QuizForm() {
         const targetIndex = direction === "up" ? index - 1 : index + 1
 
         if (targetIndex < 0 || targetIndex >= newQuestions.length) return
-        ;[newQuestions[index], newQuestions[targetIndex]] = [newQuestions[targetIndex], newQuestions[index]]
+            ;[newQuestions[index], newQuestions[targetIndex]] = [newQuestions[targetIndex], newQuestions[index]]
         setQuestions(newQuestions)
     }
 
@@ -167,7 +185,9 @@ export function QuizForm() {
                                 Voltar
                             </Link>
                         </Button>
-                        <h1 className="text-xl font-bold ml-5">Novo Questionário</h1>
+                        <h1 className="text-xl font-bold ml-5">{
+                            mode === 'create' ? 'Novo Questionário' : 'Editar Questionário'}
+                        </h1>
                     </div>
                     <Button onClick={handleSubmit} disabled={questions.length === 0}>
                         Salvar Questionário

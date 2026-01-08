@@ -1,7 +1,7 @@
 import { QuizForm } from "../../_components/quiz-form";
 
-export default function NewQuizPage() {
+export default function EditQuizPage() {
     return (
-        <QuizForm mode="create"/>
+        <QuizForm mode="edit" />
     )
 }
