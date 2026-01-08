@@ -15,7 +15,6 @@ export default async function Home() {
     });
 
     quizzes = await res.json();
-    console.log(quizzes)
   } catch (error) {
     console.error('Failed to fetch quizzes:', error);
     quizzes = [];
