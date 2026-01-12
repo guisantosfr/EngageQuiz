@@ -30,4 +30,9 @@ export class QuizzesController {
         return this.quizzesService.deleteQuiz(id);
     }
 
+    @Post('ai/generate')
+    async generateAIQuiz(@Body() data: any) {
+        return this.quizzesService.generateQuizByAI(data);
+    }
+
 }
