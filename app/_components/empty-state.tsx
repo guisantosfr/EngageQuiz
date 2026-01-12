@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/empty"
 import { PlusCircle } from "lucide-react"
 import Link from "next/link"
+import { NewQuizModal } from "./new-quiz-modal"
 
 export function EmptyState() {
   return (
@@ -26,12 +27,7 @@ export function EmptyState() {
 
       <EmptyContent>
         <div className="flex gap-2">
-          <Button asChild>
-              <Link href="/quizzes/new">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Novo Questionário
-              </Link>
-            </Button>
+          <NewQuizModal />
         </div>
       </EmptyContent>
     </Empty>

@@ -1,10 +1,11 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { PlusCircle, Play, Pencil } from "lucide-react"
+import { Play, Pencil } from "lucide-react"
 import { HomeLayout } from "./_components/home-layout"
 import { EmptyState } from "./_components/empty-state"
 import { Quiz } from "@/types/Quiz"
+import { NewQuizModal } from "./_components/new-quiz-modal"
 
 export default async function Home() {
   let quizzes: Quiz[] = [];
@@ -27,12 +28,7 @@ export default async function Home() {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-3xl font-bold tracking-tight">Meus Questionários</h2>
             <div className="flex items-center gap-2">
-              <Button asChild>
-                <Link href="/quizzes/new">
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Novo Questionário
-                </Link>
-              </Button>
+              <NewQuizModal />
             </div>
           </div>
 
