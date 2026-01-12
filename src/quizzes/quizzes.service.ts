@@ -104,6 +104,7 @@ export class QuizzesService {
 
         prompt += '**Instruções:**\n';
         prompt += '- Gere questões claras e objetivas\n';
+        prompt += '- Cada questão deve conter um tempo adequado para sua resolução, podendo ser de 15, 30, 45 ou 60 segundos.\n';
         prompt += '- Certifique-se de que as questões estejam alinhadas com os parâmetros especificados';
 
         return prompt;
@@ -299,8 +300,7 @@ export class QuizzesService {
                                         enum: ['MULTIPLE_CHOICE', 'TRUE_FALSE'] 
                                     },
                                     timeLimit: { 
-                                        type: Type.NUMBER,
-                                        enum: [15, 30, 45, 60]
+                                        type: Type.NUMBER
                                     },
                                     options: {
                                         type: Type.ARRAY,
@@ -333,6 +333,6 @@ export class QuizzesService {
             throw new BadRequestException('Falha ao gerar quiz via IA');
         }
 
-        return response.text;
+        return JSON.parse(response.text);
     }
 }
