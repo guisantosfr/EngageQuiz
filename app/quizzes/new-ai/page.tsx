@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import Swal from 'sweetalert2';
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -10,14 +10,21 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { ChevronLeft, ChevronDown, Sparkles } from "lucide-react"
+import { ChevronLeft, ChevronDown, Sparkles, AlertCircle, Plus } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+import { Question } from "@/types/Question";
+import { QuestionCard } from "@/app/_components/question-card";
+import { SuccessModal } from "@/app/_components/success-modal";
+import { useRouter } from "next/navigation";
 
 export default function CreateAIQuiz() {
-    const router = useRouter()
+    const router = useRouter();
+    
     const [isAdvancedOpen, setIsAdvancedOpen] = useState(false)
+
+    const [generatedQuiz, setGeneratedQuiz] = useState(false)
 
     const [theme, setTheme] = useState("")
     const [subtopics, setSubtopics] = useState("")
@@ -31,7 +38,13 @@ export default function CreateAIQuiz() {
     const [tone, setTone] = useState("")
     const [timeLimit, setTimeLimit] = useState("")
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const [title, setTitle] = useState("")
+    const [description, setDescription] = useState("")
+    const [questions, setQuestions] = useState<Question[]>([])
+
+    const [showSuccessModal, setShowSuccessModal] = useState(false)
+
+    const handleSubmitAIData = async (e: React.FormEvent) => {
         e.preventDefault()
 
         if (!targetAudience) {
@@ -41,6 +54,14 @@ export default function CreateAIQuiz() {
         if (!questionTypes) {
             return toast.error("Por favor, selecione os tipos de questão")
         }
+
+        //sem botao de ok
+        //todos dark
+        Swal.fire({
+            title: "Aguarde",
+            text: "A IA está criando suas questões. Isso pode levar alguns segundos...",
+            icon: 'warning'
+        })
 
         const body = {
             mainSubject: theme,
@@ -55,7 +76,6 @@ export default function CreateAIQuiz() {
             estimatedTime: timeLimit
         }
 
-        // show a loading modal
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/ai/generate`, {
                 method: 'POST',
@@ -64,10 +84,191 @@ export default function CreateAIQuiz() {
             })
 
             if (response.ok) {
-                // get response data
-                // close loading modal
-                // show success modal with button to go to quiz page
-                // redirect to /quizzes/ai/:id page sending data as prop, replacing id from id get from response
+                const data = await response.json()
+
+                Swal.close()
+
+                Swal.fire({
+                    title: "Questionário gerado com sucesso!",
+                    icon: 'success'
+                })
+
+                setGeneratedQuiz(true)
+
+                setTitle(data.title)
+                setDescription(data.description)
+
+                const processedQuestions = data.questions.map((question: Question) => {
+                    if (question.correctAnswer === null) {
+                        return {
+                            id: question.id,
+                            text: question.text,
+                            type: question.type,
+                            timeLimit: question.timeLimit,
+                            options: question.options
+                        }
+                    } else {
+                        return {
+                            id: question.id,
+                            text: question.text,
+                            type: question.type,
+                            timeLimit: question.timeLimit,
+                            correctAnswer: question.correctAnswer
+                        }
+                    }
+                })
+
+                setQuestions(processedQuestions)
+
+            } else {
+                Swal.fire({
+                    title: "Erro ao gerar questionário!",
+                    icon: 'error'
+                })
+            }
+
+        } catch (error) {
+            Swal.fire({
+                title: "Erro ao gerar questionário!",
+                icon: 'error'
+            })
+            console.error(error)
+        }
+    }
+
+    const addQuestion = () => {
+        const newQuestion: Question = {
+            id: Date.now().toString(),
+            type: "MULTIPLE_CHOICE",
+            text: "",
+            timeLimit: 30,
+            options: [
+                { text: "", isCorrect: true },
+                { text: "", isCorrect: false },
+                { text: "", isCorrect: false },
+                { text: "", isCorrect: false },
+            ],
+        }
+        setQuestions([...questions, newQuestion])
+    }
+
+    const removeQuestion = (id: string) => {
+        setQuestions(questions.filter((q) => q.id !== id))
+    }
+
+    const moveQuestion = (index: number, direction: "up" | "down") => {
+        const newQuestions = [...questions]
+        const targetIndex = direction === "up" ? index - 1 : index + 1
+
+        if (targetIndex < 0 || targetIndex >= newQuestions.length) return
+            ;[newQuestions[index], newQuestions[targetIndex]] = [newQuestions[targetIndex], newQuestions[index]]
+        setQuestions(newQuestions)
+    }
+
+    const updateQuestion = (id: string, field: keyof Question, value: any) => {
+        setQuestions(
+            questions.map((q) => {
+                if (q.id === id) {
+                    if (field === "type") {
+                        if (value === "TRUE_FALSE") {
+                            return {
+                                id: q.id,
+                                type: "TRUE_FALSE",
+                                text: q.text,
+                                timeLimit: q.timeLimit,
+                                correctAnswer: true,
+                            }
+                        } else {
+                            return {
+                                id: q.id,
+                                type: "MULTIPLE_CHOICE",
+                                text: q.text,
+                                timeLimit: q.timeLimit,
+                                options: [
+                                    { text: "", isCorrect: true },
+                                    { text: "", isCorrect: false },
+                                ],
+                            }
+                        }
+                    }
+                    return { ...q, [field]: value }
+                }
+                return q
+            }),
+        )
+    }
+
+    const updateOption = (questionId: string, optionIndex: number, value: string) => {
+        setQuestions(
+            questions.map((q) => {
+                if (q.id === questionId && q.type === "MULTIPLE_CHOICE" && q.options) {
+                    const newOptions = [...q.options]
+                    newOptions[optionIndex] = { ...newOptions[optionIndex], text: value }
+                    return { ...q, options: newOptions }
+                }
+                return q
+            }),
+        )
+    }
+
+    const setCorrectOption = (questionId: string, optionIndex: number) => {
+        setQuestions(
+            questions.map((q) => {
+                if (q.id === questionId && q.type === "MULTIPLE_CHOICE" && q.options) {
+                    const newOptions = q.options.map((opt, idx) => ({
+                        ...opt,
+                        isCorrect: idx === optionIndex,
+                    }))
+                    return { ...q, options: newOptions }
+                }
+                return q
+            }),
+        )
+    }
+
+    const handleSubmitNewQuiz = async (e: React.FormEvent) => {
+        e.preventDefault()
+
+        let body = {
+            title,
+            description,
+            questions: questions.map(q => {
+                if (q.type === "TRUE_FALSE") {
+                    return {
+                        text: q.text,
+                        type: q.type,
+                        timeLimit: q.timeLimit,
+                        correctAnswer: q.correctAnswer
+                    }
+                } else if (q.type === "MULTIPLE_CHOICE") {
+                    return {
+                        text: q.text,
+                        type: q.type,
+                        timeLimit: q.timeLimit,
+                        options: q.options
+                            ?.filter((option: any) => option.text.trim() !== '')
+                            .map((option: any) => ({
+                                text: option.text,
+                                isCorrect: option.isCorrect
+                            }))
+                    }
+                }
+            })
+        }
+
+        await createQuiz(body);
+    }
+
+    const createQuiz = async (body: Object) => {
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/quizzes`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            })
+
+            if (response.status === 201) {
+                setShowSuccessModal(true)
             }
         } catch (error) {
             toast.error('Erro ao salvar questionário.')
@@ -91,201 +292,300 @@ export default function CreateAIQuiz() {
                             Criar Quiz com IA
                         </h1>
                     </div>
-                    <Button onClick={handleSubmit}>Gerar Questionário</Button>
+
+                    {
+                        generatedQuiz ?
+                            <Button onClick={handleSubmitNewQuiz}>Salvar Questionário</Button>
+                            :
+                            <Button onClick={handleSubmitAIData}>Gerar Questionário</Button>
+
+                    }
                 </div>
             </header>
 
             <main className="flex-1 container py-6 max-w-5xl mx-auto">
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Informações Básicas</CardTitle>
-                            <CardDescription>Configure os parâmetros principais do seu questionário</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
+                {
+                    generatedQuiz ? (
+                        <form onSubmit={handleSubmitNewQuiz} className="space-y-6">
+                            <Card className="bg-blue-400">
+                                <CardContent className="flex gap-3">
+                                    <AlertCircle />
+                                    Confira as informações do questionário gerado antes de salvar
+                                </CardContent>
+                            </Card>
+
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Informações do questionário</CardTitle>
+                                </CardHeader>
+
+                                <CardContent className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="theme">
-                                    Tema / Assunto Principal <span className="text-red-500">*</span>
+                                <Label htmlFor="title">
+                                    Nome <span className="text-red-500">*</span>
                                 </Label>
                                 <Input
-                                    id="theme"
-                                    placeholder="Ex: Revolução Francesa, Funções Quadráticas, Sistema Solar..."
-                                    value={theme}
-                                    onChange={(e) => setTheme(e.target.value)}
+                                    id="title"
+                                    placeholder="Digite o nome do questionário"
+                                    value={title}
+                                    onChange={(e) => setTitle(e.target.value)}
                                     required
                                 />
                             </div>
-
                             <div className="space-y-2">
-                                <Label htmlFor="subtopics">Subtópicos / Assuntos a Incluir (opcional)</Label>
+                                <Label htmlFor="description">Descrição</Label>
                                 <Textarea
-                                    id="subtopics"
-                                    placeholder="Ex: Causas da revolução, Queda da Bastilha, Período do Terror..."
-                                    value={subtopics}
-                                    onChange={(e) => setSubtopics(e.target.value)}
+                                    id="description"
+                                    placeholder="Descreva o questionário (opcional)"
+                                    value={description}
+                                    onChange={(e) => setDescription(e.target.value)}
                                     rows={3}
                                 />
                             </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="targetAudience">
-                                        Nível / Público Alvo <span className="text-red-500">*</span>
-                                    </Label>
-                                    <Select value={targetAudience} onValueChange={setTargetAudience} required>
-                                        <SelectTrigger id="targetAudience">
-                                            <SelectValue placeholder="Selecione o nível" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="beginner">Iniciante</SelectItem>
-                                            <SelectItem value="intermediate">Intermediário</SelectItem>
-                                            <SelectItem value="advanced">Avançado</SelectItem>
-                                            <SelectItem value="elementary">Fundamental</SelectItem>
-                                            <SelectItem value="middle">Médio</SelectItem>
-                                            <SelectItem value="university">Universitário</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="questionCount">
-                                        Quantidade de Questões (min. 2, max. 20) <span className="text-red-500">*</span>
-                                    </Label>
-                                    <Input
-                                        id="questionCount"
-                                        type="number"
-                                        min="2"
-                                        max="20"
-                                        placeholder="10"
-                                        value={questionCount}
-                                        onChange={(e) => setQuestionCount(e.target.value)}
-                                        required
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="questionTypes">
-                                        Tipos de Questão <span className="text-red-500">*</span>
-                                    </Label>
-                                    <Select value={questionTypes} onValueChange={setQuestionTypes} required>
-                                        <SelectTrigger id="questionTypes">
-                                            <SelectValue placeholder="Selecione os tipos de questão" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="MULTIPLE_CHOICE">Apenas Múltipla Escolha</SelectItem>
-                                            <SelectItem value="TRUE_FALSE">Apenas Verdadeiro ou Falso</SelectItem>
-                                            <SelectItem value="ALL">Misto (Ambos os tipos)</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
                         </CardContent>
-                    </Card>
+                            </Card>
 
-                    <Collapsible open={isAdvancedOpen} onOpenChange={setIsAdvancedOpen}>
-                        <Card>
-                            <CollapsibleTrigger className="w-full">
+                            <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-2xl font-bold">
+                                Questões{" "}
+                                <span className="text-sm text-muted-foreground font-normal">
+                                    ({questions.length})
+                                </span>
+                            </h2>
+                            <Button type="button" onClick={addQuestion} variant="outline" className="cursor-pointer">
+                                <Plus className="h-4 w-4 mr-2" />
+                                Adicionar questão
+                            </Button>
+                        </div>
+
+                        {questions.map((question, index) => (
+                            <QuestionCard
+                                key={question.id}
+                                question={question}
+                                index={index}
+                                totalQuestions={questions.length}
+                                onRemove={removeQuestion}
+                                onMove={moveQuestion}
+                                onUpdate={updateQuestion}
+                                onUpdateOption={updateOption}
+                                onSetCorrectOption={setCorrectOption}
+                            />
+                        ))}
+                    </div>
+
+                    <div className="flex justify-end gap-4">
+                        <Button type="button" variant="outline" onClick={() => router.push("/")}>
+                            Cancelar
+                        </Button>
+                        <Button type="submit" disabled={questions.length === 0} className="cursor-pointer">
+                            Salvar Questionário
+                        </Button>
+                    </div>
+
+
+                        </form>
+                    ) : (
+                        <form onSubmit={handleSubmitAIData} className="space-y-6">
+                            <Card>
                                 <CardHeader>
-                                    <div className="flex items-center justify-between">
-                                        <div className="text-left">
-                                            <CardTitle>Opções Avançadas (Opcional)</CardTitle>
-                                            <CardDescription className="my-3">
-                                                Personalize ainda mais a geração do questionário
-                                            </CardDescription>
-                                        </div>
-                                        <ChevronDown className={cn("h-5 w-5 transition-transform", isAdvancedOpen && "rotate-180")} />
-                                    </div>
+                                    <CardTitle>Informações Básicas</CardTitle>
+                                    <CardDescription>Configure os parâmetros principais do seu questionário</CardDescription>
                                 </CardHeader>
-                            </CollapsibleTrigger>
-
-                            <CollapsibleContent>
-                                <CardContent className="space-y-4 pt-4">
+                                <CardContent className="space-y-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="learningObjective">Objetivo de Aprendizagem</Label>
+                                        <Label htmlFor="theme">
+                                            Tema / Assunto Principal <span className="text-red-500">*</span>
+                                        </Label>
+                                        <Input
+                                            id="theme"
+                                            placeholder="Ex: Revolução Francesa, Funções Quadráticas, Sistema Solar..."
+                                            value={theme}
+                                            onChange={(e) => setTheme(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="subtopics">Subtópicos / Assuntos a Incluir (opcional)</Label>
                                         <Textarea
-                                            id="learningObjective"
-                                            placeholder="Ex: Avaliar compreensão dos eventos principais e suas consequências..."
-                                            value={learningObjective}
-                                            onChange={(e) => setLearningObjective(e.target.value)}
+                                            id="subtopics"
+                                            placeholder="Ex: Causas da revolução, Queda da Bastilha, Período do Terror..."
+                                            value={subtopics}
+                                            onChange={(e) => setSubtopics(e.target.value)}
                                             rows={3}
                                         />
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                                         <div className="space-y-2">
-                                            <Label htmlFor="difficulty">Grau de Dificuldade</Label>
-                                            <Select value={difficulty} onValueChange={setDifficulty}>
-                                                <SelectTrigger id="difficulty">
-                                                    <SelectValue placeholder="Selecione a dificuldade" />
+                                            <Label htmlFor="targetAudience">
+                                                Nível / Público Alvo <span className="text-red-500">*</span>
+                                            </Label>
+                                            <Select value={targetAudience} onValueChange={setTargetAudience} required>
+                                                <SelectTrigger id="targetAudience">
+                                                    <SelectValue placeholder="Selecione o nível" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="easy">Fácil</SelectItem>
-                                                    <SelectItem value="medium">Médio</SelectItem>
-                                                    <SelectItem value="hard">Difícil</SelectItem>
-                                                    <SelectItem value="mixed">Misto</SelectItem>
+                                                    <SelectItem value="beginner">Iniciante</SelectItem>
+                                                    <SelectItem value="intermediate">Intermediário</SelectItem>
+                                                    <SelectItem value="advanced">Avançado</SelectItem>
+                                                    <SelectItem value="elementary">Fundamental</SelectItem>
+                                                    <SelectItem value="middle">Médio</SelectItem>
+                                                    <SelectItem value="university">Universitário</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </div>
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="educationalContext">Contexto Educacional</Label>
-                                            <Select value={educationalContext} onValueChange={setEducationalContext}>
-                                                <SelectTrigger id="educationalContext">
-                                                    <SelectValue placeholder="Selecione o contexto" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="in_person">Aula Presencial</SelectItem>
-                                                    <SelectItem value="remote">Aula Remota</SelectItem>
-                                                    <SelectItem value="pre_exam">Revisão antes da Prova</SelectItem>
-                                                    <SelectItem value="diagnostic">Avaliação Diagnóstica</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="tone">Linguagem / Tom</Label>
-                                            <Select value={tone} onValueChange={setTone}>
-                                                <SelectTrigger id="tone">
-                                                    <SelectValue placeholder="Selecione o tom" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="neutral">Neutro</SelectItem>
-                                                    <SelectItem value="formal">Formal</SelectItem>
-                                                    <SelectItem value="casual">Descontraído</SelectItem>
-                                                    <SelectItem value="gamified">Gamificado</SelectItem>
-                                                </SelectContent>
-                                            </Select>
+                                            <Label htmlFor="questionCount">
+                                                Quantidade de Questões (min. 2, max. 20) <span className="text-red-500">*</span>
+                                            </Label>
+                                            <Input
+                                                id="questionCount"
+                                                type="number"
+                                                min="2"
+                                                max="20"
+                                                placeholder="10"
+                                                value={questionCount}
+                                                onChange={(e) => setQuestionCount(e.target.value)}
+                                                required
+                                            />
                                         </div>
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="timeLimit">Tempo Estimado por Resposta</Label>
-                                            <Select value={timeLimit} onValueChange={setTimeLimit}>
-                                                <SelectTrigger id="timeLimit">
-                                                    <SelectValue placeholder="Selecione o tempo" />
+                                            <Label htmlFor="questionTypes">
+                                                Tipos de Questão <span className="text-red-500">*</span>
+                                            </Label>
+                                            <Select value={questionTypes} onValueChange={setQuestionTypes} required>
+                                                <SelectTrigger id="questionTypes">
+                                                    <SelectValue placeholder="Selecione os tipos de questão" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="15">15 segundos</SelectItem>
-                                                    <SelectItem value="30">30 segundos</SelectItem>
-                                                    <SelectItem value="45">45 segundos</SelectItem>
-                                                    <SelectItem value="60">1 minuto (60 segundos)</SelectItem>
+                                                    <SelectItem value="MULTIPLE_CHOICE">Apenas Múltipla Escolha</SelectItem>
+                                                    <SelectItem value="TRUE_FALSE">Apenas Verdadeiro ou Falso</SelectItem>
+                                                    <SelectItem value="ALL">Misto (Ambos os tipos)</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </div>
                                     </div>
                                 </CardContent>
-                            </CollapsibleContent>
-                        </Card>
-                    </Collapsible>
+                            </Card>
 
-                    <div className="flex justify-end">
-                        <Button type="submit" size="lg" className="gap-2">
-                            <Sparkles className="h-4 w-4" />
-                            Gerar Questionário com IA
-                        </Button>
-                    </div>
-                </form>
+                            <Collapsible open={isAdvancedOpen} onOpenChange={setIsAdvancedOpen}>
+                                <Card>
+                                    <CollapsibleTrigger className="w-full">
+                                        <CardHeader>
+                                            <div className="flex items-center justify-between">
+                                                <div className="text-left">
+                                                    <CardTitle>Opções Avançadas (Opcional)</CardTitle>
+                                                    <CardDescription className="my-3">
+                                                        Personalize ainda mais a geração do questionário
+                                                    </CardDescription>
+                                                </div>
+                                                <ChevronDown className={cn("h-5 w-5 transition-transform", isAdvancedOpen && "rotate-180")} />
+                                            </div>
+                                        </CardHeader>
+                                    </CollapsibleTrigger>
+
+                                    <CollapsibleContent>
+                                        <CardContent className="space-y-4 pt-4">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="learningObjective">Objetivo de Aprendizagem</Label>
+                                                <Textarea
+                                                    id="learningObjective"
+                                                    placeholder="Ex: Avaliar compreensão dos eventos principais e suas consequências..."
+                                                    value={learningObjective}
+                                                    onChange={(e) => setLearningObjective(e.target.value)}
+                                                    rows={3}
+                                                />
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="difficulty">Grau de Dificuldade</Label>
+                                                    <Select value={difficulty} onValueChange={setDifficulty}>
+                                                        <SelectTrigger id="difficulty">
+                                                            <SelectValue placeholder="Selecione a dificuldade" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="easy">Fácil</SelectItem>
+                                                            <SelectItem value="medium">Médio</SelectItem>
+                                                            <SelectItem value="hard">Difícil</SelectItem>
+                                                            <SelectItem value="mixed">Misto</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="educationalContext">Contexto Educacional</Label>
+                                                    <Select value={educationalContext} onValueChange={setEducationalContext}>
+                                                        <SelectTrigger id="educationalContext">
+                                                            <SelectValue placeholder="Selecione o contexto" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="in_person">Aula Presencial</SelectItem>
+                                                            <SelectItem value="remote">Aula Remota</SelectItem>
+                                                            <SelectItem value="pre_exam">Revisão antes da Prova</SelectItem>
+                                                            <SelectItem value="diagnostic">Avaliação Diagnóstica</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="tone">Linguagem / Tom</Label>
+                                                    <Select value={tone} onValueChange={setTone}>
+                                                        <SelectTrigger id="tone">
+                                                            <SelectValue placeholder="Selecione o tom" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="neutral">Neutro</SelectItem>
+                                                            <SelectItem value="formal">Formal</SelectItem>
+                                                            <SelectItem value="casual">Descontraído</SelectItem>
+                                                            <SelectItem value="gamified">Gamificado</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="timeLimit">Tempo Estimado por Resposta</Label>
+                                                    <Select value={timeLimit} onValueChange={setTimeLimit}>
+                                                        <SelectTrigger id="timeLimit">
+                                                            <SelectValue placeholder="Selecione o tempo" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="15">15 segundos</SelectItem>
+                                                            <SelectItem value="30">30 segundos</SelectItem>
+                                                            <SelectItem value="45">45 segundos</SelectItem>
+                                                            <SelectItem value="60">1 minuto (60 segundos)</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                            </div>
+                                        </CardContent>
+                                    </CollapsibleContent>
+                                </Card>
+                            </Collapsible>
+
+                            <div className="flex justify-end">
+                                <Button type="submit" size="lg" className="gap-2">
+                                    <Sparkles className="h-4 w-4" />
+                                    Gerar Questionário com IA
+                                </Button>
+                            </div>
+                        </form>
+
+                    )
+                }
+
+                <SuccessModal
+                                mode='create'
+                                open={showSuccessModal}
+                                onOpenChange={setShowSuccessModal}
+                                onBack={() => router.push("/")}
+                            />
             </main>
         </div>
     )
