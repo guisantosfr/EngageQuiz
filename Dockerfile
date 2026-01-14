@@ -34,7 +34,9 @@ RUN npm ci --only=production
 
 # Copy built application from builder stage
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+
+# Copy generated Prisma Client from custom location
+COPY --from=builder /app/.generated ./.generated
 
 # Generate Prisma Client in production
 RUN npx prisma generate
