@@ -6,6 +6,6 @@ dockerfile
 npm
 .env
 npm-debug.log
-generated
+.generated
 README.md
 .vscode
