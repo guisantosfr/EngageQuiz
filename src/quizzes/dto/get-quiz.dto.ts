@@ -1,4 +1,4 @@
-import { QuestionType } from "generated/prisma/enums";
+import { QuestionType } from "../../generated/prisma/enums";
 
 export class GetQuizDto {
   id: string;

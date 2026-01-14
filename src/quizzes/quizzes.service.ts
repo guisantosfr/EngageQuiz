@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateQuizDto, UpdateQuizDto } from './dto';
-import { QuestionType } from 'generated/prisma/enums';
+import { QuestionType } from '../generated/prisma/enums';
 import { createTrueFalseAlternatives } from './factories/true-false.factory';
 import { GetQuizDto } from './dto/get-quiz.dto';
 import { QuizMapper } from './mappers/quiz.mapper';

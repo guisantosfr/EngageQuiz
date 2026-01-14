@@ -1,4 +1,4 @@
-import { QuestionType } from '../../../generated/prisma/client';
+import { QuestionType } from '../../generated/prisma/client';
 import { UpdateOptionDto } from './update-option.dto';
 
 export class UpdateQuestionDto {
