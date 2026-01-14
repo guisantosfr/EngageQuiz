@@ -6,8 +6,9 @@
 
 generator client {
   provider = "prisma-client"
-  output   = "../generated/prisma"
+  output   = "../generated/prisma" // obrigatorio na nova versão do prisma
   moduleFormat  = "cjs"
+  binaryTargets = ["native"]
 }
 
 datasource db {

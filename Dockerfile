@@ -29,7 +29,7 @@ COPY prisma ./prisma/
 RUN npm ci --only=production
 
 # Generate Prisma Client in production
-RUN npx prisma generate
+RUN npx prisma generate --schema=prisma/schema.prisma
 
 # Copy built app
 COPY --from=builder /app/dist ./dist
