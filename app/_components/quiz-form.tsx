@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import {
@@ -20,12 +20,17 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import { ChevronLeft, Plus, Trash2 } from "lucide-react"
-import Link from "next/link"
 import { Question } from "@/types/Question"
 import { QuestionCard } from "../_components/question-card"
 import { SuccessModal } from "../_components/success-modal"
 
 type Mode = 'create' | 'edit'
+
+interface InitialValues {
+    title: string
+    description: string
+    questions: Question[]
+}
 
 export function QuizForm({ mode }: { mode: Mode }) {
     const router = useRouter()
@@ -35,9 +40,41 @@ export function QuizForm({ mode }: { mode: Mode }) {
     const [description, setDescription] = useState("")
     const [questions, setQuestions] = useState<Question[]>([])
     const [showSuccessModal, setShowSuccessModal] = useState(false)
+    const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] = useState(false)
+
+    const initialValuesRef = useRef<InitialValues>({
+        title: "",
+        description: "",
+        questions: []
+    })
+
+    const hasUnsavedChanges = useCallback(() => {
+        const initial = initialValuesRef.current
+
+        if (title !== initial.title) return true
+        if (description !== initial.description) return true
+        if (JSON.stringify(questions) !== JSON.stringify(initial.questions)) return true
+
+        return false
+    }, [title, description, questions])
+
+    const handleBack = () => {
+        if (hasUnsavedChanges()) {
+            setShowUnsavedChangesDialog(true)
+        } else {
+            router.push("/")
+        }
+    }
+
+    const confirmBack = () => {
+        setShowUnsavedChangesDialog(false)
+        router.push("/")
+    }
 
     useEffect(() => {
-        if (mode === 'create') return;
+        if (mode === 'create') {
+            return;
+        }
 
         const fetchQuiz = async () => {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/${id}`)
@@ -61,6 +98,12 @@ export function QuizForm({ mode }: { mode: Mode }) {
             })
 
             setQuestions(updatedQuestions)
+
+            initialValuesRef.current = {
+                title: data.title,
+                description: data.description,
+                questions: updatedQuestions
+            }
         }
 
         fetchQuiz();
@@ -252,11 +295,9 @@ export function QuizForm({ mode }: { mode: Mode }) {
             <header className="sticky top-0 z-10 border-b bg-background">
                 <div className="container flex h-16 items-center justify-between py-4">
                     <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm" asChild>
-                            <Link href="/">
-                                <ChevronLeft className="h-4 w-4 mr-2" />
-                                Voltar
-                            </Link>
+                        <Button variant="ghost" size="sm" onClick={handleBack} className="cursor-pointer">
+                            <ChevronLeft className="h-4 w-4 mr-2" />
+                            Voltar
                         </Button>
                         <h1 className="text-xl font-bold ml-5">{
                             mode === 'create' ? 'Novo Questionário' : 'Editar Questionário'}
@@ -380,7 +421,7 @@ export function QuizForm({ mode }: { mode: Mode }) {
                     </div>
 
                     <div className="flex justify-end gap-4">
-                        <Button type="button" variant="outline" onClick={() => router.push("/")}>
+                        <Button type="button" variant="outline" onClick={handleBack} className="cursor-pointer">
                             Cancelar
                         </Button>
                         <Button type="submit" disabled={questions.length === 0 || title.length === 0} className="cursor-pointer">
@@ -396,6 +437,23 @@ export function QuizForm({ mode }: { mode: Mode }) {
                 onOpenChange={setShowSuccessModal}
                 onBack={() => router.push("/")}
             />
+
+            <AlertDialog open={showUnsavedChangesDialog} onOpenChange={setShowUnsavedChangesDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Alterações não salvas</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Você tem alterações não salvas. Tem certeza que deseja sair? Todas as alterações serão perdidas.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Continuar editando</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmBack} className="bg-destructive text-destructive-foreground">
+                            Sair sem salvar
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     )
 }

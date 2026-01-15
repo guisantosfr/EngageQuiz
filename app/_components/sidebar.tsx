@@ -6,16 +6,19 @@ import { Button } from "@/components/ui/button";
 import { FileText } from "lucide-react";
 
 interface SidebarProps {
-  open: boolean;
+    open: boolean;
+    onClose?: () => void;
 }
 
-export default function Sidebar({ open }: SidebarProps) {
+export default function Sidebar({ open, onClose }: SidebarProps) {
     const [activeView, setActiveView] = useState<"quizzes" | "classes">("quizzes")
 
     return (
         <aside
             className={cn(
-                "border-r bg-muted/40 transition-all duration-300",
+                "border-r bg-background transition-all duration-300",
+                // Mobile: sidebar fixa como overlay
+                "fixed md:relative top-16 md:top-0 left-0 h-[calc(100vh-4rem)] md:h-auto z-20",
                 open ? "w-64" : "w-0 overflow-hidden",
             )}
         >

@@ -11,7 +11,7 @@ export function HomeLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <header className="sticky top-0 z-10 border-b bg-background w-full px-8 mx-auto">
+      <header className="sticky top-0 z-30 border-b bg-background w-full px-4 md:px-8 mx-auto">
         <div className="container flex h-16 items-center justify-between py-4">
           <div className="flex items-center gap-4">
             <Button
@@ -26,8 +26,15 @@ export function HomeLayout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <div className="flex flex-1">
-        <Sidebar open={sidebarOpen} />
+      <div className="flex flex-1 relative">
+        {/* Overlay para mobile quando sidebar está aberta */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-10 md:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+        <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         {children}
       </div>
     </>
