@@ -1,1 +1,1 @@
-export type QuestionType = "MULTIPLE_CHOICE" | "TRUE_FALSE"
+export type QuestionType = "MULTIPLE_CHOICE" | "TRUE_FALSE" | "ALL"

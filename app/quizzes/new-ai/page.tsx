@@ -18,10 +18,13 @@ import { Question } from "@/types/Question";
 import { QuestionCard } from "@/app/_components/question-card";
 import { SuccessModal } from "@/app/_components/success-modal";
 import { useRouter } from "next/navigation";
+import { Slider } from "@/components/ui/slider";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { QuestionType } from "@/types/QuestionType";
 
 export default function CreateAIQuiz() {
     const router = useRouter();
-    
+
     const [isAdvancedOpen, setIsAdvancedOpen] = useState(false)
 
     const [generatedQuiz, setGeneratedQuiz] = useState(false)
@@ -29,8 +32,8 @@ export default function CreateAIQuiz() {
     const [theme, setTheme] = useState("")
     const [subtopics, setSubtopics] = useState("")
     const [targetAudience, setTargetAudience] = useState("")
-    const [questionCount, setQuestionCount] = useState("10")
-    const [questionTypes, setQuestionTypes] = useState("")
+    const [questionCount, setQuestionCount] = useState(10)
+    const [questionTypes, setQuestionTypes] = useState<QuestionType>("ALL")
 
     const [learningObjective, setLearningObjective] = useState("")
     const [difficulty, setDifficulty] = useState("")
@@ -43,6 +46,12 @@ export default function CreateAIQuiz() {
     const [questions, setQuestions] = useState<Question[]>([])
 
     const [showSuccessModal, setShowSuccessModal] = useState(false)
+
+    const handleQuestionTypeChange = (value: string) => {
+        if (["ALL", "MULTIPLE", "TRUE_FALSE"].includes(value)) {
+            setQuestionTypes(value as QuestionType)
+        }
+    }
 
     const handleSubmitAIData = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -320,68 +329,68 @@ export default function CreateAIQuiz() {
                                 </CardHeader>
 
                                 <CardContent className="space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="title">
-                                    Nome <span className="text-red-500">*</span>
-                                </Label>
-                                <Input
-                                    id="title"
-                                    placeholder="Digite o nome do questionário"
-                                    value={title}
-                                    onChange={(e) => setTitle(e.target.value)}
-                                    required
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="description">Descrição</Label>
-                                <Textarea
-                                    id="description"
-                                    placeholder="Descreva o questionário (opcional)"
-                                    value={description}
-                                    onChange={(e) => setDescription(e.target.value)}
-                                    rows={3}
-                                />
-                            </div>
-                        </CardContent>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="title">
+                                            Nome <span className="text-red-500">*</span>
+                                        </Label>
+                                        <Input
+                                            id="title"
+                                            placeholder="Digite o nome do questionário"
+                                            value={title}
+                                            onChange={(e) => setTitle(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="description">Descrição</Label>
+                                        <Textarea
+                                            id="description"
+                                            placeholder="Descreva o questionário (opcional)"
+                                            value={description}
+                                            onChange={(e) => setDescription(e.target.value)}
+                                            rows={3}
+                                        />
+                                    </div>
+                                </CardContent>
                             </Card>
 
                             <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-2xl font-bold">
-                                Questões{" "}
-                                <span className="text-sm text-muted-foreground font-normal">
-                                    ({questions.length})
-                                </span>
-                            </h2>
-                            <Button type="button" onClick={addQuestion} variant="outline" className="cursor-pointer">
-                                <Plus className="h-4 w-4 mr-2" />
-                                Adicionar questão
-                            </Button>
-                        </div>
+                                <div className="flex items-center justify-between">
+                                    <h2 className="text-2xl font-bold">
+                                        Questões{" "}
+                                        <span className="text-sm text-muted-foreground font-normal">
+                                            ({questions.length})
+                                        </span>
+                                    </h2>
+                                    <Button type="button" onClick={addQuestion} variant="outline" className="cursor-pointer">
+                                        <Plus className="h-4 w-4 mr-2" />
+                                        Adicionar questão
+                                    </Button>
+                                </div>
 
-                        {questions.map((question, index) => (
-                            <QuestionCard
-                                key={question.id}
-                                question={question}
-                                index={index}
-                                totalQuestions={questions.length}
-                                onRemove={removeQuestion}
-                                onMove={moveQuestion}
-                                onUpdate={updateQuestion}
-                                onUpdateOption={updateOption}
-                                onSetCorrectOption={setCorrectOption}
-                            />
-                        ))}
-                    </div>
+                                {questions.map((question, index) => (
+                                    <QuestionCard
+                                        key={question.id}
+                                        question={question}
+                                        index={index}
+                                        totalQuestions={questions.length}
+                                        onRemove={removeQuestion}
+                                        onMove={moveQuestion}
+                                        onUpdate={updateQuestion}
+                                        onUpdateOption={updateOption}
+                                        onSetCorrectOption={setCorrectOption}
+                                    />
+                                ))}
+                            </div>
 
-                    <div className="flex justify-end gap-4">
-                        <Button type="button" variant="outline" onClick={() => router.push("/")}>
-                            Cancelar
-                        </Button>
-                        <Button type="submit" disabled={questions.length === 0} className="cursor-pointer">
-                            Salvar Questionário
-                        </Button>
-                    </div>
+                            <div className="flex justify-end gap-4">
+                                <Button type="button" variant="outline" onClick={() => router.push("/")}>
+                                    Cancelar
+                                </Button>
+                                <Button type="submit" disabled={questions.length === 0} className="cursor-pointer">
+                                    Salvar Questionário
+                                </Button>
+                            </div>
 
 
                         </form>
@@ -417,7 +426,7 @@ export default function CreateAIQuiz() {
                                         />
                                     </div>
 
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <Label htmlFor="targetAudience">
                                                 Nível / Público Alvo <span className="text-red-500">*</span>
@@ -439,25 +448,47 @@ export default function CreateAIQuiz() {
 
                                         <div className="space-y-2">
                                             <Label htmlFor="questionCount">
-                                                Quantidade de Questões (min. 2, max. 20) <span className="text-red-500">*</span>
+                                                Quantidade de Questões <span className="text-red-500">*</span>
                                             </Label>
-                                            <Input
-                                                id="questionCount"
-                                                type="number"
-                                                min="2"
-                                                max="20"
-                                                placeholder="10"
-                                                value={questionCount}
-                                                onChange={(e) => setQuestionCount(e.target.value)}
-                                                required
-                                            />
+                                            <div className="pt-2 space-y-3">
+                                                <Slider
+                                                    id="questionCount"
+                                                    min={2}
+                                                    max={20}
+                                                    step={1}
+                                                    value={[questionCount]}
+                                                    onValueChange={(value) => setQuestionCount(value[0])}
+                                                    className="w-full"
+                                                />
+                                                <div className="text-center text-2xl font-semibold text-primary">{questionCount}</div>
+                                            </div>
                                         </div>
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="questionTypes">
+                                            <Label htmlFor="questionTypes" className="mb-3">
                                                 Tipos de Questão <span className="text-red-500">*</span>
                                             </Label>
-                                            <Select value={questionTypes} onValueChange={setQuestionTypes} required>
+                                            <RadioGroup value={questionTypes} onValueChange={handleQuestionTypeChange} className="flex justify-between">
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="ALL" id="ALL" />
+                                                    <Label htmlFor="ALL" className="cursor-pointer font-normal">
+                                                        Misto
+                                                    </Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="MULTIPLE_CHOICE" id="MULTIPLE_CHOICE" />
+                                                    <Label htmlFor="MULTIPLE_CHOICE" className="cursor-pointer font-normal">
+                                                        Múltipla Escolha
+                                                    </Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="TRUE_FALSE" id="TRUE_FALSE" />
+                                                    <Label htmlFor="TRUE_FALSE" className="cursor-pointer font-normal">
+                                                        Verdadeiro ou Falso
+                                                    </Label>
+                                                </div>
+                                            </RadioGroup>
+                                            {/* <Select value={questionTypes} onValueChange={setQuestionTypes} required>
                                                 <SelectTrigger id="questionTypes">
                                                     <SelectValue placeholder="Selecione os tipos de questão" />
                                                 </SelectTrigger>
@@ -466,7 +497,7 @@ export default function CreateAIQuiz() {
                                                     <SelectItem value="TRUE_FALSE">Apenas Verdadeiro ou Falso</SelectItem>
                                                     <SelectItem value="ALL">Misto (Ambos os tipos)</SelectItem>
                                                 </SelectContent>
-                                            </Select>
+                                            </Select> */}
                                         </div>
                                     </div>
                                 </CardContent>
@@ -581,11 +612,11 @@ export default function CreateAIQuiz() {
                 }
 
                 <SuccessModal
-                                mode='create'
-                                open={showSuccessModal}
-                                onOpenChange={setShowSuccessModal}
-                                onBack={() => router.push("/")}
-                            />
+                    mode='create'
+                    open={showSuccessModal}
+                    onOpenChange={setShowSuccessModal}
+                    onBack={() => router.push("/")}
+                />
             </main>
         </div>
     )
