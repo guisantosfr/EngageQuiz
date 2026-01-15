@@ -335,7 +335,7 @@ export function QuizForm({ mode }: { mode: Mode }) {
                         </CardContent>
                     </Card>
 
-                    <div className="space-y-4">
+                    <div className="space-y-5">
                         <div className="flex items-center justify-between">
                             <h2 className="text-2xl font-bold">
                                 Questões{" "}
@@ -343,10 +343,14 @@ export function QuizForm({ mode }: { mode: Mode }) {
                                     ({questions.length})
                                 </span>
                             </h2>
-                            <Button type="button" onClick={addQuestion} variant="outline" className="cursor-pointer">
-                                <Plus className="h-4 w-4 mr-2" />
-                                Adicionar questão
-                            </Button>
+                            {
+                                questions.length === 0 && (
+                                    <Button type="button" onClick={addQuestion} variant="outline" className="cursor-pointer">
+                                        <Plus className="h-4 w-4 mr-2" />
+                                        Adicionar questão
+                                    </Button>
+                                )
+                            }
                         </div>
 
                         {questions.map((question, index) => (
@@ -362,6 +366,17 @@ export function QuizForm({ mode }: { mode: Mode }) {
                                 onSetCorrectOption={setCorrectOption}
                             />
                         ))}
+
+                        {
+                            questions.length !== 0 && (
+                                <div className="flex justify-end mb-3">
+                                    <Button type="button" onClick={addQuestion} variant="outline" className="cursor-pointer">
+                                        <Plus className="h-4 w-4 mr-2" />
+                                        Adicionar questão
+                                    </Button>
+                                </div>
+                            )
+                        }
                     </div>
 
                     <div className="flex justify-end gap-4">
