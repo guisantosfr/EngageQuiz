@@ -294,7 +294,7 @@ export function QuizForm({ mode }: { mode: Mode }) {
                         <Button
                             onClick={handleSubmit}
                             className="cursor-pointer"
-                            disabled={questions.length === 0}
+                            disabled={questions.length === 0 || title.length === 0}
                         >
                             Salvar Questionário
                         </Button>
@@ -383,7 +383,7 @@ export function QuizForm({ mode }: { mode: Mode }) {
                         <Button type="button" variant="outline" onClick={() => router.push("/")}>
                             Cancelar
                         </Button>
-                        <Button type="submit" disabled={questions.length === 0} className="cursor-pointer">
+                        <Button type="submit" disabled={questions.length === 0 || title.length === 0} className="cursor-pointer">
                             Salvar Questionário
                         </Button>
                     </div>
