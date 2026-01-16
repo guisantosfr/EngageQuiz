@@ -48,7 +48,7 @@ export default function CreateAIQuiz() {
     const [showSuccessModal, setShowSuccessModal] = useState(false)
 
     const handleQuestionTypeChange = (value: string) => {
-        if (["ALL", "MULTIPLE", "TRUE_FALSE"].includes(value)) {
+        if (["ALL", "MULTIPLE_CHOICE", "TRUE_FALSE"].includes(value)) {
             setQuestionTypes(value as QuestionType)
         }
     }
