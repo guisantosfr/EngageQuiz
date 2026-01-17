@@ -1,37 +1,38 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function QuizSkeleton() {
     return (
-        <div className="space-y-6 animate-pulse">
+        <div className="space-y-6">
             <Card>
                 <CardHeader>
-                    <div className="h-6 bg-muted rounded w-48"></div>
+                    <Skeleton className="h-6 w-48" />
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
-                        <div className="h-4 bg-muted rounded w-16"></div>
-                        <div className="h-10 bg-muted rounded w-full"></div>
+                        <Skeleton className="h-4 w-16" />
+                        <Skeleton className="h-10 w-full" />
                     </div>
                     <div className="space-y-2">
-                        <div className="h-4 bg-muted rounded w-20"></div>
-                        <div className="h-24 bg-muted rounded w-full"></div>
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-24 w-full" />
                     </div>
                 </CardContent>
             </Card>
 
             <div className="space-y-5">
-                <div className="h-8 bg-muted rounded w-32"></div>
+                <Skeleton className="h-8 w-32" />
                 <Card>
                     <CardHeader>
-                        <div className="h-6 bg-muted rounded w-24"></div>
+                        <Skeleton className="h-6 w-24" />
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="h-10 bg-muted rounded w-full"></div>
+                        <Skeleton className="h-10 w-full" />
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="h-10 bg-muted rounded"></div>
-                            <div className="h-10 bg-muted rounded"></div>
-                            <div className="h-10 bg-muted rounded"></div>
-                            <div className="h-10 bg-muted rounded"></div>
+                            <Skeleton className="h-10" />
+                            <Skeleton className="h-10" />
+                            <Skeleton className="h-10" />
+                            <Skeleton className="h-10" />
                         </div>
                     </CardContent>
                 </Card>
