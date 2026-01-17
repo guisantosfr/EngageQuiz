@@ -376,23 +376,31 @@ export function QuizForm({ mode }: { mode: Mode }) {
 
                             <CardContent className="space-y-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="title">
-                                        Nome <span className="text-red-500">*</span>
-                                    </Label>
+                                    <div className="flex justify-between">
+                                        <Label htmlFor="title">
+                                            Nome <span className="text-red-500">*</span>
+                                        </Label>
+                                        <span>{title.length} / 100</span>
+                                    </div>
                                     <Input
                                         id="title"
                                         placeholder="Digite o nome do questionário"
                                         value={title}
+                                        maxLength={100}
                                         onChange={(e) => setTitle(e.target.value)}
                                         required
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="description">Descrição</Label>
+                                    <div className="flex justify-between">
+                                        <Label htmlFor="description">Descrição</Label>
+                                        <span>{description.length} / 200</span>
+                                    </div>
                                     <Textarea
                                         id="description"
                                         placeholder="Descreva o questionário (opcional)"
                                         value={description}
+                                        maxLength={200}
                                         onChange={(e) => setDescription(e.target.value)}
                                         rows={3}
                                     />
