@@ -23,6 +23,7 @@ import { ChevronLeft, Plus, Trash2 } from "lucide-react"
 import { Question } from "@/types/Question"
 import { QuestionCard } from "../_components/question-card"
 import { SuccessModal } from "../_components/success-modal"
+import QuizSkeleton from "./quiz-skeleton"
 import Swal from "sweetalert2"
 
 type Mode = 'create' | 'edit'
@@ -365,43 +366,7 @@ export function QuizForm({ mode }: { mode: Mode }) {
 
             <main className="flex-1 container py-6 max-w-4xl mx-auto">
                 {isLoading ? (
-                    <div className="space-y-6 animate-pulse">
-                        {/* Skeleton do Card de Informações */}
-                        <Card>
-                            <CardHeader>
-                                <div className="h-6 bg-muted rounded w-48"></div>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="space-y-2">
-                                    <div className="h-4 bg-muted rounded w-16"></div>
-                                    <div className="h-10 bg-muted rounded w-full"></div>
-                                </div>
-                                <div className="space-y-2">
-                                    <div className="h-4 bg-muted rounded w-20"></div>
-                                    <div className="h-24 bg-muted rounded w-full"></div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        {/* Skeleton das Questões */}
-                        <div className="space-y-5">
-                            <div className="h-8 bg-muted rounded w-32"></div>
-                            <Card>
-                                <CardHeader>
-                                    <div className="h-6 bg-muted rounded w-24"></div>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="h-10 bg-muted rounded w-full"></div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="h-10 bg-muted rounded"></div>
-                                        <div className="h-10 bg-muted rounded"></div>
-                                        <div className="h-10 bg-muted rounded"></div>
-                                        <div className="h-10 bg-muted rounded"></div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </div>
-                    </div>
+                    <QuizSkeleton />
                 ) : (
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <Card>
