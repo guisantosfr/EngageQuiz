@@ -84,7 +84,6 @@ model Session {
 
 enum StatusType {
   CREATED
-  LOBBY
   IN_PROGRESS
   QUESTION_OPEN
   QUESTION_CLOSED
