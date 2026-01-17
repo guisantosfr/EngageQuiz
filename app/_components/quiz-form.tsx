@@ -23,6 +23,7 @@ import { ChevronLeft, Plus, Trash2 } from "lucide-react"
 import { Question } from "@/types/Question"
 import { QuestionCard } from "../_components/question-card"
 import { SuccessModal } from "../_components/success-modal"
+import Swal from "sweetalert2"
 
 type Mode = 'create' | 'edit'
 
@@ -202,6 +203,17 @@ export function QuizForm({ mode }: { mode: Mode }) {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
+        Swal.fire({
+            title: "Aguarde!",
+            text: "Salvando questionário",
+            showConfirmButton: false,
+            allowOutsideClick: false,
+            theme: 'auto',
+            didOpen: () => {
+                Swal.showLoading()
+            }
+        })
+
         let body = {
             title,
             description,
@@ -244,7 +256,8 @@ export function QuizForm({ mode }: { mode: Mode }) {
                 body: JSON.stringify(body)
             })
 
-            if (response.status === 201) {
+            if (response.ok) {
+                Swal.close();
                 setShowSuccessModal(true)
             }
         } catch (error) {
@@ -261,7 +274,8 @@ export function QuizForm({ mode }: { mode: Mode }) {
                 body: JSON.stringify(body)
             })
 
-            if (response.status === 200) {
+            if (response.ok) {
+                Swal.close();
                 setShowSuccessModal(true)
             }
         } catch (error) {

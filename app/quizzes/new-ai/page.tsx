@@ -64,12 +64,16 @@ export default function CreateAIQuiz() {
             return toast.error("Por favor, selecione os tipos de questão")
         }
 
-        //sem botao de ok
-        //todos dark
         Swal.fire({
             title: "Aguarde",
             text: "A IA está criando suas questões. Isso pode levar alguns segundos...",
-            icon: 'warning'
+            showConfirmButton: false,
+            allowOutsideClick: false,
+            theme: 'auto',
+            didOpen: () => {
+                Swal.showLoading()
+            }
+            
         })
 
         const body = {
@@ -95,11 +99,12 @@ export default function CreateAIQuiz() {
             if (response.ok) {
                 const data = await response.json()
 
-                Swal.close()
+                Swal.close();
 
                 Swal.fire({
                     title: "Questionário gerado com sucesso!",
-                    icon: 'success'
+                    icon: 'success',
+                    theme: 'auto'
                 })
 
                 setGeneratedQuiz(true)
