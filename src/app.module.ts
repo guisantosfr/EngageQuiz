@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { QuizzesModule } from './quizzes/quizzes.module';
+import { SessionsModule } from './sessions/sessions.module';
 
 @Module({
   imports: [
@@ -10,7 +11,8 @@ import { QuizzesModule } from './quizzes/quizzes.module';
       envFilePath: '.env', // Path to your .env file
     }),
     PrismaModule,
-    QuizzesModule
+    QuizzesModule,
+    SessionsModule
   ],
 })
 export class AppModule {}
