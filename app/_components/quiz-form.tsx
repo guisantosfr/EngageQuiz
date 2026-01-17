@@ -42,6 +42,7 @@ export function QuizForm({ mode }: { mode: Mode }) {
     const [questions, setQuestions] = useState<Question[]>([])
     const [showSuccessModal, setShowSuccessModal] = useState(false)
     const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] = useState(false)
+    const [isLoading, setIsLoading] = useState(mode === 'edit')
 
     const initialValuesRef = useRef<InitialValues>({
         title: "",
@@ -78,32 +79,37 @@ export function QuizForm({ mode }: { mode: Mode }) {
         }
 
         const fetchQuiz = async () => {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/${id}`)
-            const data = await response.json()
+            setIsLoading(true)
+            try {
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/${id}`)
+                const data = await response.json()
 
-            setTitle(data.title)
-            setDescription(data.description)
+                setTitle(data.title)
+                setDescription(data.description)
 
-            //for each question inside data.questions, if is multiple choice and has
-            //less than 4 options, fill with empty options until reach 4 options
-            const updatedQuestions = data.questions.map((q: Question) => {
-                if (q.type === "MULTIPLE_CHOICE" && q.options && q.options.length < 4) {
-                    const optionsToAdd = 4 - q.options.length
-                    const newOptions = [...q.options]
-                    for (let i = 0; i < optionsToAdd; i++) {
-                        newOptions.push({ text: "", isCorrect: false })
+                //for each question inside data.questions, if is multiple choice and has
+                //less than 4 options, fill with empty options until reach 4 options
+                const updatedQuestions = data.questions.map((q: Question) => {
+                    if (q.type === "MULTIPLE_CHOICE" && q.options && q.options.length < 4) {
+                        const optionsToAdd = 4 - q.options.length
+                        const newOptions = [...q.options]
+                        for (let i = 0; i < optionsToAdd; i++) {
+                            newOptions.push({ text: "", isCorrect: false })
+                        }
+                        return { ...q, options: newOptions }
                     }
-                    return { ...q, options: newOptions }
+                    return q
+                })
+
+                setQuestions(updatedQuestions)
+
+                initialValuesRef.current = {
+                    title: data.title,
+                    description: data.description,
+                    questions: updatedQuestions
                 }
-                return q
-            })
-
-            setQuestions(updatedQuestions)
-
-            initialValuesRef.current = {
-                title: data.title,
-                description: data.description,
-                questions: updatedQuestions
+            } finally {
+                setIsLoading(false)
             }
         }
 
@@ -358,91 +364,131 @@ export function QuizForm({ mode }: { mode: Mode }) {
             </header>
 
             <main className="flex-1 container py-6 max-w-4xl mx-auto">
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Informações do questionário</CardTitle>
-                        </CardHeader>
+                {isLoading ? (
+                    <div className="space-y-6 animate-pulse">
+                        {/* Skeleton do Card de Informações */}
+                        <Card>
+                            <CardHeader>
+                                <div className="h-6 bg-muted rounded w-48"></div>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="space-y-2">
+                                    <div className="h-4 bg-muted rounded w-16"></div>
+                                    <div className="h-10 bg-muted rounded w-full"></div>
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="h-4 bg-muted rounded w-20"></div>
+                                    <div className="h-24 bg-muted rounded w-full"></div>
+                                </div>
+                            </CardContent>
+                        </Card>
 
-                        <CardContent className="space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="title">
-                                    Nome <span className="text-red-500">*</span>
-                                </Label>
-                                <Input
-                                    id="title"
-                                    placeholder="Digite o nome do questionário"
-                                    value={title}
-                                    onChange={(e) => setTitle(e.target.value)}
-                                    required
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="description">Descrição</Label>
-                                <Textarea
-                                    id="description"
-                                    placeholder="Descreva o questionário (opcional)"
-                                    value={description}
-                                    onChange={(e) => setDescription(e.target.value)}
-                                    rows={3}
-                                />
-                            </div>
-                        </CardContent>
-                    </Card>
+                        {/* Skeleton das Questões */}
+                        <div className="space-y-5">
+                            <div className="h-8 bg-muted rounded w-32"></div>
+                            <Card>
+                                <CardHeader>
+                                    <div className="h-6 bg-muted rounded w-24"></div>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="h-10 bg-muted rounded w-full"></div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="h-10 bg-muted rounded"></div>
+                                        <div className="h-10 bg-muted rounded"></div>
+                                        <div className="h-10 bg-muted rounded"></div>
+                                        <div className="h-10 bg-muted rounded"></div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>
+                ) : (
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Informações do questionário</CardTitle>
+                            </CardHeader>
 
-                    <div className="space-y-5">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-2xl font-bold">
-                                Questões{" "}
-                                <span className="text-sm text-muted-foreground font-normal">
-                                    ({questions.length})
-                                </span>
-                            </h2>
+                            <CardContent className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="title">
+                                        Nome <span className="text-red-500">*</span>
+                                    </Label>
+                                    <Input
+                                        id="title"
+                                        placeholder="Digite o nome do questionário"
+                                        value={title}
+                                        onChange={(e) => setTitle(e.target.value)}
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="description">Descrição</Label>
+                                    <Textarea
+                                        id="description"
+                                        placeholder="Descreva o questionário (opcional)"
+                                        value={description}
+                                        onChange={(e) => setDescription(e.target.value)}
+                                        rows={3}
+                                    />
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <div className="space-y-5">
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-2xl font-bold">
+                                    Questões{" "}
+                                    <span className="text-sm text-muted-foreground font-normal">
+                                        ({questions.length})
+                                    </span>
+                                </h2>
+                                {
+                                    questions.length === 0 && (
+                                        <Button type="button" onClick={addQuestion} variant="outline" className="cursor-pointer">
+                                            <Plus className="h-4 w-4 mr-2" />
+                                            Adicionar questão
+                                        </Button>
+                                    )
+                                }
+                            </div>
+
+                            {questions.map((question, index) => (
+                                <QuestionCard
+                                    key={question.id}
+                                    question={question}
+                                    index={index}
+                                    totalQuestions={questions.length}
+                                    onRemove={removeQuestion}
+                                    onMove={moveQuestion}
+                                    onUpdate={updateQuestion}
+                                    onUpdateOption={updateOption}
+                                    onSetCorrectOption={setCorrectOption}
+                                />
+                            ))}
+
                             {
-                                questions.length === 0 && (
-                                    <Button type="button" onClick={addQuestion} variant="outline" className="cursor-pointer">
-                                        <Plus className="h-4 w-4 mr-2" />
-                                        Adicionar questão
-                                    </Button>
+                                questions.length !== 0 && (
+                                    <div className="flex justify-end mb-3">
+                                        <Button type="button" onClick={addQuestion} variant="outline" className="cursor-pointer">
+                                            <Plus className="h-4 w-4 mr-2" />
+                                            Adicionar questão
+                                        </Button>
+                                    </div>
                                 )
                             }
                         </div>
 
-                        {questions.map((question, index) => (
-                            <QuestionCard
-                                key={question.id}
-                                question={question}
-                                index={index}
-                                totalQuestions={questions.length}
-                                onRemove={removeQuestion}
-                                onMove={moveQuestion}
-                                onUpdate={updateQuestion}
-                                onUpdateOption={updateOption}
-                                onSetCorrectOption={setCorrectOption}
-                            />
-                        ))}
-
-                        {
-                            questions.length !== 0 && (
-                                <div className="flex justify-end mb-3">
-                                    <Button type="button" onClick={addQuestion} variant="outline" className="cursor-pointer">
-                                        <Plus className="h-4 w-4 mr-2" />
-                                        Adicionar questão
-                                    </Button>
-                                </div>
-                            )
-                        }
-                    </div>
-
-                    <div className="flex justify-end gap-4">
-                        <Button type="button" variant="outline" onClick={handleBack} className="cursor-pointer">
-                            Cancelar
-                        </Button>
-                        <Button type="submit" disabled={questions.length === 0 || title.length === 0} className="cursor-pointer">
-                            Salvar Questionário
-                        </Button>
-                    </div>
-                </form>
+                        <div className="flex justify-end gap-4">
+                            <Button type="button" variant="outline" onClick={handleBack} className="cursor-pointer">
+                                Cancelar
+                            </Button>
+                            <Button type="submit" disabled={questions.length === 0 || title.length === 0} className="cursor-pointer">
+                                Salvar Questionário
+                            </Button>
+                        </div>
+                    </form>
+                )}
             </main>
 
             <SuccessModal
