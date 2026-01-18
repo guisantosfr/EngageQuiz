@@ -53,19 +53,18 @@ export class QuizzesService {
             estimatedTime
         } = data;
 
-        let prompt = 'Atue como um professor e gere um questionário para seus alunos.\n\n';
+        let prompt = 'Atue como um professor e gere um questionário educional para seus alunos, com base nos seguintes parâmetros especificados.\n\n';
 
         if (mainSubject) {
-            prompt += `**Assunto principal:** ${mainSubject}\n\n`;
+            prompt += `**Tema / Assunto principal:** ${mainSubject}\n\n`;
         }
 
-        // Add optional fields only if they have values
         if (topicsToInclude && topicsToInclude.trim()) {
-            prompt += `**Tópicos a incluir:** ${topicsToInclude}\n\n`;
+            prompt += `**Subtópicos / Tópicos a incluir:** ${topicsToInclude}\n\n`;
         }
 
         if (level && level.trim()) {
-            prompt += `**Nível educacional:** ${level}\n\n`;
+            prompt += `**Nível / Público Alvo:** ${level}\n\n`;
         }
 
         if (numberOfQuestions) {
@@ -94,18 +93,18 @@ export class QuizzesService {
         }
 
         if (tone && tone.trim()) {
-            prompt += `**Tom das questões:** ${tone}\n\n`;
+            prompt += `**Linguagem / Tom das questões:** ${tone}\n\n`;
         }
 
         if (estimatedTime && estimatedTime.trim()) {
-            prompt += `**Tempo estimado:** ${estimatedTime}\n\n`;
+            prompt += `**Tempo estimado por resposta:** ${estimatedTime}\n\n`;
         }
 
 
         prompt += '**Instruções:**\n';
-        prompt += '- Gere questões claras e objetivas\n';
+        prompt += '- Certifique-se de que as questões estejam alinhadas com os parâmetros especificados\n';
+        prompt += '- Evite ambiguidades, pegadinhas ou perguntas subjetivas.\n';
         prompt += '- Cada questão deve conter um tempo adequado para sua resolução, podendo ser de 15, 30, 45 ou 60 segundos.\n';
-        prompt += '- Certifique-se de que as questões estejam alinhadas com os parâmetros especificados';
 
         return prompt;
     }
