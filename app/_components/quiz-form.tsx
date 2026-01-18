@@ -118,16 +118,17 @@ export function QuizForm({ mode }: { mode: Mode }) {
     }, [])
 
     const addQuestion = () => {
+        const timestamp = Date.now()
         const newQuestion: Question = {
-            id: Date.now().toString(),
+            id: `NEW_QUESTION_${timestamp}`,
             type: "MULTIPLE_CHOICE",
             text: "",
             timeLimit: 30,
             options: [
-                { text: "", isCorrect: true },
-                { text: "", isCorrect: false },
-                { text: "", isCorrect: false },
-                { text: "", isCorrect: false },
+                { id: `NEW_OPTION_${timestamp}_1`, text: "", isCorrect: true },
+                { id: `NEW_OPTION_${timestamp}_2`, text: "", isCorrect: false },
+                { id: `NEW_OPTION_${timestamp}_3`, text: "", isCorrect: false },
+                { id: `NEW_OPTION_${timestamp}_4`, text: "", isCorrect: false },
             ],
         }
         setQuestions([...questions, newQuestion])
@@ -160,14 +161,17 @@ export function QuizForm({ mode }: { mode: Mode }) {
                                 correctAnswer: true,
                             }
                         } else {
+                            const timestamp = Date.now()
                             return {
                                 id: q.id,
                                 type: "MULTIPLE_CHOICE",
                                 text: q.text,
                                 timeLimit: q.timeLimit,
                                 options: [
-                                    { text: "", isCorrect: true },
-                                    { text: "", isCorrect: false },
+                                    { id: `NEW_OPTION_${timestamp}_1`, text: "", isCorrect: true },
+                                    { id: `NEW_OPTION_${timestamp}_2`, text: "", isCorrect: false },
+                                    { id: `NEW_OPTION_${timestamp}_3`, text: "", isCorrect: false },
+                                    { id: `NEW_OPTION_${timestamp}_4`, text: "", isCorrect: false },
                                 ],
                             }
                         }
@@ -221,12 +225,19 @@ export function QuizForm({ mode }: { mode: Mode }) {
             }
         })
 
+        // Função auxiliar para verificar se é um ID novo (criado localmente)
+        const isNewId = (id: string | undefined) => id?.startsWith('NEW_QUESTION_') || id?.startsWith('NEW_OPTION_')
+
         let body = {
             title,
             description,
             questions: questions.map(q => {
+                // No modo edit, só incluir ID se não for novo
+                const questionId = mode === 'edit' && !isNewId(q.id) ? q.id : undefined
+
                 if (q.type === "TRUE_FALSE") {
                     return {
+                        ...(questionId && { id: questionId }),
                         text: q.text,
                         type: q.type,
                         timeLimit: q.timeLimit,
@@ -234,15 +245,21 @@ export function QuizForm({ mode }: { mode: Mode }) {
                     }
                 } else if (q.type === "MULTIPLE_CHOICE") {
                     return {
+                        ...(questionId && { id: questionId }),
                         text: q.text,
                         type: q.type,
                         timeLimit: q.timeLimit,
                         options: q.options
                             ?.filter((option: any) => option.text.trim() !== '')
-                            .map((option: any) => ({
-                                text: option.text,
-                                isCorrect: option.isCorrect
-                            }))
+                            .map((option: any) => {
+                                // No modo edit, só incluir ID da option se não for novo
+                                const optionId = mode === 'edit' && !isNewId(option.id) ? option.id : undefined
+                                return {
+                                    ...(optionId && { id: optionId }),
+                                    text: option.text,
+                                    isCorrect: option.isCorrect
+                                }
+                            })
                     }
                 }
             })
