@@ -70,7 +70,7 @@ export class QuizzesService {
         if (numberOfQuestions) {
             prompt += `**Quantidade de questões:** ${numberOfQuestions}\n\n`;
         }
-        
+
         if (questionTypes === 'ALL') {
             prompt += '- Varie entre diferentes tipos de questões (verdadeiro ou falso e múltipla escolha)\n';
             prompt += 'As questões de múltipla escolha tevem conter 4 alternativas e apenas uma correta.\n\n'
@@ -185,14 +185,13 @@ export class QuizzesService {
     async updateQuiz(id: string, data: UpdateQuizDto) {
         const quizExists = await this.prisma.quiz.findUnique({
             where: { id },
-            include: { questions: true },
+            include: { questions: { include: { options: true } } },
         });
 
         if (!quizExists) {
             throw new NotFoundException('Quiz não encontrado');
         }
 
-        // Se o payload contém questions, validar regra
         if (data.questions && data.questions.length === 0) {
             throw new BadRequestException(
                 'Não é permitido remover todas as questões do quiz',
@@ -203,47 +202,66 @@ export class QuizzesService {
             data.questions.forEach(q => this.validateQuestionRules(q));
         }
 
+        const sentQuestionIds = data.questions
+            ?.filter(q => q.id)
+            .map(q => q.id) || [];
+
+        const questionsToDelete = quizExists.questions
+            .filter(q => !sentQuestionIds.includes(q.id))
+            .map(q => q.id);
+
         return this.prisma.quiz.update({
             where: { id },
             data: {
                 title: data.title,
                 description: data.description,
-
-                // Estratégia simples:
-                // - Remove todas as questões antigas
-                // - Cria novamente as enviadas
                 ...(data.questions && {
                     questions: {
-                        deleteMany: {},
-                        create: data.questions.map(q => {
-                            const options =
-                                q.type === 'TRUE_FALSE'
-                                    ? createTrueFalseAlternatives(q.correctAnswer)
-                                    : q.options;
+                        // Remove questões que não vieram no payload
+                        delete: questionsToDelete.map(qId => ({ id: qId })),
 
-                            this.validateQuestionRules({
-                                type: q.type,
-                                options,
-                            });
+                        // Atualiza ou cria cada questão
+                        upsert: data.questions.map(q => {
+                            const options = q.type === 'TRUE_FALSE'
+                                ? createTrueFalseAlternatives(q.correctAnswer)
+                                : q.options;
+
+                            this.validateQuestionRules({ type: q.type, options });
 
                             return {
-                                text: q.text,
-                                type: q.type,
-                                timeLimit: q.timeLimit,
-                                options: {
-                                    create: options.map(a => ({
-                                        text: a.text,
-                                        isCorrect: a.isCorrect,
-                                    })),
+                                where: { id: q.id || 'new' },
+                                create: {
+                                    text: q.text,
+                                    type: q.type,
+                                    timeLimit: q.timeLimit,
+                                    options: {
+                                        create: options.map(a => ({
+                                            text: a.text,
+                                            isCorrect: a.isCorrect,
+                                        })),
+                                    },
+                                },
+                                update: {
+                                    text: q.text,
+                                    type: q.type,
+                                    timeLimit: q.timeLimit,
+                                    options: {
+                                        // Remove opções antigas
+                                        deleteMany: {},
+                                        // Cria novas opções
+                                        create: options.map(a => ({
+                                            text: a.text,
+                                            isCorrect: a.isCorrect,
+                                        })),
+                                    },
                                 },
                             };
                         }),
                     },
-
                 }),
             },
             include: {
-                questions: true,
+                questions: { include: { options: true } },
             },
         });
     }
@@ -294,16 +312,16 @@ export class QuizzesService {
                                 properties: {
                                     id: { type: Type.STRING },
                                     text: { type: Type.STRING },
-                                    type: { 
-                                        type: Type.STRING, 
-                                        enum: ['MULTIPLE_CHOICE', 'TRUE_FALSE'] 
+                                    type: {
+                                        type: Type.STRING,
+                                        enum: ['MULTIPLE_CHOICE', 'TRUE_FALSE']
                                     },
-                                    timeLimit: { 
+                                    timeLimit: {
                                         type: Type.NUMBER
                                     },
                                     options: {
                                         type: Type.ARRAY,
-                                        nullable: true, 
+                                        nullable: true,
                                         items: {
                                             type: Type.OBJECT,
                                             properties: {
@@ -319,7 +337,7 @@ export class QuizzesService {
                                         nullable: true
                                     }
                                 },
-                                required: ['text', 'type', 'timeLimit'] 
+                                required: ['text', 'type', 'timeLimit']
                             }
                         }
                     },
@@ -328,7 +346,7 @@ export class QuizzesService {
             }
         });
 
-        if(!response || !response.text) {
+        if (!response || !response.text) {
             throw new BadRequestException('Falha ao gerar quiz via IA');
         }
 
