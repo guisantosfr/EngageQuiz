@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateQuizDto, UpdateQuizDto } from './dto';
+import { CreateOptionDto, CreateQuizDto, UpdateQuizDto } from './dto';
 import { QuestionType } from '../generated/prisma/enums';
 import { createTrueFalseAlternatives } from './factories/true-false.factory';
 import { GetQuizDto } from './dto/get-quiz.dto';
@@ -182,6 +182,35 @@ export class QuizzesService {
         return QuizMapper.toEditDto(quiz);
     }
 
+    private prepareOptionsForUpsert(question: any, existingQuestion?: any): CreateOptionDto[] {
+        let options: CreateOptionDto[];
+
+        if (question.type === 'TRUE_FALSE') {
+            // Gera as alternativas base
+            const generatedOptions = createTrueFalseAlternatives(question.correctAnswer);
+
+            // Se a questão já existe, preserva os IDs
+            if (existingQuestion?.options) {
+                options = generatedOptions.map(genOpt => {
+                    const existingOption = existingQuestion.options.find(
+                        exOpt => exOpt.text === genOpt.text
+                    );
+
+                    return {
+                        ...genOpt,
+                        ...(existingOption && { id: existingOption.id }),
+                    };
+                });
+            } else {
+                options = generatedOptions;
+            }
+        } else {
+            options = question.options;
+        }
+
+        return options;
+    }
+
     async updateQuiz(id: string, data: UpdateQuizDto) {
         const quizExists = await this.prisma.quiz.findUnique({
             where: { id },
@@ -222,11 +251,25 @@ export class QuizzesService {
 
                         // Atualiza ou cria cada questão
                         upsert: data.questions.map(q => {
-                            const options = q.type === 'TRUE_FALSE'
-                                ? createTrueFalseAlternatives(q.correctAnswer)
-                                : q.options;
+                            const existingQuestion = quizExists.questions.find(
+                                eq => eq.id === q.id
+                            );
+
+                            // Prepara as opções com IDs preservados se existirem
+                            const options = this.prepareOptionsForUpsert(q, existingQuestion);
 
                             this.validateQuestionRules({ type: q.type, options });
+
+                            // IDs das opções enviadas para esta questão
+                            const sentOptionIds = options
+                                ?.filter(opt => opt.id)
+                                .map(opt => opt.id) || [];
+
+                            // IDs das opções a remover (existentes mas não enviadas)
+                            const optionsToDelete = existingQuestion?.options
+                                .filter(opt => !sentOptionIds.includes(opt.id))
+                                .map(opt => opt.id) || [];
+
 
                             return {
                                 where: { id: q.id || 'new' },
@@ -246,12 +289,18 @@ export class QuizzesService {
                                     type: q.type,
                                     timeLimit: q.timeLimit,
                                     options: {
-                                        // Remove opções antigas
-                                        deleteMany: {},
-                                        // Cria novas opções
-                                        create: options.map(a => ({
-                                            text: a.text,
-                                            isCorrect: a.isCorrect,
+                                        delete: optionsToDelete.map(optId => ({ id: optId })),
+
+                                        upsert: options.map(opt => ({
+                                            where: { id: opt.id || 'new' },
+                                            create: {
+                                                text: opt.text,
+                                                isCorrect: opt.isCorrect,
+                                            },
+                                            update: {
+                                                text: opt.text,
+                                                isCorrect: opt.isCorrect,
+                                            },
                                         })),
                                     },
                                 },
