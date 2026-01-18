@@ -105,6 +105,8 @@ export class QuizzesService {
         prompt += '- Certifique-se de que as questões estejam alinhadas com os parâmetros especificados\n';
         prompt += '- Evite ambiguidades, pegadinhas ou perguntas subjetivas.\n';
         prompt += '- Cada questão deve conter um tempo adequado para sua resolução, podendo ser de 15, 30, 45 ou 60 segundos.\n';
+        prompt += '- O título ("title") do questionário não deve conter mais do que 100 caracteres.\n';
+        prompt += '- A descrição ("description") do questionário não deve conter mais do que 200 caracteres.\n';
 
         return prompt;
     }
@@ -352,7 +354,7 @@ export class QuizzesService {
                     type: Type.OBJECT,
                     properties: {
                         id: { type: Type.STRING },
-                        title: { type: Type.STRING },
+                        title: { type: Type.STRING, },
                         description: { type: Type.STRING },
                         questions: {
                             type: Type.ARRAY,
