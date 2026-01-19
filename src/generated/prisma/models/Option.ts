@@ -191,6 +191,7 @@ export type OptionWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"Option"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Option"> | Date | string
   question?: Prisma.XOR<Prisma.QuestionScalarRelationFilter, Prisma.QuestionWhereInput>
+  responses?: Prisma.ResponseListRelationFilter
 }
 
 export type OptionOrderByWithRelationInput = {
@@ -201,6 +202,7 @@ export type OptionOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   question?: Prisma.QuestionOrderByWithRelationInput
+  responses?: Prisma.ResponseOrderByRelationAggregateInput
 }
 
 export type OptionWhereUniqueInput = Prisma.AtLeast<{
@@ -214,6 +216,7 @@ export type OptionWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Option"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Option"> | Date | string
   question?: Prisma.XOR<Prisma.QuestionScalarRelationFilter, Prisma.QuestionWhereInput>
+  responses?: Prisma.ResponseListRelationFilter
 }, "id">
 
 export type OptionOrderByWithAggregationInput = {
@@ -247,6 +250,7 @@ export type OptionCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   question: Prisma.QuestionCreateNestedOneWithoutOptionsInput
+  responses?: Prisma.ResponseCreateNestedManyWithoutOptionInput
 }
 
 export type OptionUncheckedCreateInput = {
@@ -256,6 +260,7 @@ export type OptionUncheckedCreateInput = {
   isCorrect?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutOptionInput
 }
 
 export type OptionUpdateInput = {
@@ -265,6 +270,7 @@ export type OptionUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   question?: Prisma.QuestionUpdateOneRequiredWithoutOptionsNestedInput
+  responses?: Prisma.ResponseUpdateManyWithoutOptionNestedInput
 }
 
 export type OptionUncheckedUpdateInput = {
@@ -274,6 +280,7 @@ export type OptionUncheckedUpdateInput = {
   isCorrect?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  responses?: Prisma.ResponseUncheckedUpdateManyWithoutOptionNestedInput
 }
 
 export type OptionCreateManyInput = {
@@ -339,6 +346,11 @@ export type OptionMinOrderByAggregateInput = {
   updatedAt?: Prisma.SortOrder
 }
 
+export type OptionNullableScalarRelationFilter = {
+  is?: Prisma.OptionWhereInput | null
+  isNot?: Prisma.OptionWhereInput | null
+}
+
 export type OptionCreateNestedManyWithoutQuestionInput = {
   create?: Prisma.XOR<Prisma.OptionCreateWithoutQuestionInput, Prisma.OptionUncheckedCreateWithoutQuestionInput> | Prisma.OptionCreateWithoutQuestionInput[] | Prisma.OptionUncheckedCreateWithoutQuestionInput[]
   connectOrCreate?: Prisma.OptionCreateOrConnectWithoutQuestionInput | Prisma.OptionCreateOrConnectWithoutQuestionInput[]
@@ -385,12 +397,29 @@ export type BoolFieldUpdateOperationsInput = {
   set?: boolean
 }
 
+export type OptionCreateNestedOneWithoutResponsesInput = {
+  create?: Prisma.XOR<Prisma.OptionCreateWithoutResponsesInput, Prisma.OptionUncheckedCreateWithoutResponsesInput>
+  connectOrCreate?: Prisma.OptionCreateOrConnectWithoutResponsesInput
+  connect?: Prisma.OptionWhereUniqueInput
+}
+
+export type OptionUpdateOneWithoutResponsesNestedInput = {
+  create?: Prisma.XOR<Prisma.OptionCreateWithoutResponsesInput, Prisma.OptionUncheckedCreateWithoutResponsesInput>
+  connectOrCreate?: Prisma.OptionCreateOrConnectWithoutResponsesInput
+  upsert?: Prisma.OptionUpsertWithoutResponsesInput
+  disconnect?: Prisma.OptionWhereInput | boolean
+  delete?: Prisma.OptionWhereInput | boolean
+  connect?: Prisma.OptionWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.OptionUpdateToOneWithWhereWithoutResponsesInput, Prisma.OptionUpdateWithoutResponsesInput>, Prisma.OptionUncheckedUpdateWithoutResponsesInput>
+}
+
 export type OptionCreateWithoutQuestionInput = {
   id?: string
   text: string
   isCorrect?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  responses?: Prisma.ResponseCreateNestedManyWithoutOptionInput
 }
 
 export type OptionUncheckedCreateWithoutQuestionInput = {
@@ -399,6 +428,7 @@ export type OptionUncheckedCreateWithoutQuestionInput = {
   isCorrect?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutOptionInput
 }
 
 export type OptionCreateOrConnectWithoutQuestionInput = {
@@ -439,6 +469,58 @@ export type OptionScalarWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"Option"> | Date | string
 }
 
+export type OptionCreateWithoutResponsesInput = {
+  id?: string
+  text: string
+  isCorrect?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  question: Prisma.QuestionCreateNestedOneWithoutOptionsInput
+}
+
+export type OptionUncheckedCreateWithoutResponsesInput = {
+  id?: string
+  questionId: string
+  text: string
+  isCorrect?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type OptionCreateOrConnectWithoutResponsesInput = {
+  where: Prisma.OptionWhereUniqueInput
+  create: Prisma.XOR<Prisma.OptionCreateWithoutResponsesInput, Prisma.OptionUncheckedCreateWithoutResponsesInput>
+}
+
+export type OptionUpsertWithoutResponsesInput = {
+  update: Prisma.XOR<Prisma.OptionUpdateWithoutResponsesInput, Prisma.OptionUncheckedUpdateWithoutResponsesInput>
+  create: Prisma.XOR<Prisma.OptionCreateWithoutResponsesInput, Prisma.OptionUncheckedCreateWithoutResponsesInput>
+  where?: Prisma.OptionWhereInput
+}
+
+export type OptionUpdateToOneWithWhereWithoutResponsesInput = {
+  where?: Prisma.OptionWhereInput
+  data: Prisma.XOR<Prisma.OptionUpdateWithoutResponsesInput, Prisma.OptionUncheckedUpdateWithoutResponsesInput>
+}
+
+export type OptionUpdateWithoutResponsesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  text?: Prisma.StringFieldUpdateOperationsInput | string
+  isCorrect?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  question?: Prisma.QuestionUpdateOneRequiredWithoutOptionsNestedInput
+}
+
+export type OptionUncheckedUpdateWithoutResponsesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  questionId?: Prisma.StringFieldUpdateOperationsInput | string
+  text?: Prisma.StringFieldUpdateOperationsInput | string
+  isCorrect?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
 export type OptionCreateManyQuestionInput = {
   id?: string
   text: string
@@ -453,6 +535,7 @@ export type OptionUpdateWithoutQuestionInput = {
   isCorrect?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  responses?: Prisma.ResponseUpdateManyWithoutOptionNestedInput
 }
 
 export type OptionUncheckedUpdateWithoutQuestionInput = {
@@ -461,6 +544,7 @@ export type OptionUncheckedUpdateWithoutQuestionInput = {
   isCorrect?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  responses?: Prisma.ResponseUncheckedUpdateManyWithoutOptionNestedInput
 }
 
 export type OptionUncheckedUpdateManyWithoutQuestionInput = {
@@ -472,6 +556,35 @@ export type OptionUncheckedUpdateManyWithoutQuestionInput = {
 }
 
 
+/**
+ * Count Type OptionCountOutputType
+ */
+
+export type OptionCountOutputType = {
+  responses: number
+}
+
+export type OptionCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  responses?: boolean | OptionCountOutputTypeCountResponsesArgs
+}
+
+/**
+ * OptionCountOutputType without action
+ */
+export type OptionCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the OptionCountOutputType
+   */
+  select?: Prisma.OptionCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * OptionCountOutputType without action
+ */
+export type OptionCountOutputTypeCountResponsesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ResponseWhereInput
+}
+
 
 export type OptionSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -481,6 +594,8 @@ export type OptionSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   createdAt?: boolean
   updatedAt?: boolean
   question?: boolean | Prisma.QuestionDefaultArgs<ExtArgs>
+  responses?: boolean | Prisma.Option$responsesArgs<ExtArgs>
+  _count?: boolean | Prisma.OptionCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["option"]>
 
 export type OptionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -515,6 +630,8 @@ export type OptionSelectScalar = {
 export type OptionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "questionId" | "text" | "isCorrect" | "createdAt" | "updatedAt", ExtArgs["result"]["option"]>
 export type OptionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   question?: boolean | Prisma.QuestionDefaultArgs<ExtArgs>
+  responses?: boolean | Prisma.Option$responsesArgs<ExtArgs>
+  _count?: boolean | Prisma.OptionCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type OptionIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   question?: boolean | Prisma.QuestionDefaultArgs<ExtArgs>
@@ -527,6 +644,7 @@ export type $OptionPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
   name: "Option"
   objects: {
     question: Prisma.$QuestionPayload<ExtArgs>
+    responses: Prisma.$ResponsePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -930,6 +1048,7 @@ readonly fields: OptionFieldRefs;
 export interface Prisma__OptionClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   question<T extends Prisma.QuestionDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.QuestionDefaultArgs<ExtArgs>>): Prisma.Prisma__QuestionClient<runtime.Types.Result.GetResult<Prisma.$QuestionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  responses<T extends Prisma.Option$responsesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Option$responsesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ResponsePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1358,6 +1477,30 @@ export type OptionDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Intern
    * Limit how many Options to delete.
    */
   limit?: number
+}
+
+/**
+ * Option.responses
+ */
+export type Option$responsesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Response
+   */
+  select?: Prisma.ResponseSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Response
+   */
+  omit?: Prisma.ResponseOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ResponseInclude<ExtArgs> | null
+  where?: Prisma.ResponseWhereInput
+  orderBy?: Prisma.ResponseOrderByWithRelationInput | Prisma.ResponseOrderByWithRelationInput[]
+  cursor?: Prisma.ResponseWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ResponseScalarFieldEnum | Prisma.ResponseScalarFieldEnum[]
 }
 
 /**

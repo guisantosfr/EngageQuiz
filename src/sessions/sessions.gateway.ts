@@ -1,9 +1,6 @@
 import {
     WebSocketGateway,
     WebSocketServer,
-    SubscribeMessage,
-    MessageBody,
-    ConnectedSocket,
     OnGatewayConnection,
     OnGatewayDisconnect,
 } from '@nestjs/websockets';
@@ -24,60 +21,29 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
 
     private readonly logger = new Logger(SessionsGateway.name);
 
-    // Chamado quando um cliente se conecta
     handleConnection(client: Socket) {
-        this.logger.log(`Cliente conectado: ${client.id}`);
+        this.logger.log(`Client connected: ${client.id}`);
     }
 
-    // Chamado quando um cliente se desconecta
     handleDisconnect(client: Socket) {
-        this.logger.log(`Cliente desconectado: ${client.id}`);
+        this.logger.log(`Client disconnected: ${client.id}`);
     }
 
-    // Evento de teste simples - responde com uma mensagem de confirmação
-    @SubscribeMessage('ping')
-    handlePing(
-        @MessageBody() data: any,
-        @ConnectedSocket() client: Socket,
-    ): { event: string; data: any } {
-        this.logger.log(`Ping recebido de ${client.id}: ${JSON.stringify(data)}`);
+    emitPlayerJoined(sessionId: string, playerData: { playerId: string; nickname: string; joinedAt: Date }) {
+        this.logger.log(`Player joined session ${sessionId}: ${playerData.nickname}`);
 
-        return {
-            event: 'pong',
-            data: {
-                message: 'Pong! Conexão WebSocket funcionando.',
-                receivedData: data,
-                timestamp: new Date().toISOString(),
-            },
-        };
-    }
-
-    // Evento de teste que envia broadcast para todos os clientes conectados
-    @SubscribeMessage('broadcast')
-    handleBroadcast(
-        @MessageBody() data: { message: string },
-        @ConnectedSocket() client: Socket,
-    ): void {
-        this.logger.log(`Broadcast de ${client.id}: ${data.message}`);
-
-        console.log(data)
-        console.log(data.message)
-
-        // Envia para todos os clientes, incluindo o remetente
-        this.server.emit('broadcast-message', {
-            from: client.id,
-            message: data.message,
+        this.server.emit('player_joined', {
+            sessionId,
+            player: playerData,
             timestamp: new Date().toISOString(),
         });
     }
 
-    // Método utilitário para emitir eventos do servidor (pode ser chamado de outros serviços)
     emitToAll(event: string, data: any): void {
         this.server.emit(event, data);
     }
 
-    // Método para emitir para um cliente específico
-    emitToClient(clientId: string, event: string, data: any): void {
-        this.server.to(clientId).emit(event, data);
+    emitToSession(sessionId: string, event: string, data: any): void {
+        this.server.to(sessionId).emit(event, data);
     }
 }
