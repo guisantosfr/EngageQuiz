@@ -36,7 +36,6 @@ model Question {
   timeLimit Int
 
   options   Option[]
-
   responses Response[]
 
   createdAt DateTime @default(now())
@@ -74,7 +73,7 @@ model Session {
   startedAt  DateTime?
   endedAt    DateTime?
 
-  participants Participant[]
+  players    Player[]
 
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
@@ -91,7 +90,7 @@ enum StatusType {
   CANCELED
 }
 
-model Participant {
+model Player {
   id         String      @id @default(uuid())
   sessionId  String
   session    Session     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
@@ -109,23 +108,23 @@ model Participant {
 }
 
 model Response {
-  id            String       @id @default(uuid())
-  participantId String
-  participant   Participant  @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  id          String       @id @default(uuid())
+  playerId    String
+  player      Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
-  questionId    String
-  question      Question     @relation(fields: [questionId], references: [id])
+  questionId  String
+  question    Question     @relation(fields: [questionId], references: [id])
 
-  optionId      String?
-  option        Option?      @relation(fields: [optionId], references: [id], onDelete: SetNull)
+  optionId    String?
+  option      Option?      @relation(fields: [optionId], references: [id], onDelete: SetNull)
 
-  answeredAt    DateTime     @default(now())
-  isCorrect     Boolean?
+  answeredAt  DateTime     @default(now())
+  isCorrect   Boolean?
 
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
-  @@index([participantId])
+  @@index([playerId])
   @@index([questionId])
   @@index([optionId])
 }
