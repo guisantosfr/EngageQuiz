@@ -109,4 +109,76 @@ export class SessionsService {
             },
         });
     }
+
+    async cancel(sessionId: string) {
+        const session = await this.prisma.session.findUnique({
+            where: { id: sessionId },
+        });
+
+        if (!session) {
+            throw new NotFoundException(`Session not found`);
+        }
+
+        if (session.status === StatusType.CANCELED || session.status === StatusType.FINISHED) {
+            throw new BadRequestException(`Session is already ${session.status.toLowerCase()}`);
+        }
+
+        return this.prisma.session.update({
+            where: { id: sessionId },
+            data: {
+                status: StatusType.CANCELED,
+                endedAt: new Date(),
+            },
+        });
+    }
+
+    async leaveSession(playerId: string) {
+        const player = await this.prisma.player.findUnique({
+            where: { id: playerId },
+            include: { session: true },
+        });
+
+        if (!player) {
+            throw new NotFoundException(`Player not found`);
+        }
+
+        if (player.leftAt) {
+            throw new BadRequestException(`Player has already left the session`);
+        }
+
+        const updatedPlayer = await this.prisma.player.update({
+            where: { id: playerId },
+            data: { leftAt: new Date() },
+        });
+
+        return {
+            player: updatedPlayer,
+            sessionId: player.sessionId,
+        };
+    }
+
+    async kickPlayer(playerId: string) {
+        const player = await this.prisma.player.findUnique({
+            where: { id: playerId },
+            include: { session: true },
+        });
+
+        if (!player) {
+            throw new NotFoundException(`Player not found`);
+        }
+
+        if (player.leftAt) {
+            throw new BadRequestException(`Player has already left the session`);
+        }
+
+        const updatedPlayer = await this.prisma.player.update({
+            where: { id: playerId },
+            data: { leftAt: new Date() },
+        });
+
+        return {
+            player: updatedPlayer,
+            sessionId: player.sessionId,
+        };
+    }
 }

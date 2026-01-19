@@ -46,4 +46,33 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
     emitToSession(sessionId: string, event: string, data: any): void {
         this.server.to(sessionId).emit(event, data);
     }
+
+    emitSessionCanceled(sessionId: string) {
+        this.logger.log(`Session canceled: ${sessionId}`);
+
+        this.server.emit('session_canceled', {
+            sessionId,
+            timestamp: new Date().toISOString(),
+        });
+    }
+
+    emitPlayerLeft(sessionId: string, playerData: { playerId: string; nickname: string }) {
+        this.logger.log(`Player left session ${sessionId}: ${playerData.nickname}`);
+
+        this.server.emit('player_left', {
+            sessionId,
+            player: playerData,
+            timestamp: new Date().toISOString(),
+        });
+    }
+
+    emitPlayerKicked(sessionId: string, playerData: { playerId: string; nickname: string }) {
+        this.logger.log(`Player kicked from session ${sessionId}: ${playerData.nickname}`);
+
+        this.server.emit('player_kicked', {
+            sessionId,
+            player: playerData,
+            timestamp: new Date().toISOString(),
+        });
+    }
 }
