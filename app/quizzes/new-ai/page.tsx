@@ -354,6 +354,7 @@ export default function CreateAIQuiz() {
                                             placeholder="Digite o nome do questionário"
                                             value={title}
                                             maxLength={100}
+                                            autoComplete="off"
                                             onChange={(e) => setTitle(e.target.value)}
                                             required
                                         />

@@ -405,6 +405,7 @@ export function QuizForm({ mode }: { mode: Mode }) {
                                         placeholder="Digite o nome do questionário"
                                         value={title}
                                         maxLength={100}
+                                        autoComplete="off"
                                         onChange={(e) => setTitle(e.target.value)}
                                         required
                                     />
