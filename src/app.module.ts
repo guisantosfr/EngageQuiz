@@ -5,6 +5,7 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { PrismaModule } from './prisma/prisma.module';
 import { QuizzesModule } from './quizzes/quizzes.module';
 import { SessionsModule } from './sessions/sessions.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -18,7 +19,8 @@ import { SessionsModule } from './sessions/sessions.module';
     }]),
     PrismaModule,
     QuizzesModule,
-    SessionsModule
+    SessionsModule,
+    HealthModule,
   ],
   providers: [
     {
