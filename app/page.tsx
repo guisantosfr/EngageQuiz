@@ -1,11 +1,8 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Play, Pencil } from "lucide-react"
 import { HomeLayout } from "./_components/home-layout"
 import { EmptyState } from "./_components/empty-state"
 import { Quiz } from "@/types/Quiz"
 import { NewQuizModal } from "./_components/new-quiz-modal"
+import QuizCard from "./_components/quiz-card"
 
 export default async function Home() {
   let quizzes: Quiz[] = [];
@@ -39,30 +36,7 @@ export default async function Home() {
               ) : (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {quizzes.map((quiz) => (
-                    <Card key={quiz.id}>
-                      <CardHeader className="pb-2">
-                        <CardTitle>{quiz.title}</CardTitle>
-                        <CardDescription>
-                          {quiz.questions?.length} {quiz.questions?.length === 1 ? 'questão' : 'questões'}
-                        </CardDescription>
-                      </CardHeader>
-
-                      <CardFooter className="flex justify-between">
-                        <Button variant="outline" size="sm" asChild>
-                          <Link href={`/quizzes/${quiz.id}`}>
-                            <Pencil className="mr-2 h-4 w-4" />
-                            Editar
-                          </Link>
-                        </Button>
-
-                        <Button size="sm" asChild>
-                          <Link href={`/`}>
-                            <Play className="mr-2 h-4 w-4" />
-                            Iniciar
-                          </Link>
-                        </Button>
-                      </CardFooter>
-                    </Card>
+                    <QuizCard key={quiz.id} quiz={quiz} />
                   ))}
                 </div>
               )
