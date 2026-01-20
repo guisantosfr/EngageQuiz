@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
-import { ChevronLeft, Plus, Trash2 } from "lucide-react"
+import { ChevronLeft, Plus, Save, Trash2 } from "lucide-react"
 import { Question } from "@/types/Question"
 import { QuestionCard } from "../_components/question-card"
 import { SuccessModal } from "../_components/success-modal"
@@ -375,6 +375,7 @@ export function QuizForm({ mode }: { mode: Mode }) {
                             className="cursor-pointer"
                             disabled={questions.length === 0 || title.length === 0}
                         >
+                            <Save className="h-4 w-4" />
                             Salvar Questionário
                         </Button>
                     </div>
@@ -474,6 +475,7 @@ export function QuizForm({ mode }: { mode: Mode }) {
                                 Cancelar
                             </Button>
                             <Button type="submit" disabled={questions.length === 0 || title.length === 0} className="cursor-pointer">
+                                <Save className="h-4 w-4" />
                                 Salvar Questionário
                             </Button>
                         </div>

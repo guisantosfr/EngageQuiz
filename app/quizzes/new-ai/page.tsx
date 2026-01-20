@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { ChevronLeft, ChevronDown, Sparkles, AlertCircle, Plus } from "lucide-react"
+import { ChevronLeft, ChevronDown, Sparkles, AlertCircle, Plus, Save } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
@@ -309,9 +309,15 @@ export default function CreateAIQuiz() {
 
                     {
                         generatedQuiz ?
-                            <Button onClick={handleSubmitNewQuiz}>Salvar Questionário</Button>
+                            <Button onClick={handleSubmitNewQuiz}>
+                                <Save className="h-4 w-4" />
+                                Salvar Questionário
+                            </Button>
                             :
-                            <Button onClick={handleSubmitAIData}>Gerar Questionário</Button>
+                            <Button onClick={handleSubmitAIData}>
+                                <Sparkles className="h-4 w-4" />
+                                Gerar Questionário
+                            </Button>
 
                     }
                 </div>
@@ -401,6 +407,7 @@ export default function CreateAIQuiz() {
                                     Cancelar
                                 </Button>
                                 <Button type="submit" disabled={questions.length === 0} className="cursor-pointer">
+                                    <Save className="h-4 w-4" />
                                     Salvar Questionário
                                 </Button>
                             </div>
