@@ -70,12 +70,6 @@ export function QuestionCard({
                         <div className="text-left">
                             <CardTitle className="text-lg">
                                 Questão {index + 1}
-                                {question.text && (
-                                    <span className="ml-2 font-normal text-muted-foreground">
-                                        {question.text.slice(0, 50)}
-                                        {question.text.length > 50 ? "..." : ""}
-                                    </span>
-                                )}
                             </CardTitle>
                         </div>
                     </div>
