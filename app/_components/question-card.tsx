@@ -32,6 +32,8 @@ export function QuestionCard({
     onUpdateOption,
     onSetCorrectOption,
 }: QuestionCardProps) {
+    const canChangeType = question?.id.startsWith('NEW_QUESTION');
+
     return (
         <Card>
             <CardHeader className="pb-2">
@@ -95,6 +97,7 @@ export function QuestionCard({
                         <Label>Tipo de Questão</Label>
                         <Select
                             value={question.type}
+                            disabled={!canChangeType}
                             onValueChange={(value) => onUpdate(question.id, "type", value)}
                         >
                             <SelectTrigger>
