@@ -70,7 +70,8 @@ export default function QuizCard({ quiz }: { quiz: Quiz }) {
             } else {
                 Swal.fire({
                     title: "Erro ao iniciar questionário!",
-                    icon: 'error'
+                    icon: 'error',
+                    theme: 'auto'
                 })
             }
         } catch (error) {
@@ -78,7 +79,8 @@ export default function QuizCard({ quiz }: { quiz: Quiz }) {
 
             Swal.fire({
                 title: "Erro ao iniciar questionário!",
-                icon: 'error'
+                icon: 'error',
+                theme: 'auto'
             })
         }
     }

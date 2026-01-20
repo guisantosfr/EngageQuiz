@@ -137,14 +137,16 @@ export default function CreateAIQuiz() {
             } else {
                 Swal.fire({
                     title: "Erro ao gerar questionário!",
-                    icon: 'error'
+                    icon: 'error',
+                    theme: 'auto'
                 })
             }
 
         } catch (error) {
             Swal.fire({
                 title: "Erro ao gerar questionário!",
-                icon: 'error'
+                icon: 'error',
+                theme: 'auto'
             })
             console.error(error)
         }
