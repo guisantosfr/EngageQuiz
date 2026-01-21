@@ -49,4 +49,9 @@ export class SessionsController {
     ) {
         return this.sessionsService.removePlayer(sessionId, playerId, true);
     }
+
+    @Get(':sessionId/quiz/:quizId')
+    async getSessionInfo(@Param('sessionId') sessionId: string, @Param('quizId') quizId: string) {
+        return this.sessionsService.getSessionData(sessionId, quizId);
+    }
 }

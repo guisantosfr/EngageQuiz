@@ -62,9 +62,6 @@ export class SessionsService {
         return session;
     }
 
-    /**
-     * Join a session using Prisma transaction for atomicity
-     */
     async join(code: string, joinSessionDto: JoinSessionDto) {
         const { nickname } = joinSessionDto;
 
@@ -81,7 +78,6 @@ export class SessionsService {
                 throw new NotFoundException(`Session not found or not joinable`);
             }
 
-            // Check if nickname is already taken (within transaction)
             const existingPlayer = await tx.player.findFirst({
                 where: {
                     sessionId: session.id,
@@ -94,7 +90,6 @@ export class SessionsService {
                 throw new BadRequestException(`Nickname "${nickname}" is already taken in this session`);
             }
 
-            // Create player atomically
             const player = await tx.player.create({
                 data: {
                     sessionId: session.id,
@@ -125,9 +120,6 @@ export class SessionsService {
         });
     }
 
-    /**
-     * Cancel a session and notify all connected clients
-     */
     async cancel(sessionId: string) {
         const session = await this.prisma.session.findUnique({
             where: { id: sessionId },
@@ -149,18 +141,11 @@ export class SessionsService {
             },
         });
 
-        // Emit session canceled event to all clients in the session room
         this.gateway.emitSessionCanceled(sessionId);
 
         return updatedSession;
     }
 
-    /**
-     * Remove a player from a session (leave or kick)
-     * @param sessionId - The session ID
-     * @param playerId - The player ID to remove
-     * @param kicked - If true, player was kicked; if false, player left voluntarily
-     */
     async removePlayer(sessionId: string, playerId: string, kicked: boolean = false) {
         const player = await this.prisma.player.findUnique({
             where: { id: playerId },
@@ -184,7 +169,6 @@ export class SessionsService {
             data: { leftAt: new Date() },
         });
 
-        // Emit appropriate event based on kicked flag
         const playerData = { playerId: updatedPlayer.id, nickname: updatedPlayer.nickname };
         if (kicked) {
             this.gateway.emitPlayerKicked(sessionId, playerData);
@@ -192,9 +176,47 @@ export class SessionsService {
             this.gateway.emitPlayerLeft(sessionId, playerData);
         }
 
-        // Disconnect player from WebSocket
         this.gateway.disconnectPlayer(playerId);
 
         return updatedPlayer;
+    }
+
+    async getSessionData(sessionId: string, quizId: string) {
+        const session = await this.prisma.session.findUnique({
+            where: { id: sessionId },
+            include: {
+                quiz: {
+                    include: {
+                        _count: {
+                            select: { questions: true }
+                        }
+                    }
+                },
+                players: true
+            },
+        });
+
+        const quizFound = await this.prisma.quiz.findUnique({
+            where: { id: quizId }
+        });
+
+        if (!session || !quizFound) {
+            throw new NotFoundException(`Session/Quiz not found`);
+        }
+
+        if (session.status !== StatusType.CREATED) {
+            throw new BadRequestException(`Session is already started or finished`);
+        }
+
+        const { quiz, ...rest } = session;
+        const { _count, ...quizRest } = quiz;
+
+        return {
+            ...rest,
+            quiz: {
+                ...quizRest,
+                numberOfQuestions: _count.questions
+            }
+        };
     }
 }
