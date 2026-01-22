@@ -6,5 +6,5 @@ export type Quiz = {
   description: string
   createdAt: string
   updatedAt: string
-  questions?: Question[]
+  questions: number
 }

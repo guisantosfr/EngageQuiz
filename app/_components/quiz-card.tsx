@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Quiz } from "@/types/Quiz";
@@ -40,7 +40,7 @@ export default function QuizCard({ quiz }: { quiz: Quiz }) {
             <CardHeader className="pb-2">
                 <CardTitle>{quiz.title}</CardTitle>
                 <CardDescription>
-                    {quiz.questions?.length} {quiz.questions?.length === 1 ? 'questão' : 'questões'}
+                    {quiz.questions} {quiz.questions === 1 ? 'questão' : 'questões'}
                 </CardDescription>
             </CardHeader>
 
