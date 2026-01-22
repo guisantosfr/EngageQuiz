@@ -8,18 +8,19 @@ export default async function Home() {
   let quizzes: Quiz[] = [];
 
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/quizzes`, {
-      cache: 'no-store'
-    });
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/quizzes`);
 
-    quizzes = await res.json();
+    if (res.ok) {
+        const data = await res.json();
+        quizzes = Array.isArray(data) ? data : [];
+    }  
   } catch (error) {
     console.error('Failed to fetch quizzes:', error);
     quizzes = [];
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex flex-col h-full">
       <HomeLayout>
         <main className="flex-1 container px-4 md:px-8 py-4 md:py-6 mx-auto">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
