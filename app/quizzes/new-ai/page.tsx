@@ -21,6 +21,7 @@ import { useRouter } from "next/navigation";
 import { Slider } from "@/components/ui/slider";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { QuestionType } from "@/types/QuestionType";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 export default function CreateAIQuiz() {
     const router = useRouter();
@@ -45,7 +46,21 @@ export default function CreateAIQuiz() {
     const [description, setDescription] = useState("")
     const [questions, setQuestions] = useState<Question[]>([])
 
+    const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] = useState(false)
     const [showSuccessModal, setShowSuccessModal] = useState(false)
+
+    const handleBack = () => {
+        if (generatedQuiz) {
+            setShowUnsavedChangesDialog(true)
+        } else {
+            router.push("/")
+        }
+    }
+
+    const confirmBack = () => {
+        setShowUnsavedChangesDialog(false)
+        setGeneratedQuiz(false);
+    }
 
     const handleQuestionTypeChange = (value: string) => {
         if (["ALL", "MULTIPLE_CHOICE", "TRUE_FALSE"].includes(value)) {
@@ -297,11 +312,9 @@ export default function CreateAIQuiz() {
             <header className="sticky top-0 z-10 border-b bg-background">
                 <div className="container flex h-16 items-center justify-between py-4">
                     <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm" asChild>
-                            <Link href="/">
-                                <ChevronLeft className="h-4 w-4 mr-2" />
-                                Voltar
-                            </Link>
+                        <Button variant="ghost" className="cursor-pointer" size="sm" onClick={handleBack}>
+                            <ChevronLeft className="h-4 w-4 mr-2" />
+                            Voltar
                         </Button>
                         <h1 className="text-xl font-bold flex items-center gap-2 ml-5">
                             <Sparkles className="h-5 w-5" />
@@ -311,12 +324,12 @@ export default function CreateAIQuiz() {
 
                     {
                         generatedQuiz ?
-                            <Button onClick={handleSubmitNewQuiz}>
+                            <Button onClick={handleSubmitNewQuiz} className="cursor-pointer">
                                 <Save className="h-4 w-4" />
                                 Salvar Questionário
                             </Button>
                             :
-                            <Button onClick={handleSubmitAIData}>
+                            <Button onClick={handleSubmitAIData} className="cursor-pointer">
                                 <Sparkles className="h-4 w-4" />
                                 Gerar Questionário
                             </Button>
@@ -422,7 +435,7 @@ export default function CreateAIQuiz() {
                             <Card>
                                 <CardHeader>
                                     <CardTitle>Informações Básicas</CardTitle>
-                                    <CardDescription>Configure os parâmetros principais do seu questionário</CardDescription>
+                                    <CardDescription>Defina os parâmetros principais do seu questionário</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <div className="space-y-2">
@@ -459,12 +472,13 @@ export default function CreateAIQuiz() {
                                                     <SelectValue placeholder="Selecione o nível" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="beginner">Iniciante</SelectItem>
-                                                    <SelectItem value="intermediate">Intermediário</SelectItem>
-                                                    <SelectItem value="advanced">Avançado</SelectItem>
-                                                    <SelectItem value="elementary">Fundamental</SelectItem>
-                                                    <SelectItem value="middle">Médio</SelectItem>
-                                                    <SelectItem value="university">Universitário</SelectItem>
+                                                    <SelectItem value="iniciante">Iniciante</SelectItem>
+                                                    <SelectItem value="intermediário">Intermediário</SelectItem>
+                                                    <SelectItem value="avançado">Avançado</SelectItem>
+                                                    <hr/>
+                                                    <SelectItem value="ensino-fundamental">Ensino Fundamental</SelectItem>
+                                                    <SelectItem value="ensino-medio">Ensino Médio</SelectItem>
+                                                    <SelectItem value="ensino-superior">Ensino Supperior</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </div>
@@ -481,7 +495,7 @@ export default function CreateAIQuiz() {
                                                     step={1}
                                                     value={[questionCount]}
                                                     onValueChange={(value) => setQuestionCount(value[0])}
-                                                    className="w-full"
+                                                    className="w-full cursor-pointer"
                                                 />
                                                 <div className="text-center text-2xl font-semibold text-primary">{questionCount}</div>
                                             </div>
@@ -624,13 +638,12 @@ export default function CreateAIQuiz() {
                             </Collapsible>
 
                             <div className="flex justify-end">
-                                <Button type="submit" size="lg" className="gap-2">
+                                <Button type="submit" size="lg" className="gap-2 cursor-pointer">
                                     <Sparkles className="h-4 w-4" />
                                     Gerar Questionário com IA
                                 </Button>
                             </div>
                         </form>
-
                     )
                 }
 
@@ -640,6 +653,23 @@ export default function CreateAIQuiz() {
                     onOpenChange={setShowSuccessModal}
                     onBack={() => router.push("/")}
                 />
+
+                <AlertDialog open={showUnsavedChangesDialog} onOpenChange={setShowUnsavedChangesDialog}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Alterações não salvas</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Você tem alterações não salvas. Tem certeza que deseja sair? Todas as alterações serão perdidas.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Continuar editando</AlertDialogCancel>
+                            <AlertDialogAction onClick={confirmBack} className="bg-destructive text-destructive-foreground">
+                                Sair sem salvar
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </main>
         </div>
     )
