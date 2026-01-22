@@ -113,10 +113,22 @@ export class QuizzesService {
 
 
     async getAllQuizzes() {
-        return this.prisma.quiz.findMany({
+        const quizzes = await this.prisma.quiz.findMany({
             include: {
-                questions: true,
+                _count: {
+                    select: {
+                        questions: true,
+                    },
+                },
             },
+        });
+
+        return quizzes.map(quiz => {
+            const { _count, ...rest } = quiz;
+            return {
+                ...rest,
+                questions: _count.questions,
+            };
         });
     }
 
