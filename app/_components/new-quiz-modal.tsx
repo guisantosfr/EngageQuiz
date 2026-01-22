@@ -17,9 +17,10 @@ export function NewQuizModal() {
 
   return (
     <>
-      <Button onClick={() => setShowCreateModal(true)}>
+      <Button onClick={() => setShowCreateModal(true)} className="flex items-center">
         <PlusCircle className="mr-2 h-4 w-4" />
-        Novo Questionário
+        <span className="hidden sm:inline">Novo Questionário</span>
+        <span className="inline sm:hidden">Novo</span>
       </Button>
 
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
