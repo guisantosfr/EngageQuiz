@@ -1,4 +1,3 @@
-// app/_components/dashboard-layout.tsx
 'use client';
 
 import { useState } from "react";
@@ -11,12 +10,13 @@ export function HomeLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <header className="sticky top-0 z-30 border-b bg-background w-full px-4 md:px-8 mx-auto">
+      <header className="sticky top-0 z-30 border-b bg-background w-full px-4 md:px-10 mx-auto">
         <div className="container flex h-16 items-center justify-between py-4">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-6">
             <Button
               variant="ghost"
               size="icon"
+              asChild
               onClick={() => setSidebarOpen(!sidebarOpen)}
             >
               {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -27,7 +27,6 @@ export function HomeLayout({ children }: { children: React.ReactNode }) {
       </header>
 
       <div className="flex flex-1 relative">
-        {/* Overlay para mobile quando sidebar está aberta */}
         {sidebarOpen && (
           <div
             className="fixed inset-0 bg-black/50 z-10 md:hidden"
