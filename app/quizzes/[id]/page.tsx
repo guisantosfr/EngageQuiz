@@ -1,7 +1,23 @@
+import { notFound } from "next/navigation";
 import { QuizForm } from "../../_components/quiz-form";
+import { getQuiz } from "@/app/_actions/get-quiz";
 
-export default function EditQuizPage() {
+interface PageProps {
+    params: { id: string }
+}
+
+export default async function EditQuizPage({ params }: PageProps) {
+    const { id } = await params;
+    const quiz = await getQuiz(id);
+
+    console.log(id)
+    console.log(quiz)
+
+    if (!quiz) {
+        notFound();
+    }
+
     return (
-        <QuizForm mode="edit" />
+        <QuizForm mode="edit" initialData={quiz} />
     )
 }

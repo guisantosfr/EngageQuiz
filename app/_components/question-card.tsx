@@ -1,5 +1,6 @@
 "use client"
 
+import { memo } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -22,7 +23,7 @@ interface QuestionCardProps {
     onSetCorrectOption: (questionId: string, optionIndex: number) => void
 }
 
-export function QuestionCard({
+function QuestionCardComponent({
     question,
     index,
     totalQuestions,
@@ -254,3 +255,11 @@ export function QuestionCard({
         </Card>
     )
 }
+
+export const QuestionCard = memo(QuestionCardComponent, (prev, next) => {
+    return (
+        prev.question === next.question &&
+        prev.index === next.index &&
+        prev.totalQuestions === next.totalQuestions
+    );
+});

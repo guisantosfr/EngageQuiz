@@ -1,7 +1,9 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useCallback, useRef, useState, useTransition } from "react"
+import { useRouter } from "next/navigation"
+import { deleteQuiz } from '../_actions/delete-quiz';
+import { saveQuiz } from '../_actions/save-quiz';
 import { Button } from "@/components/ui/button"
 import {
     AlertDialog,
@@ -19,12 +21,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
-import { ChevronLeft, Plus, Save, Trash2 } from "lucide-react"
+import { ChevronLeft, Loader2, Plus, Save, Trash2 } from "lucide-react"
 import { Question } from "@/types/Question"
 import { QuestionCard } from "../_components/question-card"
-import { SuccessModal } from "../_components/success-modal"
-import QuizSkeleton from "./quiz-skeleton"
-import Swal from "sweetalert2"
 
 type Mode = 'create' | 'edit'
 
@@ -34,21 +33,41 @@ interface InitialValues {
     questions: Question[]
 }
 
-export function QuizForm({ mode }: { mode: Mode }) {
-    const router = useRouter()
-    const { id } = useParams();
+interface QuizFormProps {
+    mode: Mode
+    initialData?: any // O ideal seria tipar corretamente com a interface Quiz completa
+}
 
-    const [title, setTitle] = useState("")
-    const [description, setDescription] = useState("")
-    const [questions, setQuestions] = useState<Question[]>([])
-    const [showSuccessModal, setShowSuccessModal] = useState(false)
-    const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] = useState(false)
-    const [isLoading, setIsLoading] = useState(mode === 'edit')
+export function QuizForm({ mode, initialData }: QuizFormProps) {
+    const router = useRouter()
+
+    const normalizeQuestions = (dataQuestions: Question[] = []) => {
+        return dataQuestions.map((q) => {
+            if (q.type === "MULTIPLE_CHOICE" && q.options && q.options.length < 4) {
+                const optionsToAdd = 4 - q.options.length
+                const newOptions = [...q.options]
+                for (let i = 0; i < optionsToAdd; i++) {
+                    newOptions.push({ text: "", isCorrect: false })
+                }
+                return { ...q, options: newOptions }
+            }
+            return q
+        })
+    }
+
+    const [title, setTitle] = useState(initialData?.title || "")
+    const [description, setDescription] = useState(initialData?.description || "")
+    const [questions, setQuestions] = useState<Question[]>(normalizeQuestions(initialData?.questions))
+
+    const [showSuccessDialog, setShowSuccessDialog] = useState(false)
+    const [showUnsavedDialog, setShowUnsavedDialog] = useState(false)
+
+    const [isPending, startTransition] = useTransition()
 
     const initialValuesRef = useRef<InitialValues>({
-        title: "",
-        description: "",
-        questions: []
+        title: initialData?.title || "",
+        description: initialData?.description || "",
+        questions: normalizeQuestions(initialData?.questions)
     })
 
     const hasUnsavedChanges = useCallback(() => {
@@ -63,59 +82,16 @@ export function QuizForm({ mode }: { mode: Mode }) {
 
     const handleBack = () => {
         if (hasUnsavedChanges()) {
-            setShowUnsavedChangesDialog(true)
+            setShowUnsavedDialog(true)
         } else {
             router.push("/")
         }
     }
 
     const confirmBack = () => {
-        setShowUnsavedChangesDialog(false)
+        setShowUnsavedDialog(false)
         router.push("/")
     }
-
-    useEffect(() => {
-        if (mode === 'create') {
-            return;
-        }
-
-        const fetchQuiz = async () => {
-            setIsLoading(true)
-            try {
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/${id}`)
-                const data = await response.json()
-
-                setTitle(data.title)
-                setDescription(data.description)
-
-                //for each question inside data.questions, if is multiple choice and has
-                //less than 4 options, fill with empty options until reach 4 options
-                const updatedQuestions = data.questions.map((q: Question) => {
-                    if (q.type === "MULTIPLE_CHOICE" && q.options && q.options.length < 4) {
-                        const optionsToAdd = 4 - q.options.length
-                        const newOptions = [...q.options]
-                        for (let i = 0; i < optionsToAdd; i++) {
-                            newOptions.push({ text: "", isCorrect: false })
-                        }
-                        return { ...q, options: newOptions }
-                    }
-                    return q
-                })
-
-                setQuestions(updatedQuestions)
-
-                initialValuesRef.current = {
-                    title: data.title,
-                    description: data.description,
-                    questions: updatedQuestions
-                }
-            } finally {
-                setIsLoading(false)
-            }
-        }
-
-        fetchQuiz();
-    }, [])
 
     const addQuestion = () => {
         const timestamp = Date.now()
@@ -142,8 +118,8 @@ export function QuizForm({ mode }: { mode: Mode }) {
         const newQuestions = [...questions]
         const targetIndex = direction === "up" ? index - 1 : index + 1
 
-        if (targetIndex < 0 || targetIndex >= newQuestions.length) return
-            ;[newQuestions[index], newQuestions[targetIndex]] = [newQuestions[targetIndex], newQuestions[index]]
+        if (targetIndex < 0 || targetIndex >= newQuestions.length) return;
+        [newQuestions[index], newQuestions[targetIndex]] = [newQuestions[targetIndex], newQuestions[index]]
         setQuestions(newQuestions)
     }
 
@@ -167,12 +143,9 @@ export function QuizForm({ mode }: { mode: Mode }) {
                                 type: "MULTIPLE_CHOICE",
                                 text: q.text,
                                 timeLimit: q.timeLimit,
-                                options: [
-                                    { id: `NEW_OPTION_${timestamp}_1`, text: "", isCorrect: true },
-                                    { id: `NEW_OPTION_${timestamp}_2`, text: "", isCorrect: false },
-                                    { id: `NEW_OPTION_${timestamp}_3`, text: "", isCorrect: false },
-                                    { id: `NEW_OPTION_${timestamp}_4`, text: "", isCorrect: false },
-                                ],
+                                options: Array(4).fill(null).map((_, i) => ({
+                                    id: `NEW_OPTION_${timestamp}_${i}`, text: "", isCorrect: i === 0
+                                }))
                             }
                         }
                     }
@@ -214,118 +187,62 @@ export function QuizForm({ mode }: { mode: Mode }) {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
-        Swal.fire({
-            title: "Aguarde!",
-            text: "Salvando questionário",
-            showConfirmButton: false,
-            allowOutsideClick: false,
-            theme: 'auto',
-            didOpen: () => {
-                Swal.showLoading()
+        const isNewId = (id: string | undefined) => id?.startsWith('NEW_QUESTION_') || id?.startsWith('NEW_OPTION_')
+
+        const cleanedQuestions = questions.map(q => {
+            const base = {
+                text: q.text,
+                type: q.type,
+                timeLimit: q.timeLimit,
+                id: (mode === 'edit' && !isNewId(q.id)) ? q.id : undefined
+            }
+
+            if (q.type === "TRUE_FALSE") {
+                return { ...base, correctAnswer: q.correctAnswer }
+            }
+
+            return {
+                ...base,
+                options: q.options
+                    ?.filter(opt => opt.text.trim() !== '')
+                    .map(opt => ({
+                        text: opt.text,
+                        isCorrect: opt.isCorrect,
+                        id: (mode === 'edit' && !isNewId(opt.id)) ? opt.id : undefined
+                    }))
             }
         })
-
-        // Função auxiliar para verificar se é um ID novo (criado localmente)
-        const isNewId = (id: string | undefined) => id?.startsWith('NEW_QUESTION_') || id?.startsWith('NEW_OPTION_')
 
         let body = {
             title,
             description,
-            questions: questions.map(q => {
-                // No modo edit, só incluir ID se não for novo
-                const questionId = mode === 'edit' && !isNewId(q.id) ? q.id : undefined
-
-                if (q.type === "TRUE_FALSE") {
-                    return {
-                        ...(questionId && { id: questionId }),
-                        text: q.text,
-                        type: q.type,
-                        timeLimit: q.timeLimit,
-                        correctAnswer: q.correctAnswer
-                    }
-                } else if (q.type === "MULTIPLE_CHOICE") {
-                    return {
-                        ...(questionId && { id: questionId }),
-                        text: q.text,
-                        type: q.type,
-                        timeLimit: q.timeLimit,
-                        options: q.options
-                            ?.filter((option: any) => option.text.trim() !== '')
-                            .map((option: any) => {
-                                // No modo edit, só incluir ID da option se não for novo
-                                const optionId = mode === 'edit' && !isNewId(option.id) ? option.id : undefined
-                                return {
-                                    ...(optionId && { id: optionId }),
-                                    text: option.text,
-                                    isCorrect: option.isCorrect
-                                }
-                            })
-                    }
-                }
-            })
+            questions: cleanedQuestions
         }
 
-        if (mode === 'create') {
-            await createQuiz(body);
-        } else if (mode === 'edit') {
-            await updateQuiz({ ...body, id });
-        }
-    }
+        startTransition(async () => {
+            const result = await saveQuiz(body, mode, initialData?.id);
 
-    const createQuiz = async (body: Object) => {
-        try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/quizzes`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            })
-
-            if (response.ok) {
-                Swal.close();
-                setShowSuccessModal(true)
+            if (result.error) {
+                toast.error(result.error);
+                return;
             }
-        } catch (error) {
-            toast.error('Erro ao salvar questionário.')
-            console.error(error)
-        }
-    }
 
-    const updateQuiz = async (body: Object) => {
-        try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            })
-
-            if (response.ok) {
-                Swal.close();
-                setShowSuccessModal(true)
-            }
-        } catch (error) {
-            toast.error('Erro ao editar questionário.')
-            console.error(error)
-        }
+            setShowSuccessDialog(true);
+        });
     }
 
     const handleDelete = async () => {
-        try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/${id}`, {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-            })
+        if (!initialData?.id) return;
 
-            if (response.ok) {
-                toast.success('Questionário excluído com sucesso.')
-                router.push("/")
+        startTransition(async () => {
+            const result = await deleteQuiz(initialData.id);
+            if (result.success) {
+                toast.success("Questionário excluído.");
+                router.push("/");
             } else {
-                toast.error('Erro ao excluir questionário.')
-                console.error('Delete failed with status:', response.status)
+                toast.error(result.error);
             }
-        } catch (error) {
-            toast.error('Erro ao editar questionário.')
-            console.error(error)
-        }
+        })
     }
 
     return (
@@ -338,7 +255,7 @@ export function QuizForm({ mode }: { mode: Mode }) {
                             Voltar
                         </Button>
                         <h1 className="text-base sm:text-xl font-bold ml-5">
-                            { mode === 'create' ? 'Novo Questionário' : 'Editar Questionário' }
+                            {mode === 'create' ? 'Novo Questionário' : 'Editar Questionário'}
                         </h1>
                     </div>
 
@@ -372,127 +289,131 @@ export function QuizForm({ mode }: { mode: Mode }) {
 
                         <Button
                             onClick={handleSubmit}
-                            className="cursor-pointer"
-                            disabled={questions.length === 0 || title.length === 0}
+                            disabled={questions.length === 0 || title.length === 0 || isPending}
                         >
-                            <Save className="h-4 w-4" />
-                            <span className="hidden sm:inline">Salvar Questionário</span>
-            <span className="sm:hidden">Salvar</span>
+                            {isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                            <span className="hidden sm:inline">Salvar</span>
                         </Button>
                     </div>
                 </div>
             </header>
 
             <main className="flex-1 container py-6 max-w-4xl mx-auto">
-                {isLoading ? (
-                    <QuizSkeleton />
-                ) : (
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Informações do questionário</CardTitle>
-                            </CardHeader>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Informações do questionário</CardTitle>
+                        </CardHeader>
 
-                            <CardContent className="space-y-4">
-                                <div className="space-y-2">
-                                    <div className="flex justify-between">
-                                        <Label htmlFor="title">
-                                            Nome <span className="text-red-500">*</span>
-                                        </Label>
-                                        <span>{title.length} / 100</span>
-                                    </div>
-                                    <Input
-                                        id="title"
-                                        placeholder="Digite o nome do questionário"
-                                        value={title}
-                                        maxLength={100}
-                                        autoComplete="off"
-                                        onChange={(e) => setTitle(e.target.value)}
-                                        required
-                                    />
+                        <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                                <div className="flex justify-between">
+                                    <Label htmlFor="title">
+                                        Nome <span className="text-red-500">*</span>
+                                    </Label>
+                                    <span>{title.length} / 100</span>
                                 </div>
-                                <div className="space-y-2">
-                                    <div className="flex justify-between">
-                                        <Label htmlFor="description">Descrição</Label>
-                                        <span>{description.length} / 200</span>
-                                    </div>
-                                    <Textarea
-                                        id="description"
-                                        placeholder="Descreva o questionário (opcional)"
-                                        value={description}
-                                        maxLength={200}
-                                        onChange={(e) => setDescription(e.target.value)}
-                                        rows={3}
-                                    />
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <div className="space-y-5">
-                            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-                                <h2 className="text-2xl font-bold">
-                                    Questões{" "}
-                                    <span className="text-sm text-muted-foreground font-normal">
-                                        ({questions.length})
-                                    </span>
-                                </h2>
-                                {
-                                    questions.length === 0 && (
-                                        <Button type="button" onClick={addQuestion} variant="outline" className="cursor-pointer">
-                                            <Plus className="h-4 w-4 mr-2" />
-                                            Adicionar questão
-                                        </Button>
-                                    )
-                                }
-                            </div>
-
-                            {questions.map((question, index) => (
-                                <QuestionCard
-                                    key={question.id}
-                                    question={question}
-                                    index={index}
-                                    totalQuestions={questions.length}
-                                    onRemove={removeQuestion}
-                                    onMove={moveQuestion}
-                                    onUpdate={updateQuestion}
-                                    onUpdateOption={updateOption}
-                                    onSetCorrectOption={setCorrectOption}
+                                <Input
+                                    id="title"
+                                    placeholder="Digite o nome do questionário"
+                                    value={title}
+                                    maxLength={100}
+                                    autoComplete="off"
+                                    onChange={(e) => setTitle(e.target.value)}
+                                    required
                                 />
-                            ))}
+                            </div>
+                            <div className="space-y-2">
+                                <div className="flex justify-between">
+                                    <Label htmlFor="description">Descrição</Label>
+                                    <span>{description.length} / 200</span>
+                                </div>
+                                <Textarea
+                                    id="description"
+                                    placeholder="Descreva o questionário (opcional)"
+                                    value={description}
+                                    maxLength={200}
+                                    onChange={(e) => setDescription(e.target.value)}
+                                    rows={3}
+                                />
+                            </div>
+                        </CardContent>
+                    </Card>
 
+                    <div className="space-y-5">
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                            <h2 className="text-2xl font-bold">
+                                Questões{" "}
+                                <span className="text-sm text-muted-foreground font-normal">
+                                    ({questions.length})
+                                </span>
+                            </h2>
                             {
-                                questions.length !== 0 && (
-                                    <div className="flex justify-center sm:justify-end mb-3">
-                                        <Button type="button" onClick={addQuestion} variant="outline" className="cursor-pointer">
-                                            <Plus className="h-4 w-4 mr-2" />
-                                            Adicionar questão
-                                        </Button>
-                                    </div>
+                                questions.length === 0 && (
+                                    <Button type="button" onClick={addQuestion} variant="outline" className="cursor-pointer">
+                                        <Plus className="h-4 w-4 mr-2" />
+                                        Adicionar questão
+                                    </Button>
                                 )
                             }
                         </div>
 
-                        <div className="flex justify-end gap-4">
-                            <Button type="button" variant="outline" onClick={handleBack} className="cursor-pointer">
-                                Cancelar
-                            </Button>
-                            <Button type="submit" disabled={questions.length === 0 || title.length === 0} className="cursor-pointer">
-                                <Save className="h-4 w-4" />
-                                Salvar Questionário
-                            </Button>
-                        </div>
-                    </form>
-                )}
+                        {questions.map((question, index) => (
+                            <QuestionCard
+                                key={question.id}
+                                question={question}
+                                index={index}
+                                totalQuestions={questions.length}
+                                onRemove={removeQuestion}
+                                onMove={moveQuestion}
+                                onUpdate={updateQuestion}
+                                onUpdateOption={updateOption}
+                                onSetCorrectOption={setCorrectOption}
+                            />
+                        ))}
+
+                        {
+                            questions.length !== 0 && (
+                                <div className="flex justify-center sm:justify-end mb-3">
+                                    <Button type="button" onClick={addQuestion} variant="outline" className="cursor-pointer">
+                                        <Plus className="h-4 w-4 mr-2" />
+                                        Adicionar questão
+                                    </Button>
+                                </div>
+                            )
+                        }
+                    </div>
+
+                    <div className="flex justify-end gap-4">
+                        <Button type="button" variant="outline" onClick={handleBack} className="cursor-pointer">
+                            Cancelar
+                        </Button>
+                        <Button type="submit" disabled={questions.length === 0 || title.length === 0} className="cursor-pointer">
+                            <Save className="h-4 w-4" />
+                            Salvar Questionário
+                        </Button>
+                    </div>
+                </form>
             </main>
 
-            <SuccessModal
-                mode={mode}
-                open={showSuccessModal}
-                onOpenChange={setShowSuccessModal}
-                onBack={() => router.push("/")}
-            />
+            <AlertDialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Sucesso!</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            O questionário foi {mode === 'create' ? 'criado' : 'atualizado'} com sucesso.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => router.push('/')}>Voltar</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => {/* Lógica para iniciar quiz se necessário */}}>
+                            Iniciar Agora
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
-            <AlertDialog open={showUnsavedChangesDialog} onOpenChange={setShowUnsavedChangesDialog}>
+            <AlertDialog open={showUnsavedDialog} onOpenChange={setShowUnsavedDialog}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Alterações não salvas</AlertDialogTitle>
