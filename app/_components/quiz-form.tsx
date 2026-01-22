@@ -337,8 +337,8 @@ export function QuizForm({ mode }: { mode: Mode }) {
                             <ChevronLeft className="h-4 w-4 mr-2" />
                             Voltar
                         </Button>
-                        <h1 className="text-xl font-bold ml-5">{
-                            mode === 'create' ? 'Novo Questionário' : 'Editar Questionário'}
+                        <h1 className="text-base sm:text-xl font-bold ml-5">
+                            { mode === 'create' ? 'Novo Questionário' : 'Editar Questionário' }
                         </h1>
                     </div>
 
@@ -376,7 +376,8 @@ export function QuizForm({ mode }: { mode: Mode }) {
                             disabled={questions.length === 0 || title.length === 0}
                         >
                             <Save className="h-4 w-4" />
-                            Salvar Questionário
+                            <span className="hidden sm:inline">Salvar Questionário</span>
+            <span className="sm:hidden">Salvar</span>
                         </Button>
                     </div>
                 </div>
@@ -428,7 +429,7 @@ export function QuizForm({ mode }: { mode: Mode }) {
                         </Card>
 
                         <div className="space-y-5">
-                            <div className="flex items-center justify-between">
+                            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
                                 <h2 className="text-2xl font-bold">
                                     Questões{" "}
                                     <span className="text-sm text-muted-foreground font-normal">
@@ -461,7 +462,7 @@ export function QuizForm({ mode }: { mode: Mode }) {
 
                             {
                                 questions.length !== 0 && (
-                                    <div className="flex justify-end mb-3">
+                                    <div className="flex justify-center sm:justify-end mb-3">
                                         <Button type="button" onClick={addQuestion} variant="outline" className="cursor-pointer">
                                             <Plus className="h-4 w-4 mr-2" />
                                             Adicionar questão

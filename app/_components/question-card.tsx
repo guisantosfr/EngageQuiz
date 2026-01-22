@@ -92,7 +92,7 @@ export function QuestionCard({
             </CardHeader>
 
             <CardContent className="space-y-4 pt-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label>Tipo de Questão</Label>
                         <Select
@@ -142,7 +142,7 @@ export function QuestionCard({
                         value={question.text}
                         onChange={(e) => onUpdate(question.id, "text", e.target.value)}
                         required
-                        rows={2}
+                        rows={3}
                     />
                 </div>
 
