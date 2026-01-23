@@ -29,7 +29,7 @@ model Quiz {
 model Question {
   id        String   @id @default(uuid())
   quizId    String
-  quiz      Quiz     @relation(fields: [quizId], references: [id])
+  quiz      Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
 
   text      String
   type      QuestionType
@@ -66,7 +66,7 @@ model Option {
 model Session {
   id         String        @id @default(uuid())
   quizId     String
-  quiz       Quiz          @relation(fields: [quizId], references: [id])
+  quiz       Quiz          @relation(fields: [quizId], references: [id], onDelete: Cascade)
 
   code       String
   status     StatusType
@@ -113,7 +113,7 @@ model Response {
   player      Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
   questionId  String
-  question    Question     @relation(fields: [questionId], references: [id])
+  question    Question     @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   optionId    String?
   option      Option?      @relation(fields: [optionId], references: [id], onDelete: SetNull)
