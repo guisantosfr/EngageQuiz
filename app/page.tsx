@@ -22,7 +22,7 @@ export default async function Home() {
   return (
     <div className="flex flex-col h-full">
       <HomeLayout>
-        <main className="flex-1 container px-4 md:px-8 py-4 md:py-6 mx-auto">
+        <main className="flex-1 container px-5 md:px-12 py-4 md:py-6 mx-auto">
           <div className="flex sm:items-center justify-between gap-4 mb-6">
             <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Meus Questionários</h2>
             <div className="flex items-center gap-2">

@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { AlertDialog, AlertDialogContent } from "@/components/ui/alert-dialog";
 import { ChevronLeft, ChevronDown, Sparkles, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
@@ -79,6 +80,8 @@ export default function CreateAIQuiz() {
             if (result.success) {
                 toast.success("Questionário gerado! Revise e salve.");
                 setGeneratedData(result.data);
+
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         });
     }
@@ -125,6 +128,7 @@ export default function CreateAIQuiz() {
                                     onChange={(e) => setTheme(e.target.value)}
                                     required
                                     disabled={isPending}
+                                    autoComplete="off"
                                 />
                             </div>
 
@@ -151,6 +155,8 @@ export default function CreateAIQuiz() {
                                             <SelectItem value="iniciante">Iniciante</SelectItem>
                                             <SelectItem value="intermediário">Intermediário</SelectItem>
                                             <SelectItem value="avançado">Avançado</SelectItem>
+                                            <hr />
+                                            <SelectItem value="ensino-fundamental">Ensino Fundamental</SelectItem>
                                             <SelectItem value="ensino-medio">Ensino Médio</SelectItem>
                                             <SelectItem value="ensino-superior">Ensino Superior</SelectItem>
                                         </SelectContent>
@@ -158,15 +164,20 @@ export default function CreateAIQuiz() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label>Quantidade: <span className="text-primary font-bold">{questionCount}</span></Label>
-                                    <Slider
-                                        min={2}
-                                        max={20}
-                                        step={1}
-                                        value={[questionCount]}
-                                        onValueChange={(v) => setQuestionCount(v[0])}
-                                        disabled={isPending}
-                                    />
+                                    <Label htmlFor="questionsCount">Quantidade de questões</Label>
+                                    <div className="pt-2 space-y-3">
+                                        <Slider
+                                            id="questionsCount"
+                                            min={2}
+                                            max={20}
+                                            step={1}
+                                            value={[questionCount]}
+                                            onValueChange={(v) => setQuestionCount(v[0])}
+                                            disabled={isPending}
+                                            className="w-full"
+                                        />
+                                        <div className="text-center text-2xl font-semibold text-primary">{questionCount}</div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -183,7 +194,7 @@ export default function CreateAIQuiz() {
                                     </div>
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="TRUE_FALSE" id="TF" />
-                                        <Label htmlFor="TF">V / F</Label>
+                                        <Label htmlFor="TF">Verdadeiro ou Falso</Label>
                                     </div>
                                 </RadioGroup>
                             </div>
@@ -204,16 +215,16 @@ export default function CreateAIQuiz() {
                                 <CardContent className="space-y-4 pt-0">
                                     <div className="space-y-2">
                                         <Label>Objetivo de Aprendizagem</Label>
-                                        <Input 
-                                            value={learningObjective} 
-                                            onChange={e => setLearningObjective(e.target.value)} 
+                                        <Input
+                                            value={learningObjective}
+                                            onChange={e => setLearningObjective(e.target.value)}
                                             placeholder="O que o aluno deve aprender?"
                                             disabled={isPending}
                                         />
                                     </div>
                                     {/* ... Outros campos avançados podem ser simplificados ou mantidos conforme necessário ... */}
                                     <div className="grid grid-cols-2 gap-4">
-                                         <div className="space-y-2">
+                                        <div className="space-y-2">
                                             <Label>Dificuldade</Label>
                                             <Select value={difficulty} onValueChange={setDifficulty} disabled={isPending}>
                                                 <SelectTrigger><SelectValue placeholder="Padrão" /></SelectTrigger>
@@ -224,7 +235,7 @@ export default function CreateAIQuiz() {
                                                 </SelectContent>
                                             </Select>
                                         </div>
-                                         <div className="space-y-2">
+                                        <div className="space-y-2">
                                             <Label>Tom</Label>
                                             <Select value={tone} onValueChange={setTone} disabled={isPending}>
                                                 <SelectTrigger><SelectValue placeholder="Padrão" /></SelectTrigger>
@@ -256,6 +267,12 @@ export default function CreateAIQuiz() {
                             )}
                         </Button>
                     </div>
+
+                    <AlertDialog open={isPending} >
+                        <AlertDialogContent>
+                            <h1>Aguarde. Gerando questionário ...</h1>
+                        </AlertDialogContent>
+                    </AlertDialog>
                 </form>
             </main>
         </div>

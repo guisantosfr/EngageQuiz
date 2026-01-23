@@ -10,9 +10,6 @@ export default async function EditQuizPage({ params }: PageProps) {
     const { id } = await params;
     const quiz = await getQuiz(id);
 
-    console.log(id)
-    console.log(quiz)
-
     if (!quiz) {
         notFound();
     }
