@@ -112,19 +112,19 @@ function CreateAIQuizContent() {
                 </div>
             </header>
 
-            <main className="flex-1 container py-6 max-w-3xl mx-auto px-4">
+            <main className="flex-1 container py-6 max-w-4xl mx-auto">
                 <form onSubmit={handleSubmitAIData} className="space-y-6">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Configuração do Quiz</CardTitle>
-                            <CardDescription>A IA criará as perguntas baseada nestes parâmetros.</CardDescription>
+                            <CardTitle>Informações Básicas</CardTitle>
+                            <CardDescription>Configure os parâmetros principais do seu questionário</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="theme">Tema / Assunto <span className="text-destructive">*</span></Label>
+                                <Label htmlFor="theme">Tema / Assunto Principal<span className="text-destructive">*</span></Label>
                                 <Input
                                     id="theme"
-                                    placeholder="Ex: Revolução Francesa, Fotossíntese..."
+                                    placeholder="Ex: Revolução Francesa, Funções Quadráticas, Sistema Solar..."
                                     value={theme}
                                     onChange={(e) => setTheme(e.target.value)}
                                     required
@@ -134,23 +134,24 @@ function CreateAIQuizContent() {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="subtopics">Subtópicos (Opcional)</Label>
+                                <Label htmlFor="subtopics">Subtópicos / Assuntos a Incluir (Opcional)</Label>
                                 <Textarea
                                     id="subtopics"
-                                    placeholder="Detalhes específicos para focar..."
+                                    placeholder="Ex: Causas da revolução, Queda da Bastilha, Período do Terror..."
                                     value={subtopics}
                                     onChange={(e) => setSubtopics(e.target.value)}
-                                    rows={2}
+                                    rows={3}
                                     disabled={isPending}
                                 />
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label>Público Alvo <span className="text-destructive">*</span></Label>
-                                    <Select value={targetAudience} onValueChange={setTargetAudience} required disabled={isPending}>
+                                    <Label>Nível / Público Alvo <span className="text-destructive">*</span></Label>
+                                    <Select
+                                        value={targetAudience} onValueChange={setTargetAudience} required disabled={isPending}>
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Selecione..." />
+                                            <SelectValue placeholder="Selecione uma opção..." />
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="iniciante">Iniciante</SelectItem>
@@ -175,9 +176,9 @@ function CreateAIQuizContent() {
                                             value={[questionCount]}
                                             onValueChange={(v) => setQuestionCount(v[0])}
                                             disabled={isPending}
-                                            className="w-full"
+                                            className="w-full cursor-pointer"
                                         />
-                                        <div className="text-center text-2xl font-semibold text-primary">{questionCount}</div>
+                                        <div className="text-center text-2xl text-primary">{questionCount}</div>
                                     </div>
                                 </div>
                             </div>
@@ -205,9 +206,16 @@ function CreateAIQuizContent() {
                     <Collapsible open={isAdvancedOpen} onOpenChange={setIsAdvancedOpen}>
                         <Card>
                             <CollapsibleTrigger className="w-full">
-                                <CardHeader className="py-4">
+                                <CardHeader>
                                     <div className="flex items-center justify-between">
-                                        <span className="font-semibold text-sm">Opções Avançadas</span>
+                                        <div className="flex items-center justify-between">
+                                            <div className="text-left">
+                                                <CardTitle>Opções Avançadas (Opcional)</CardTitle>
+                                                <CardDescription className="my-3">
+                                                    Personalize ainda mais a geração do questionário
+                                                </CardDescription>
+                                            </div>
+                                        </div>
                                         <ChevronDown className={cn("h-4 w-4 transition-transform", isAdvancedOpen && "rotate-180")} />
                                     </div>
                                 </CardHeader>
@@ -216,34 +224,73 @@ function CreateAIQuizContent() {
                                 <CardContent className="space-y-4 pt-0">
                                     <div className="space-y-2">
                                         <Label>Objetivo de Aprendizagem</Label>
-                                        <Input
+                                        <Textarea
                                             value={learningObjective}
                                             onChange={e => setLearningObjective(e.target.value)}
-                                            placeholder="O que o aluno deve aprender?"
+                                            placeholder="Ex: Avaliar compreensão dos eventos principais e suas consequências..."
                                             disabled={isPending}
+                                            rows={2}
                                         />
                                     </div>
-                                    {/* ... Outros campos avançados podem ser simplificados ou mantidos conforme necessário ... */}
-                                    <div className="grid grid-cols-2 gap-4">
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <Label>Dificuldade</Label>
+                                            <Label>Grau de Dificuldade</Label>
                                             <Select value={difficulty} onValueChange={setDifficulty} disabled={isPending}>
-                                                <SelectTrigger><SelectValue placeholder="Padrão" /></SelectTrigger>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Selecione a dificuldade" />
+                                                </SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="easy">Fácil</SelectItem>
-                                                    <SelectItem value="medium">Médio</SelectItem>
-                                                    <SelectItem value="hard">Difícil</SelectItem>
+                                                    <SelectItem value="facil">Fácil</SelectItem>
+                                                    <SelectItem value="medio">Médio</SelectItem>
+                                                    <SelectItem value="dificil">Difícil</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </div>
+
                                         <div className="space-y-2">
-                                            <Label>Tom</Label>
-                                            <Select value={tone} onValueChange={setTone} disabled={isPending}>
-                                                <SelectTrigger><SelectValue placeholder="Padrão" /></SelectTrigger>
+                                            <Label htmlFor="educationalContext">Contexto Educacional</Label>
+                                            <Select value={educationalContext} onValueChange={setEducationalContext}>
+                                                <SelectTrigger id="educationalContext">
+                                                    <SelectValue placeholder="Selecione o contexto" />
+                                                </SelectTrigger>
                                                 <SelectContent>
+                                                    <SelectItem value="aula_presencial">Aula Presencial</SelectItem>
+                                                    <SelectItem value="aula_remota">Aula Remota</SelectItem>
+                                                    <SelectItem value="revisao_pre_prova">Revisão antes da Prova</SelectItem>
+                                                    <SelectItem value="avaliacao_diagnostica">Avaliação Diagnóstica</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label>Lingagem / Tom das Questões</Label>
+                                            <Select value={tone} onValueChange={setTone} disabled={isPending}>
+                                                <SelectTrigger id="tone">
+                                                    <SelectValue placeholder="Selecione o tom das questões" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="neutro">Neutro</SelectItem>
                                                     <SelectItem value="formal">Formal</SelectItem>
-                                                    <SelectItem value="casual">Casual</SelectItem>
-                                                    <SelectItem value="gamified">Gamificado</SelectItem>
+                                                    <SelectItem value="descontraido">Descontraído</SelectItem>
+                                                    <SelectItem value="gamificado">Gamificado</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label htmlFor="timeLimit">Tempo Estimado por Resposta</Label>
+                                            <Select value={timeLimit} onValueChange={setTimeLimit}>
+                                                <SelectTrigger id="timeLimit">
+                                                    <SelectValue placeholder="Selecione o tempo" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="15">15 segundos</SelectItem>
+                                                    <SelectItem value="30">30 segundos</SelectItem>
+                                                    <SelectItem value="45">45 segundos</SelectItem>
+                                                    <SelectItem value="60">1 minuto (60 segundos)</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </div>
