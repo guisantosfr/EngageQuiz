@@ -24,6 +24,7 @@ import { toast } from "sonner"
 import { ChevronLeft, Loader2, Plus, Save, Trash2 } from "lucide-react"
 import { Question } from "@/types/Question"
 import { QuestionCard } from "../_components/question-card"
+import { ErrorBoundary } from "@/components/error-boundary"
 
 type Mode = 'create' | 'edit'
 
@@ -361,17 +362,23 @@ export function QuizForm({ mode, initialData }: QuizFormProps) {
                         </div>
 
                         {questions.map((question, index) => (
-                            <QuestionCard
+                            <ErrorBoundary
                                 key={question.id}
-                                question={question}
-                                index={index}
-                                totalQuestions={questions.length}
-                                onRemove={removeQuestion}
-                                onMove={moveQuestion}
-                                onUpdate={updateQuestion}
-                                onUpdateOption={updateOption}
-                                onSetCorrectOption={setCorrectOption}
-                            />
+                                variant="inline"
+                                title={`Erro na questão ${index + 1}`}
+                                onRemove={() => removeQuestion(question.id)}
+                            >
+                                <QuestionCard
+                                    question={question}
+                                    index={index}
+                                    totalQuestions={questions.length}
+                                    onRemove={removeQuestion}
+                                    onMove={moveQuestion}
+                                    onUpdate={updateQuestion}
+                                    onUpdateOption={updateOption}
+                                    onSetCorrectOption={setCorrectOption}
+                                />
+                            </ErrorBoundary>
                         ))}
 
                         {

@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Analytics } from '@vercel/analytics/next';
 import { Toaster } from '@/components/ui/sonner'
+import { ErrorBoundary } from '@/components/error-boundary'
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,7 +32,9 @@ export default function RootLayout({
       >
         <Analytics />
         <Toaster position="top-center" />
-        {children}
+        <ErrorBoundary variant="page" title="Erro na aplicação">
+          {children}
+        </ErrorBoundary>
       </body>
     </html>
   );

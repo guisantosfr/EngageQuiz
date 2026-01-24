@@ -18,8 +18,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { QuestionType } from "@/types/QuestionType";
 import { QuizForm } from "@/app/_components/quiz-form";
 import { generateAIQuiz } from "@/app/_actions/generate-ai-quiz";
+import { ErrorBoundary } from "@/components/error-boundary";
 
-export default function CreateAIQuiz() {
+function CreateAIQuizContent() {
     const router = useRouter();
 
     const [isPending, startTransition] = useTransition()
@@ -276,5 +277,13 @@ export default function CreateAIQuiz() {
                 </form>
             </main>
         </div>
+    )
+}
+
+export default function CreateAIQuiz() {
+    return (
+        <ErrorBoundary variant="page" title="Erro ao criar quiz com IA">
+            <CreateAIQuizContent />
+        </ErrorBoundary>
     )
 }

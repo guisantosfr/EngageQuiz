@@ -3,6 +3,7 @@ import { EmptyState } from "./_components/empty-state"
 import { Quiz } from "@/types/Quiz"
 import { NewQuizModal } from "./_components/new-quiz-modal"
 import QuizCard from "./_components/quiz-card"
+import { ErrorBoundary } from "@/components/error-boundary"
 
 export default async function Home() {
   let quizzes: Quiz[] = [];
@@ -11,9 +12,9 @@ export default async function Home() {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/quizzes`);
 
     if (res.ok) {
-        const data = await res.json();
-        quizzes = Array.isArray(data) ? data : [];
-    }  
+      const data = await res.json();
+      quizzes = Array.isArray(data) ? data : [];
+    }
   } catch (error) {
     console.error('Failed to fetch quizzes:', error);
     quizzes = [];
@@ -26,7 +27,9 @@ export default async function Home() {
           <div className="flex sm:items-center justify-between gap-4 mb-6">
             <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Meus Questionários</h2>
             <div className="flex items-center gap-2">
-              <NewQuizModal />
+              <ErrorBoundary variant="card" title="Erro no modal">
+                <NewQuizModal />
+              </ErrorBoundary>
             </div>
           </div>
 
@@ -37,7 +40,9 @@ export default async function Home() {
               ) : (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {quizzes.map((quiz) => (
-                    <QuizCard key={quiz.id} quiz={quiz} />
+                    <ErrorBoundary key={quiz.id} variant="card" title="Erro ao carregar quiz">
+                      <QuizCard quiz={quiz} />
+                    </ErrorBoundary>
                   ))}
                 </div>
               )
