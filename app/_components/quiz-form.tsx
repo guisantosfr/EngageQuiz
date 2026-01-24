@@ -107,25 +107,27 @@ export function QuizForm({ mode, initialData }: QuizFormProps) {
                 { id: `NEW_OPTION_${timestamp}_4`, text: "", isCorrect: false },
             ],
         }
-        setQuestions([...questions, newQuestion])
+        setQuestions(prevQuestions => [...prevQuestions, newQuestion])
     }
 
     const removeQuestion = (id: string) => {
-        setQuestions(questions.filter((q) => q.id !== id))
+        setQuestions(prevQuestions => prevQuestions.filter((q) => q.id !== id))
     }
 
     const moveQuestion = (index: number, direction: "up" | "down") => {
-        const newQuestions = [...questions]
-        const targetIndex = direction === "up" ? index - 1 : index + 1
+        setQuestions(prevQuestions => {
+            const newQuestions = [...prevQuestions]
+            const targetIndex = direction === "up" ? index - 1 : index + 1
 
-        if (targetIndex < 0 || targetIndex >= newQuestions.length) return;
-        [newQuestions[index], newQuestions[targetIndex]] = [newQuestions[targetIndex], newQuestions[index]]
-        setQuestions(newQuestions)
+            if (targetIndex < 0 || targetIndex >= newQuestions.length) return prevQuestions;
+            [newQuestions[index], newQuestions[targetIndex]] = [newQuestions[targetIndex], newQuestions[index]]
+            return newQuestions
+        })
     }
 
     const updateQuestion = (id: string, field: keyof Question, value: any) => {
-        setQuestions(
-            questions.map((q) => {
+        setQuestions(prevQuestions =>
+            prevQuestions.map((q) => {
                 if (q.id === id) {
                     if (field === "type") {
                         if (value === "TRUE_FALSE") {
@@ -157,8 +159,8 @@ export function QuizForm({ mode, initialData }: QuizFormProps) {
     }
 
     const updateOption = (questionId: string, optionIndex: number, value: string) => {
-        setQuestions(
-            questions.map((q) => {
+        setQuestions(prevQuestions =>
+            prevQuestions.map((q) => {
                 if (q.id === questionId && q.type === "MULTIPLE_CHOICE" && q.options) {
                     const newOptions = [...q.options]
                     newOptions[optionIndex] = { ...newOptions[optionIndex], text: value }
@@ -170,8 +172,8 @@ export function QuizForm({ mode, initialData }: QuizFormProps) {
     }
 
     const setCorrectOption = (questionId: string, optionIndex: number) => {
-        setQuestions(
-            questions.map((q) => {
+        setQuestions(prevQuestions =>
+            prevQuestions.map((q) => {
                 if (q.id === questionId && q.type === "MULTIPLE_CHOICE" && q.options) {
                     const newOptions = q.options.map((opt, idx) => ({
                         ...opt,
@@ -406,7 +408,7 @@ export function QuizForm({ mode, initialData }: QuizFormProps) {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel onClick={() => router.push('/')}>Voltar</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => {/* Lógica para iniciar quiz se necessário */}}>
+                        <AlertDialogAction onClick={() => {/* Lógica para iniciar quiz se necessário */ }}>
                             Iniciar Agora
                         </AlertDialogAction>
                     </AlertDialogFooter>
