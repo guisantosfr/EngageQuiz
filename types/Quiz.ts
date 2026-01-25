@@ -1,6 +1,4 @@
-import { Question } from "./Question"
-
-export type Quiz = {
+export interface Quiz {
   id: string
   title: string
   description: string
