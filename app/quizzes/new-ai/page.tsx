@@ -112,7 +112,7 @@ function CreateAIQuizContent() {
                 </div>
             </header>
 
-            <main className="flex-1 container py-6 max-w-4xl mx-auto">
+            <main className="flex-1 container py-6 w-4/5 sm:max-w-4xl mx-auto">
                 <form onSubmit={handleSubmitAIData} className="space-y-6">
                     <Card>
                         <CardHeader>
@@ -145,7 +145,7 @@ function CreateAIQuizContent() {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label>Nível / Público Alvo <span className="text-destructive">*</span></Label>
                                     <Select
@@ -185,7 +185,7 @@ function CreateAIQuizContent() {
 
                             <div className="space-y-3 pt-2">
                                 <Label>Tipos de Questão <span className="text-destructive">*</span></Label>
-                                <RadioGroup value={questionTypes} onValueChange={handleQuestionTypeChange} className="flex gap-4" disabled={isPending}>
+                                <RadioGroup value={questionTypes} onValueChange={handleQuestionTypeChange} className="flex flex-col sm:flex-row gap-4" disabled={isPending}>
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="ALL" id="ALL" />
                                         <Label htmlFor="ALL">Misto</Label>
@@ -233,7 +233,7 @@ function CreateAIQuizContent() {
                                         />
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <Label>Grau de Dificuldade</Label>
                                             <Select value={difficulty} onValueChange={setDifficulty} disabled={isPending}>
