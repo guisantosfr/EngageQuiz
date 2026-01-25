@@ -294,7 +294,7 @@ export function QuizForm({ mode, initialData }: QuizFormProps) {
                             onClick={handleSubmit}
                             disabled={questions.length === 0 || title.length === 0 || isPending}
                         >
-                            {isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                            {isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 sm:mr-2" />}
                             <span className="hidden sm:inline">Salvar</span>
                         </Button>
                     </div>
@@ -393,7 +393,7 @@ export function QuizForm({ mode, initialData }: QuizFormProps) {
                         }
                     </div>
 
-                    <div className="flex justify-end gap-4">
+                    <div className="flex justify-center sm:justify-end gap-4">
                         <Button type="button" variant="outline" onClick={handleBack} className="cursor-pointer">
                             Cancelar
                         </Button>
