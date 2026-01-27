@@ -1,6 +1,17 @@
 'use client'
 
 import { useTransition } from "react";
+import {
+    AlertDialog,
+    AlertDialogTrigger,
+    AlertDialogContent,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogCancel,
+    AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Quiz } from "@/types/Quiz";
@@ -9,31 +20,29 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createSession } from "../_actions/create-session";
+import StartQuizDialog from "./start-quiz-dialog";
 
 export default function QuizCard({ quiz }: { quiz: Quiz }) {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
 
-    const handleStartQuiz = () => {
-        // Opção simples nativa. Para algo mais elaborado, use um AlertDialog do shadcn
-        const confirmed = window.confirm("Deseja iniciar uma nova sessão deste questionário?");
-        
-        if (!confirmed) return;
-
+    const handleConfirmStartQuiz = () => {
         startTransition(async () => {
             const result = await createSession(quiz.id);
 
-            if (result.error) {
+            if (result?.error) {
                 toast.error(result.error);
                 return;
             }
 
-            if (result.success) {
+            if (result?.success) {
                 toast.success("Sessão criada com sucesso!");
-                router.push(`/play?sessionId=${result.sessionId}&quizId=${result.quizId}`);
+                router.push(
+                    `/play?sessionId=${result.sessionId}&quizId=${result.quizId}`
+                );
             }
         });
-    }
+    };
 
     return (
         <Card key={quiz.id}>
@@ -52,19 +61,25 @@ export default function QuizCard({ quiz }: { quiz: Quiz }) {
                     </Link>
                 </Button>
 
-                <Button 
-                    size="sm" 
-                    className="w-1/3" 
-                    onClick={handleStartQuiz} 
-                    disabled={isPending}
-                >
-                    {isPending ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                        <Play className="mr-2 h-4 w-4" />
-                    )}
-                    {isPending ? "Iniciando..." : "Iniciar"}
-                </Button>
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button
+                            size="sm"
+                            className="w-1/3"
+                            disabled={isPending}
+                        >
+                            {isPending ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                                <Play className="mr-2 h-4 w-4" />
+                            )}
+                            {isPending ? "Iniciando..." : "Iniciar"}
+                        </Button>
+                    </AlertDialogTrigger>
+
+                    <StartQuizDialog onClick={handleConfirmStartQuiz} />
+                </AlertDialog>
+
             </CardFooter>
         </Card>
     )
