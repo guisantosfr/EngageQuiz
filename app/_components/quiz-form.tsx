@@ -187,8 +187,31 @@ export function QuizForm({ mode, initialData }: QuizFormProps) {
         )
     }
 
+    const validateQuestions = (): string | null => {
+        for (let i = 0; i < questions.length; i++) {
+            const q = questions[i]
+            const questionNum = i + 1
+
+            if (q.type === "MULTIPLE_CHOICE" && q.options) {
+                const correctOption = q.options.find(opt => opt.isCorrect)
+
+                if (correctOption && !correctOption.text.trim()) {
+                    return `Questão ${questionNum}: A alternativa marcada como correta não pode estar vazia.`
+                }
+            }
+        }
+        return null
+    }
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
+
+        const validationError = validateQuestions()
+
+        if (validationError) {
+            toast.error(validationError)
+            return
+        }
 
         const isNewId = (id: string | undefined) => id?.startsWith('NEW_QUESTION_') || id?.startsWith('NEW_OPTION_')
 
