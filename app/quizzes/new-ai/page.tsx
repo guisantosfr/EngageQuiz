@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { AlertDialog, AlertDialogContent } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { ChevronLeft, ChevronDown, Sparkles, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
@@ -316,9 +316,12 @@ function CreateAIQuizContent() {
                         </Button>
                     </div>
 
-                    <AlertDialog open={isPending} >
+                    <AlertDialog open={isPending}>
                         <AlertDialogContent>
-                            <h1>Aguarde. Gerando questionário ...</h1>
+                            <AlertDialogTitle>Aguarde. Gerando questionário ...</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Isto pode levar alguns instantes
+                            </AlertDialogDescription>
                         </AlertDialogContent>
                     </AlertDialog>
                 </form>

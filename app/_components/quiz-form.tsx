@@ -428,6 +428,21 @@ export function QuizForm({ mode, initialData }: QuizFormProps) {
                 </form>
             </main>
 
+            <AlertDialog open={isPending}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Aguarde...</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {mode === 'create' ? 'Criando questionário' : 'Salvando alterações'} — isso pode levar alguns instantes.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+
+                    <div className="flex items-center justify-center py-4">
+                        <Loader2 className="h-6 w-6 animate-spin" />
+                    </div>
+                </AlertDialogContent>
+            </AlertDialog>
+
             <AlertDialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
