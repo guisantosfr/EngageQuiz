@@ -43,6 +43,7 @@ export class QuizzesService {
         const {
             mainSubject,
             topicsToInclude,
+            restrictions,
             level,
             numberOfQuestions,
             questionTypes,
@@ -50,7 +51,8 @@ export class QuizzesService {
             difficultyLevel,
             educationalContext,
             tone,
-            estimatedTime
+            estimatedTime,
+            otherComments
         } = data;
 
         let prompt = 'Atue como um professor e gere um questionário educional para seus alunos, com base nos seguintes parâmetros especificados.\n\n';
@@ -61,6 +63,10 @@ export class QuizzesService {
 
         if (topicsToInclude && topicsToInclude.trim()) {
             prompt += `**Subtópicos / Tópicos a incluir:** ${topicsToInclude}\n\n`;
+        }
+
+        if (restrictions && restrictions.trim()) {
+            prompt += `**Restrições / Coisas para não incluir:** ${restrictions}\n\n`;
         }
 
         if (level && level.trim()) {
@@ -100,10 +106,13 @@ export class QuizzesService {
             prompt += `**Tempo estimado por resposta:** ${estimatedTime}\n\n`;
         }
 
+        if (otherComments && otherComments.trim()) {
+            prompt += `**Outros comentários / instruções:** ${otherComments}\n\n`;
+        }
+
 
         prompt += '**Instruções:**\n';
         prompt += '- Certifique-se de que as questões estejam alinhadas com os parâmetros especificados\n';
-        prompt += '- Evite ambiguidades, pegadinhas ou perguntas subjetivas.\n';
         prompt += '- Cada questão deve conter um tempo adequado para sua resolução, podendo ser de 15, 30, 45 ou 60 segundos.\n';
         prompt += '- O título ("title") do questionário não deve conter mais do que 100 caracteres.\n';
         prompt += '- A descrição ("description") do questionário não deve conter mais do que 200 caracteres.\n';

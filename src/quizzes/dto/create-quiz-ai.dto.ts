@@ -1,6 +1,7 @@
 export class CreateQuizAIDto {
     mainSubject: string;
     topicsToInclude?: string;
+    restrictions?: string;
     level: string;
     numberOfQuestions: number;
     questionTypes: 'ALL' | 'MULTIPLE_CHOICE' | 'TRUE_FALSE';
@@ -9,4 +10,5 @@ export class CreateQuizAIDto {
     educationalContext?: string;
     tone?: string;
     estimatedTime?: string;
+    otherComments?: string;
 }
