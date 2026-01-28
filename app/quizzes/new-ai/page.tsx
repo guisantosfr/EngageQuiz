@@ -30,9 +30,11 @@ function CreateAIQuizContent() {
     const [isAdvancedOpen, setIsAdvancedOpen] = useState(false)
     const [theme, setTheme] = useState("")
     const [subtopics, setSubtopics] = useState("")
+    const [restrictions, setRestrictions] = useState("")
     const [targetAudience, setTargetAudience] = useState("")
     const [questionCount, setQuestionCount] = useState(10)
     const [questionTypes, setQuestionTypes] = useState<QuestionType>("ALL")
+    const [generalComments, setGeneralComments] = useState("")
 
     const [learningObjective, setLearningObjective] = useState("")
     const [difficulty, setDifficulty] = useState("")
@@ -60,9 +62,11 @@ function CreateAIQuizContent() {
         const body = {
             mainSubject: theme,
             topicsToInclude: subtopics,
+            restrictions,
             level: targetAudience,
             numberOfQuestions: questionCount,
             questionTypes: questionTypes,
+            otherComments: generalComments,
             learningObjective: learningObjective,
             difficultyLevel: difficulty,
             educationalContext,
@@ -145,6 +149,17 @@ function CreateAIQuizContent() {
                                 />
                             </div>
 
+                            <div className="space-y-2">
+                                <Label htmlFor="restrictions">Restrições / O Que Não Incluir (opcional)</Label>
+                                <Textarea
+                                    id="restrictions"
+                                    placeholder="Ex: Não incluir datas específicas, evitar questões sobre biografias, não abordar aspectos econômicos..."
+                                    value={restrictions}
+                                    onChange={(e) => setRestrictions(e.target.value)}
+                                    rows={2}
+                                />
+                            </div>
+
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label>Nível / Público Alvo <span className="text-destructive">*</span></Label>
@@ -199,6 +214,17 @@ function CreateAIQuizContent() {
                                         <Label htmlFor="TF">Verdadeiro ou Falso</Label>
                                     </div>
                                 </RadioGroup>
+                            </div>
+
+                            <div className="space-y-3 pt-3">
+                                <Label htmlFor="generalComments">Comentários e Instruções Gerais (opcional)</Label>
+                                <Textarea
+                                    id="generalComments"
+                                    placeholder="Ex: Não incluir pegadinhas, não gerar questões subjetivas, priorizar questões práticas..."
+                                    value={generalComments}
+                                    onChange={(e) => setGeneralComments(e.target.value)}
+                                    rows={3}
+                                />
                             </div>
                         </CardContent>
                     </Card>
