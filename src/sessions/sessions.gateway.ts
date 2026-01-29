@@ -7,7 +7,7 @@ import {
     OnGatewayConnection,
     OnGatewayDisconnect,
 } from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
+import { Server, Namespace, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 
 interface PlayerSocketInfo {
@@ -26,13 +26,24 @@ interface PlayerSocketInfo {
 })
 export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @WebSocketServer()
-    server: Server;
+    server: Server | Namespace;
 
     private readonly logger = new Logger(SessionsGateway.name);
 
     // Maps for socket ↔ player association
     private socketToPlayer = new Map<string, PlayerSocketInfo>();
     private playerToSocket = new Map<string, string>();
+
+    private getSessionsNamespace(): Namespace {
+        const s: any = this.server;
+        // Se for Server, usamos .of('/sessions'); se já for Namespace, retornamos direto
+        return typeof s.of === 'function' ? (s.of('/sessions') as Namespace) : (s as Namespace);
+    }
+
+    private getSocketById(socketId: string): Socket | undefined {
+        const nsp: any = this.getSessionsNamespace();
+        return nsp.sockets?.get?.(socketId);
+    }
 
     handleConnection(client: Socket) {
         this.logger.log(`Client connected: ${client.id}`);
@@ -71,7 +82,7 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
 
         const oldSocketId = this.playerToSocket.get(playerId);
         if (oldSocketId && oldSocketId !== client.id) {
-            const oldSocket = this.server.sockets.sockets.get(oldSocketId);
+            const oldSocket = this.getSocketById(oldSocketId);
             oldSocket?.disconnect(true);
             this.socketToPlayer.delete(oldSocketId);
         }
@@ -108,19 +119,27 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
 
     disconnectPlayer(playerId: string): void {
         const socketId = this.playerToSocket.get(playerId);
-        if (socketId) {
-            const socket = this.server.sockets.sockets.get(socketId);
-            if (socket) {
-                const playerInfo = this.socketToPlayer.get(socketId);
-                if (playerInfo) {
-                    socket.leave(playerInfo.sessionId);
-                }
-                socket.disconnect(true);
+        if (!socketId) return;
+
+        const nsp = this.getSessionsNamespace();
+
+        // No namespace, sockets é um Map no Socket.IO v4
+        const socket = (nsp as any).sockets?.get?.(socketId) as Socket | undefined;
+
+        if (socket) {
+            const playerInfo = this.socketToPlayer.get(socketId);
+
+            if (playerInfo) {
+                socket.leave(playerInfo.sessionId);
             }
-            this.playerToSocket.delete(playerId);
-            this.socketToPlayer.delete(socketId);
-            this.logger.log(`Player ${playerId} forcefully disconnected`);
+
+            socket.disconnect(true);
         }
+
+        this.playerToSocket.delete(playerId);
+        this.socketToPlayer.delete(socketId);
+
+        this.logger.log(`Player ${playerId} forcefully disconnected`);
     }
 
     emitSessionCanceled(sessionId: string): void {
