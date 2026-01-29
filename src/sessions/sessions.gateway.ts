@@ -42,21 +42,24 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
         this.logger.log(`Client disconnected: ${client.id}`);
 
         const playerInfo = this.socketToPlayer.get(client.id);
+        if (!playerInfo) return;
 
-        if (playerInfo) {
-            this.socketToPlayer.delete(client.id);
-            this.playerToSocket.delete(playerInfo.playerId);
+        const { sessionId, playerId, nickname } = playerInfo;
+        client.leave(sessionId);
 
-            this.emitToSession(playerInfo.sessionId, 'player_disconnected', {
-                player: {
-                    playerId: playerInfo.playerId,
-                    nickname: playerInfo.nickname,
-                },
-                timestamp: new Date().toISOString(),
-            });
+        this.socketToPlayer.delete(client.id);
+        this.playerToSocket.delete(playerId);
 
-            this.logger.log(`Player ${playerInfo.nickname} disconnected from session ${playerInfo.sessionId}`);
-        }
+        this.emitToSession(sessionId, 'player_disconnected', {
+            sessionId,
+            player: {
+                playerId: playerId,
+                nickname: nickname,
+            },
+            timestamp: new Date().toISOString(),
+        });
+
+        this.logger.log(`Player ${playerInfo.nickname} disconnected from session ${playerInfo.sessionId}`);
     }
 
     @SubscribeMessage('join_session')
@@ -66,6 +69,13 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
     ) {
         const { playerId, sessionId, nickname } = data;
 
+        const oldSocketId = this.playerToSocket.get(playerId);
+        if (oldSocketId && oldSocketId !== client.id) {
+            const oldSocket = this.server.sockets.sockets.get(oldSocketId);
+            oldSocket?.disconnect(true);
+            this.socketToPlayer.delete(oldSocketId);
+        }
+
         client.join(sessionId);
 
         this.socketToPlayer.set(client.id, { playerId, sessionId, nickname });
@@ -73,12 +83,19 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
 
         this.logger.log(`Player ${nickname} (${playerId}) joined room ${sessionId}`);
 
-        this.emitToSession(sessionId, 'player_joined', {
+        client.to(sessionId).emit('player_joined', {
+            sessionId,
             player: { playerId, nickname, joinedAt: new Date().toISOString() },
             timestamp: new Date().toISOString(),
         });
 
         return { success: true, message: `Joined session ${sessionId}` };
+    }
+
+    @SubscribeMessage('join_host')
+    handleJoinHost(@MessageBody() data: { sessionId: string }, @ConnectedSocket() client: Socket) {
+        client.join(data.sessionId);
+        return { success: true };
     }
 
     emitToSession(sessionId: string, event: string, data: any): void {
@@ -117,6 +134,7 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
     emitPlayerLeft(sessionId: string, playerData: { playerId: string; nickname: string }): void {
         this.logger.log(`Player left session ${sessionId}: ${playerData.nickname}`);
         this.emitToSession(sessionId, 'player_left', {
+            sessionId,
             player: playerData,
             timestamp: new Date().toISOString(),
         });
@@ -125,6 +143,7 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
     emitPlayerKicked(sessionId: string, playerData: { playerId: string; nickname: string }): void {
         this.logger.log(`Player kicked from session ${sessionId}: ${playerData.nickname}`);
         this.emitToSession(sessionId, 'player_kicked', {
+            sessionId,
             player: playerData,
             timestamp: new Date().toISOString(),
         });
