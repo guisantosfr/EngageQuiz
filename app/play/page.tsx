@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation"
+import { io, Socket } from 'socket.io-client';
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Clock, Home, Play, Users } from "lucide-react"
 import { toast } from "sonner";
 import { ErrorBoundary } from "@/components/error-boundary";
+import Player from "@/types/Player";
 
 interface Session {
     id: string;
@@ -36,28 +38,100 @@ function PlayQuizContent() {
     const sessionId = searchParams.get("sessionId");
 
     const [session, setSession] = useState<Session | null>(null);
+    const [players, setPlayers] = useState<Player[]>([])
+
+    const socketRef = useRef<Socket | null>(null);
+
+    const fetchSessionData = useCallback(async () => {
+        if (!quizId || !sessionId) return;
+
+        try {
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/sessions/${sessionId}/quiz/${quizId}`
+            );
+
+            if (!response.ok) {
+                toast.error("Dados inválidos");
+                router.replace("/");
+                return;
+            }
+
+            const data = await response.json();
+            setSession(data);
+        } catch (error) {
+            console.error(error);
+            toast.error("Erro ao carregar sessão");
+        }
+    }, [quizId, sessionId, router]);
+
+    const fetchPlayers = useCallback(async () => {
+        if (!sessionId) return;
+
+        try {
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/sessions/${sessionId}/players`
+            );
+
+            if (response.ok) {
+                const data = await response.json();
+                setPlayers(data);
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    }, [sessionId]);
 
     useEffect(() => {
-        const fetchSessionData = async () => {
-            if (!quizId || !sessionId) return;
+        if (!quizId || !sessionId) return;
+        fetchSessionData();
+        fetchPlayers();
+    }, [quizId, sessionId, fetchSessionData, fetchPlayers]);
 
-            try {
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/sessions/${sessionId}/quiz/${quizId}`);
+    useEffect(() => {
+        if (!sessionId) return;
 
-                if (response.ok) {
-                    const data = await response.json();
-                    setSession(data);
-                } else {
-                    toast.error('Dados inválidos')
-                    router.replace('/')
-                }
-            } catch (error) {
-                console.error(error);
-            }
-        }
+        socketRef.current = io(`${process.env.NEXT_PUBLIC_API_URL}/sessions`, {
+            transports: ["websocket"],
+            autoConnect: true,
+        });
 
-        fetchSessionData()
-    }, [])
+        const socket = socketRef.current;
+
+        socket.on("connect", () => {
+            socket.emit("join_host", { sessionId });
+        });
+
+        const shouldHandle = (payload: any) => {
+            console.log('payload', payload);
+            // se backend mandar sessionId, filtramos; se não mandar, atualizamos mesmo
+            return !payload?.sessionId || payload.sessionId === sessionId;
+        };
+
+        const refreshPlayers = async (payload: any) => {
+            if (!shouldHandle(payload)) return;
+            await fetchPlayers();
+        };
+
+        socket.on("player_joined", refreshPlayers);
+        socket.on("player_left", refreshPlayers);
+        socket.on("player_disconnected", refreshPlayers);
+
+        socket.on("connect_error", (err) => {
+            console.error("Socket connect_error:", err?.message || err);
+        });
+
+        return () => {
+            socket.off("player_joined", refreshPlayers);
+            socket.off("player_left", refreshPlayers);
+            socket.off("player_disconnected", refreshPlayers);
+            socket.disconnect();
+            socketRef.current = null;
+        };
+    }, [sessionId, fetchPlayers]);
+
+    if (!quizId || !sessionId) {
+        return null; // ou um fallback UI
+    }
 
     return (
         <>
@@ -87,13 +161,23 @@ function PlayQuizContent() {
                                     <Users className="h-5 w-5" />
                                     <span>Jogadores conectados</span>
                                 </div>
-                                <span className="font-bold">{session?.players?.length}</span>
+                                <span className="font-bold">{players.length}</span>
+                            </div>
+
+                            <div className="bg-muted rounded-lg p-4 max-h-40 overflow-y-auto">
+                                <div className="flex flex-wrap gap-2">
+                                    {players.map((p) => (
+                                        <span key={p.id} className="bg-primary/20 px-3 py-1 rounded-full text-sm">
+                                            {p.nickname}
+                                        </span>
+                                    ))}
+                                </div>
                             </div>
                         </div>
 
                         <div className="flex items-center gap-2 text-sm text-white/70 mb-6">
                             <Clock className="h-4 w-4" />
-                            <span>{session?.quiz?.numberOfQuestions} questões</span>
+                            <span>{session?.quiz?.numberOfQuestions ?? 0} questões</span>
                         </div>
 
                         <div className="flex justify-center gap-4">
@@ -105,8 +189,13 @@ function PlayQuizContent() {
                                 <Home className="mr-2 h-4 w-4" />
                                 Sair
                             </Button>
-                            <Button onClick={() => { }} className="bg-green-500 hover:bg-green-600 text-white px-8">
-                                <Play size={16} />
+                            <Button
+                                onClick={() => {
+                                    // TODO: emitir evento quiz_started e navegar
+                                    // socketRef.current?.emit('quiz_started', { sessionId })
+                                }}
+                                className="bg-green-500 hover:bg-green-600 text-white px-8"
+                            >    <Play size={16} />
                                 Iniciar Quiz
                             </Button>
                         </div>
