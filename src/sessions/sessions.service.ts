@@ -181,7 +181,64 @@ export class SessionsService {
         return updatedPlayer;
     }
 
-    async getSessionData(sessionId: string, quizId: string) {
+    async getSessionPlayerData(sessionId: string, playerId: string) {
+        const session = await this.prisma.session.findUnique({
+            where: { id: sessionId },
+            select: {
+                id: true,
+                status: true,
+                quiz: {
+                    select: {
+                        id: true,
+                        title: true,
+                        _count: {
+                            select: { questions: true }
+                        }
+                    }
+                }
+            }
+        });
+
+        if (!session) {
+            throw new NotFoundException(`Session not found`);
+        }
+
+        if (session.status !== StatusType.CREATED) {
+            throw new BadRequestException(`Session is already started or finished`);
+        }
+
+        const { _count, ...quizRest } = session.quiz;
+
+        const player = await this.prisma.player.findUnique({
+            where: { id: playerId },
+            select: {
+                id: true,
+                sessionId: true,
+                nickname: true
+            }
+        });
+
+        if (!player) {
+            throw new NotFoundException(`Player not found`);
+        }
+
+        if (player.sessionId !== sessionId) {
+            throw new BadRequestException(`Player does not belong to this session`);
+        }
+
+        return {
+            session: {
+                ...session,
+                quiz: {
+                    ...quizRest,
+                    numberOfQuestions: _count.questions
+                }
+            },
+            player
+        };
+    }
+
+    async getSessionFullData(sessionId: string, quizId: string) {
         const session = await this.prisma.session.findUnique({
             where: { id: sessionId },
             include: {

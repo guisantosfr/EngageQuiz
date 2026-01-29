@@ -15,7 +15,7 @@ export class SessionsController {
     }
 
     @Post(':code/join')
-    @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute for join
+    //@Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute for join
     async join(
         @Param('code') code: string,
         @Body() joinSessionDto: JoinSessionDto,
@@ -50,8 +50,13 @@ export class SessionsController {
         return this.sessionsService.removePlayer(sessionId, playerId, true);
     }
 
+    @Get(':sessionId/player/:playerId')
+    async getSessionPlayerInfo(@Param('sessionId') sessionId: string, @Param('playerId') playerId: string) {
+        return this.sessionsService.getSessionPlayerData(sessionId, playerId);
+    }
+
     @Get(':sessionId/quiz/:quizId')
-    async getSessionInfo(@Param('sessionId') sessionId: string, @Param('quizId') quizId: string) {
-        return this.sessionsService.getSessionData(sessionId, quizId);
+    async getSessionFullInfo(@Param('sessionId') sessionId: string, @Param('quizId') quizId: string) {
+        return this.sessionsService.getSessionFullData(sessionId, quizId);
     }
 }
