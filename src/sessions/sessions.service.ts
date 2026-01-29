@@ -117,6 +117,10 @@ export class SessionsService {
             orderBy: {
                 joinedAt: 'asc',
             },
+            select: {
+                id: true,
+                nickname: true,
+            }
         });
     }
 
