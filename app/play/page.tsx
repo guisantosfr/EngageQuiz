@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { io, Socket } from 'socket.io-client';
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Clock, Home, Play, User, Users, X } from "lucide-react"
+import { CircleX, Clock, Play, User, Users, X } from "lucide-react"
 import { toast } from "sonner";
 import { ErrorBoundary } from "@/components/error-boundary";
 import Player from "@/types/Player";
@@ -42,6 +42,8 @@ function PlayQuizContent() {
     const [session, setSession] = useState<Session | null>(null);
     const [players, setPlayers] = useState<Player[]>([])
     const [playerToKick, setPlayerToKick] = useState<Player | null>(null)
+
+    const [cancelSession, setCancelSession] = useState(false)
 
     const socketRef = useRef<Socket | null>(null);
 
@@ -99,6 +101,25 @@ function PlayQuizContent() {
             if (response.ok) {
                 setPlayers(players.filter((p) => p.id !== player.id))
 
+            }
+        } catch (error) {
+            toast.error('Erro ao expulsar jogador')
+            console.error(error);
+        }
+    }
+
+    const confirmCancelSession = async () => {
+        try {
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/sessions/${sessionId}`,
+                {
+                    method: 'DELETE'
+                }
+            );
+
+            if (response.ok) {
+                router.replace('/')
+                toast.info('Sessão Cancelada')
             }
         } catch (error) {
             toast.error('Erro ao expulsar jogador')
@@ -254,23 +275,45 @@ function PlayQuizContent() {
 
                         <div className="flex justify-center gap-4">
                             <Button
-                                onClick={() => router.push("/")}
+                                onClick={() => setCancelSession(true)}
                                 variant="outline"
                                 className="bg-white/20 hover:bg-white/30 border-white text-white"
                             >
-                                <Home className="mr-2 h-4 w-4" />
-                                Sair
+                                <CircleX className="mr-2 h-4 w-4" />
+                                Cancelar Sessão
                             </Button>
                             <Button
                                 onClick={() => {
                                     // TODO: emitir evento quiz_started e navegar
                                     // socketRef.current?.emit('quiz_started', { sessionId })
                                 }}
-                                className="bg-green-500 hover:bg-green-600 text-white px-8"
+                                className="bg-green-600 hover:bg-green-500 text-white px-8"
                             >    <Play size={16} />
                                 Iniciar Quiz
                             </Button>
                         </div>
+
+                        <AlertDialog open={cancelSession} onOpenChange={(open) => !open && setCancelSession(false)}>
+                            <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Cancelar Sessão?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        Esta ação não pode ser desfeita.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+
+                                <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+                                    <AlertDialogCancel className="w-full sm:w-auto">Continuar</AlertDialogCancel>
+                                    <AlertDialogAction
+                                        onClick={confirmCancelSession}
+                                        className="w-full sm:w-auto bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                        Cancelar Sessão
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            
+                            </AlertDialogContent>
+                        </AlertDialog>
                     </CardContent>
                 </Card>
             </div>
