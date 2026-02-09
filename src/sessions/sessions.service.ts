@@ -151,38 +151,41 @@ export class SessionsService {
     }
 
     async removePlayer(sessionId: string, playerId: string, kicked: boolean = false) {
-        const player = await this.prisma.player.findUnique({
-            where: { id: playerId },
-            include: { session: true },
+        return this.prisma.$transaction(async (tx) => {
+            const player = await tx.player.findUnique({
+                where: { id: playerId },
+                include: { session: true },
+            });
+
+            if (!player) {
+                throw new NotFoundException(`Player not found`);
+            }
+
+            if (player.sessionId !== sessionId) {
+                throw new BadRequestException(`Player does not belong to this session`);
+            }
+
+            if (player.leftAt) {
+                throw new BadRequestException(`Player has already left the session`);
+            }
+
+            const updatedPlayer = await tx.player.update({
+                where: { id: playerId },
+                data: { leftAt: new Date() },
+            });
+
+            // Emit event and disconnect - if these fail, transaction will rollback
+            const playerData = { playerId: updatedPlayer.id, nickname: updatedPlayer.nickname };
+            if (kicked) {
+                this.gateway.emitPlayerKicked(sessionId, playerData);
+            } else {
+                this.gateway.emitPlayerLeft(sessionId, playerData);
+            }
+
+            this.gateway.disconnectPlayer(playerId);
+
+            return updatedPlayer;
         });
-
-        if (!player) {
-            throw new NotFoundException(`Player not found`);
-        }
-
-        if (player.sessionId !== sessionId) {
-            throw new BadRequestException(`Player does not belong to this session`);
-        }
-
-        if (player.leftAt) {
-            throw new BadRequestException(`Player has already left the session`);
-        }
-
-        const updatedPlayer = await this.prisma.player.update({
-            where: { id: playerId },
-            data: { leftAt: new Date() },
-        });
-
-        const playerData = { playerId: updatedPlayer.id, nickname: updatedPlayer.nickname };
-        if (kicked) {
-            this.gateway.emitPlayerKicked(sessionId, playerData);
-        } else {
-            this.gateway.emitPlayerLeft(sessionId, playerData);
-        }
-
-        this.gateway.disconnectPlayer(playerId);
-
-        return updatedPlayer;
     }
 
     async getSessionPlayerData(sessionId: string, playerId: string) {
