@@ -20,8 +20,18 @@ export type SessionModel = runtime.Types.Result.DefaultSelection<Prisma.$Session
 
 export type AggregateSession = {
   _count: SessionCountAggregateOutputType | null
+  _avg: SessionAvgAggregateOutputType | null
+  _sum: SessionSumAggregateOutputType | null
   _min: SessionMinAggregateOutputType | null
   _max: SessionMaxAggregateOutputType | null
+}
+
+export type SessionAvgAggregateOutputType = {
+  currentQuestionIndex: number | null
+}
+
+export type SessionSumAggregateOutputType = {
+  currentQuestionIndex: number | null
 }
 
 export type SessionMinAggregateOutputType = {
@@ -29,6 +39,7 @@ export type SessionMinAggregateOutputType = {
   quizId: string | null
   code: string | null
   status: $Enums.StatusType | null
+  currentQuestionIndex: number | null
   startedAt: Date | null
   endedAt: Date | null
   createdAt: Date | null
@@ -40,6 +51,7 @@ export type SessionMaxAggregateOutputType = {
   quizId: string | null
   code: string | null
   status: $Enums.StatusType | null
+  currentQuestionIndex: number | null
   startedAt: Date | null
   endedAt: Date | null
   createdAt: Date | null
@@ -51,6 +63,7 @@ export type SessionCountAggregateOutputType = {
   quizId: number
   code: number
   status: number
+  currentQuestionIndex: number
   startedAt: number
   endedAt: number
   createdAt: number
@@ -59,11 +72,20 @@ export type SessionCountAggregateOutputType = {
 }
 
 
+export type SessionAvgAggregateInputType = {
+  currentQuestionIndex?: true
+}
+
+export type SessionSumAggregateInputType = {
+  currentQuestionIndex?: true
+}
+
 export type SessionMinAggregateInputType = {
   id?: true
   quizId?: true
   code?: true
   status?: true
+  currentQuestionIndex?: true
   startedAt?: true
   endedAt?: true
   createdAt?: true
@@ -75,6 +97,7 @@ export type SessionMaxAggregateInputType = {
   quizId?: true
   code?: true
   status?: true
+  currentQuestionIndex?: true
   startedAt?: true
   endedAt?: true
   createdAt?: true
@@ -86,6 +109,7 @@ export type SessionCountAggregateInputType = {
   quizId?: true
   code?: true
   status?: true
+  currentQuestionIndex?: true
   startedAt?: true
   endedAt?: true
   createdAt?: true
@@ -131,6 +155,18 @@ export type SessionAggregateArgs<ExtArgs extends runtime.Types.Extensions.Intern
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
+   * Select which fields to average
+  **/
+  _avg?: SessionAvgAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
+   * Select which fields to sum
+  **/
+  _sum?: SessionSumAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
    * Select which fields to find the minimum value
   **/
   _min?: SessionMinAggregateInputType
@@ -161,6 +197,8 @@ export type SessionGroupByArgs<ExtArgs extends runtime.Types.Extensions.Internal
   take?: number
   skip?: number
   _count?: SessionCountAggregateInputType | true
+  _avg?: SessionAvgAggregateInputType
+  _sum?: SessionSumAggregateInputType
   _min?: SessionMinAggregateInputType
   _max?: SessionMaxAggregateInputType
 }
@@ -170,11 +208,14 @@ export type SessionGroupByOutputType = {
   quizId: string
   code: string
   status: $Enums.StatusType
+  currentQuestionIndex: number | null
   startedAt: Date | null
   endedAt: Date | null
   createdAt: Date
   updatedAt: Date
   _count: SessionCountAggregateOutputType | null
+  _avg: SessionAvgAggregateOutputType | null
+  _sum: SessionSumAggregateOutputType | null
   _min: SessionMinAggregateOutputType | null
   _max: SessionMaxAggregateOutputType | null
 }
@@ -202,6 +243,7 @@ export type SessionWhereInput = {
   quizId?: Prisma.StringFilter<"Session"> | string
   code?: Prisma.StringFilter<"Session"> | string
   status?: Prisma.EnumStatusTypeFilter<"Session"> | $Enums.StatusType
+  currentQuestionIndex?: Prisma.IntNullableFilter<"Session"> | number | null
   startedAt?: Prisma.DateTimeNullableFilter<"Session"> | Date | string | null
   endedAt?: Prisma.DateTimeNullableFilter<"Session"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Session"> | Date | string
@@ -215,6 +257,7 @@ export type SessionOrderByWithRelationInput = {
   quizId?: Prisma.SortOrder
   code?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  currentQuestionIndex?: Prisma.SortOrderInput | Prisma.SortOrder
   startedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   endedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -231,6 +274,7 @@ export type SessionWhereUniqueInput = Prisma.AtLeast<{
   quizId?: Prisma.StringFilter<"Session"> | string
   code?: Prisma.StringFilter<"Session"> | string
   status?: Prisma.EnumStatusTypeFilter<"Session"> | $Enums.StatusType
+  currentQuestionIndex?: Prisma.IntNullableFilter<"Session"> | number | null
   startedAt?: Prisma.DateTimeNullableFilter<"Session"> | Date | string | null
   endedAt?: Prisma.DateTimeNullableFilter<"Session"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Session"> | Date | string
@@ -244,13 +288,16 @@ export type SessionOrderByWithAggregationInput = {
   quizId?: Prisma.SortOrder
   code?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  currentQuestionIndex?: Prisma.SortOrderInput | Prisma.SortOrder
   startedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   endedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.SessionCountOrderByAggregateInput
+  _avg?: Prisma.SessionAvgOrderByAggregateInput
   _max?: Prisma.SessionMaxOrderByAggregateInput
   _min?: Prisma.SessionMinOrderByAggregateInput
+  _sum?: Prisma.SessionSumOrderByAggregateInput
 }
 
 export type SessionScalarWhereWithAggregatesInput = {
@@ -261,6 +308,7 @@ export type SessionScalarWhereWithAggregatesInput = {
   quizId?: Prisma.StringWithAggregatesFilter<"Session"> | string
   code?: Prisma.StringWithAggregatesFilter<"Session"> | string
   status?: Prisma.EnumStatusTypeWithAggregatesFilter<"Session"> | $Enums.StatusType
+  currentQuestionIndex?: Prisma.IntNullableWithAggregatesFilter<"Session"> | number | null
   startedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Session"> | Date | string | null
   endedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Session"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Session"> | Date | string
@@ -271,6 +319,7 @@ export type SessionCreateInput = {
   id?: string
   code: string
   status: $Enums.StatusType
+  currentQuestionIndex?: number | null
   startedAt?: Date | string | null
   endedAt?: Date | string | null
   createdAt?: Date | string
@@ -284,6 +333,7 @@ export type SessionUncheckedCreateInput = {
   quizId: string
   code: string
   status: $Enums.StatusType
+  currentQuestionIndex?: number | null
   startedAt?: Date | string | null
   endedAt?: Date | string | null
   createdAt?: Date | string
@@ -295,6 +345,7 @@ export type SessionUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStatusTypeFieldUpdateOperationsInput | $Enums.StatusType
+  currentQuestionIndex?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   endedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -308,6 +359,7 @@ export type SessionUncheckedUpdateInput = {
   quizId?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStatusTypeFieldUpdateOperationsInput | $Enums.StatusType
+  currentQuestionIndex?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   endedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -320,6 +372,7 @@ export type SessionCreateManyInput = {
   quizId: string
   code: string
   status: $Enums.StatusType
+  currentQuestionIndex?: number | null
   startedAt?: Date | string | null
   endedAt?: Date | string | null
   createdAt?: Date | string
@@ -330,6 +383,7 @@ export type SessionUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStatusTypeFieldUpdateOperationsInput | $Enums.StatusType
+  currentQuestionIndex?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   endedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -341,6 +395,7 @@ export type SessionUncheckedUpdateManyInput = {
   quizId?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStatusTypeFieldUpdateOperationsInput | $Enums.StatusType
+  currentQuestionIndex?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   endedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -362,10 +417,15 @@ export type SessionCountOrderByAggregateInput = {
   quizId?: Prisma.SortOrder
   code?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  currentQuestionIndex?: Prisma.SortOrder
   startedAt?: Prisma.SortOrder
   endedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type SessionAvgOrderByAggregateInput = {
+  currentQuestionIndex?: Prisma.SortOrder
 }
 
 export type SessionMaxOrderByAggregateInput = {
@@ -373,6 +433,7 @@ export type SessionMaxOrderByAggregateInput = {
   quizId?: Prisma.SortOrder
   code?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  currentQuestionIndex?: Prisma.SortOrder
   startedAt?: Prisma.SortOrder
   endedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -384,10 +445,15 @@ export type SessionMinOrderByAggregateInput = {
   quizId?: Prisma.SortOrder
   code?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  currentQuestionIndex?: Prisma.SortOrder
   startedAt?: Prisma.SortOrder
   endedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type SessionSumOrderByAggregateInput = {
+  currentQuestionIndex?: Prisma.SortOrder
 }
 
 export type SessionScalarRelationFilter = {
@@ -441,6 +507,14 @@ export type EnumStatusTypeFieldUpdateOperationsInput = {
   set?: $Enums.StatusType
 }
 
+export type NullableIntFieldUpdateOperationsInput = {
+  set?: number | null
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
 export type NullableDateTimeFieldUpdateOperationsInput = {
   set?: Date | string | null
 }
@@ -463,6 +537,7 @@ export type SessionCreateWithoutQuizInput = {
   id?: string
   code: string
   status: $Enums.StatusType
+  currentQuestionIndex?: number | null
   startedAt?: Date | string | null
   endedAt?: Date | string | null
   createdAt?: Date | string
@@ -474,6 +549,7 @@ export type SessionUncheckedCreateWithoutQuizInput = {
   id?: string
   code: string
   status: $Enums.StatusType
+  currentQuestionIndex?: number | null
   startedAt?: Date | string | null
   endedAt?: Date | string | null
   createdAt?: Date | string
@@ -515,6 +591,7 @@ export type SessionScalarWhereInput = {
   quizId?: Prisma.StringFilter<"Session"> | string
   code?: Prisma.StringFilter<"Session"> | string
   status?: Prisma.EnumStatusTypeFilter<"Session"> | $Enums.StatusType
+  currentQuestionIndex?: Prisma.IntNullableFilter<"Session"> | number | null
   startedAt?: Prisma.DateTimeNullableFilter<"Session"> | Date | string | null
   endedAt?: Prisma.DateTimeNullableFilter<"Session"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Session"> | Date | string
@@ -525,6 +602,7 @@ export type SessionCreateWithoutPlayersInput = {
   id?: string
   code: string
   status: $Enums.StatusType
+  currentQuestionIndex?: number | null
   startedAt?: Date | string | null
   endedAt?: Date | string | null
   createdAt?: Date | string
@@ -537,6 +615,7 @@ export type SessionUncheckedCreateWithoutPlayersInput = {
   quizId: string
   code: string
   status: $Enums.StatusType
+  currentQuestionIndex?: number | null
   startedAt?: Date | string | null
   endedAt?: Date | string | null
   createdAt?: Date | string
@@ -563,6 +642,7 @@ export type SessionUpdateWithoutPlayersInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStatusTypeFieldUpdateOperationsInput | $Enums.StatusType
+  currentQuestionIndex?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   endedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -575,6 +655,7 @@ export type SessionUncheckedUpdateWithoutPlayersInput = {
   quizId?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStatusTypeFieldUpdateOperationsInput | $Enums.StatusType
+  currentQuestionIndex?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   endedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -585,6 +666,7 @@ export type SessionCreateManyQuizInput = {
   id?: string
   code: string
   status: $Enums.StatusType
+  currentQuestionIndex?: number | null
   startedAt?: Date | string | null
   endedAt?: Date | string | null
   createdAt?: Date | string
@@ -595,6 +677,7 @@ export type SessionUpdateWithoutQuizInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStatusTypeFieldUpdateOperationsInput | $Enums.StatusType
+  currentQuestionIndex?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   endedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -606,6 +689,7 @@ export type SessionUncheckedUpdateWithoutQuizInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStatusTypeFieldUpdateOperationsInput | $Enums.StatusType
+  currentQuestionIndex?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   endedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -617,6 +701,7 @@ export type SessionUncheckedUpdateManyWithoutQuizInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStatusTypeFieldUpdateOperationsInput | $Enums.StatusType
+  currentQuestionIndex?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   endedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -659,6 +744,7 @@ export type SessionSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   quizId?: boolean
   code?: boolean
   status?: boolean
+  currentQuestionIndex?: boolean
   startedAt?: boolean
   endedAt?: boolean
   createdAt?: boolean
@@ -673,6 +759,7 @@ export type SessionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   quizId?: boolean
   code?: boolean
   status?: boolean
+  currentQuestionIndex?: boolean
   startedAt?: boolean
   endedAt?: boolean
   createdAt?: boolean
@@ -685,6 +772,7 @@ export type SessionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   quizId?: boolean
   code?: boolean
   status?: boolean
+  currentQuestionIndex?: boolean
   startedAt?: boolean
   endedAt?: boolean
   createdAt?: boolean
@@ -697,13 +785,14 @@ export type SessionSelectScalar = {
   quizId?: boolean
   code?: boolean
   status?: boolean
+  currentQuestionIndex?: boolean
   startedAt?: boolean
   endedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type SessionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "quizId" | "code" | "status" | "startedAt" | "endedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["session"]>
+export type SessionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "quizId" | "code" | "status" | "currentQuestionIndex" | "startedAt" | "endedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["session"]>
 export type SessionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   quiz?: boolean | Prisma.QuizDefaultArgs<ExtArgs>
   players?: boolean | Prisma.Session$playersArgs<ExtArgs>
@@ -727,6 +816,7 @@ export type $SessionPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     quizId: string
     code: string
     status: $Enums.StatusType
+    currentQuestionIndex: number | null
     startedAt: Date | null
     endedAt: Date | null
     createdAt: Date
@@ -1160,6 +1250,7 @@ export interface SessionFieldRefs {
   readonly quizId: Prisma.FieldRef<"Session", 'String'>
   readonly code: Prisma.FieldRef<"Session", 'String'>
   readonly status: Prisma.FieldRef<"Session", 'StatusType'>
+  readonly currentQuestionIndex: Prisma.FieldRef<"Session", 'Int'>
   readonly startedAt: Prisma.FieldRef<"Session", 'DateTime'>
   readonly endedAt: Prisma.FieldRef<"Session", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"Session", 'DateTime'>

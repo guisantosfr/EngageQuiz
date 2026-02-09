@@ -20,8 +20,6 @@ export type QuestionType = (typeof QuestionType)[keyof typeof QuestionType]
 export const StatusType = {
   CREATED: 'CREATED',
   IN_PROGRESS: 'IN_PROGRESS',
-  QUESTION_OPEN: 'QUESTION_OPEN',
-  QUESTION_CLOSED: 'QUESTION_CLOSED',
   FINISHED: 'FINISHED',
   CANCELED: 'CANCELED'
 } as const

@@ -70,6 +70,7 @@ model Session {
 
   code       String
   status     StatusType
+  currentQuestionIndex Int?
   startedAt  DateTime?
   endedAt    DateTime?
 
@@ -84,8 +85,6 @@ model Session {
 enum StatusType {
   CREATED
   IN_PROGRESS
-  QUESTION_OPEN
-  QUESTION_CLOSED
   FINISHED
   CANCELED
 }

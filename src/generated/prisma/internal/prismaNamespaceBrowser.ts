@@ -116,6 +116,7 @@ export const SessionScalarFieldEnum = {
   quizId: 'quizId',
   code: 'code',
   status: 'status',
+  currentQuestionIndex: 'currentQuestionIndex',
   startedAt: 'startedAt',
   endedAt: 'endedAt',
   createdAt: 'createdAt',
