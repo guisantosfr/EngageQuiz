@@ -5,10 +5,12 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { io, Socket } from 'socket.io-client';
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Clock, Home, Play, Users } from "lucide-react"
+import { Clock, Home, Play, User, Users, X } from "lucide-react"
 import { toast } from "sonner";
 import { ErrorBoundary } from "@/components/error-boundary";
 import Player from "@/types/Player";
+import { AlertDialog } from "@radix-ui/react-alert-dialog";
+import { AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface Session {
     id: string;
@@ -39,6 +41,7 @@ function PlayQuizContent() {
 
     const [session, setSession] = useState<Session | null>(null);
     const [players, setPlayers] = useState<Player[]>([])
+    const [playerToKick, setPlayerToKick] = useState<Player | null>(null)
 
     const socketRef = useRef<Socket | null>(null);
 
@@ -75,11 +78,33 @@ function PlayQuizContent() {
             if (response.ok) {
                 const data = await response.json();
                 setPlayers(data);
+
+                // const players = [{ id: '1', nickname: 'Gui' }]
+                // setPlayers(players)
             }
         } catch (error) {
             console.error(error);
         }
     }, [sessionId]);
+
+    const handleKickPlayer = async (player: Player) => {
+        try {
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/sessions/${sessionId}/players/${player.id}/kick`,
+                {
+                    method: 'DELETE'
+                }
+            );
+
+            if (response.ok) {
+                setPlayers(players.filter((p) => p.id !== player.id))
+
+            }
+        } catch (error) {
+            toast.error('Erro ao expulsar jogador')
+            console.error(error);
+        }
+    }
 
     useEffect(() => {
         if (!quizId || !sessionId) return;
@@ -164,16 +189,63 @@ function PlayQuizContent() {
                                 <span className="font-bold">{players.length}</span>
                             </div>
 
-                            <div className="bg-muted rounded-lg p-4 max-h-40 overflow-y-auto">
+                            <div className="rounded-lg p-4 max-h-40 overflow-y-auto">
                                 <div className="flex flex-wrap gap-2">
-                                    {players.map((p) => (
-                                        <span key={p.id} className="bg-primary/20 px-3 py-1 rounded-full text-sm">
-                                            {p.nickname}
-                                        </span>
-                                    ))}
+                                    {players.map((p, i) => {
+                                        const colors = [
+                                            "bg-blue-500",
+                                            "bg-emerald-500",
+                                            "bg-amber-500",
+                                            "bg-rose-500",
+                                            "bg-violet-500",
+                                            "bg-cyan-500",
+                                            "bg-orange-500",
+                                            "bg-pink-500",
+                                        ]
+                                        const color = colors[i % colors.length]
+                                        return (
+                                            <div
+                                                key={p.id}
+                                                className="relative flex items-center gap-3 border rounded-xl px-4 py-3 pr-8 text-base"
+                                            >
+                                                <div className={`${color} h-8 w-8 rounded-full flex items-center justify-center shrink-0`}>
+                                                    <User className="h-4 w-4 text-white" />
+                                                </div>
+                                                <span className="font-medium">{p.nickname}</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setPlayerToKick(p)}
+                                                    className="absolute -top-2 -right-2 h-6 w-6 flex items-center justify-center rounded-full bg-destructive text-white cursor-pointer"
+                                                >
+                                                    <X className="h-6 w-6" />
+                                                </button>
+                                            </div>
+                                        )
+                                    })}
                                 </div>
                             </div>
                         </div>
+
+                        <AlertDialog open={!!playerToKick} onOpenChange={(open) => !open && setPlayerToKick(null)}>
+                            <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Expulsar jogador?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        Tem certeza que deseja expulsar <span className="font-semibold">{playerToKick?.nickname}</span> da
+                                        sessão? Esta ação não pode ser desfeita.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+                                    <AlertDialogCancel className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction
+                                        onClick={() => playerToKick && handleKickPlayer(playerToKick)}
+                                        className="w-full sm:w-auto bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                        Confirmar
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
 
                         <div className="flex items-center gap-2 text-sm text-white/70 mb-6">
                             <Clock className="h-4 w-4" />
