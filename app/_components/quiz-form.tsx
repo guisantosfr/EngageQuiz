@@ -25,6 +25,7 @@ import { ChevronLeft, Loader2, Plus, Save, Trash2 } from "lucide-react"
 import { Question } from "@/types/Question"
 import { QuestionCard } from "../_components/question-card"
 import { ErrorBoundary } from "@/components/error-boundary"
+import { createSession } from "../_actions/create-session";
 
 type Mode = 'create' | 'edit'
 
@@ -62,6 +63,8 @@ export function QuizForm({ mode, initialData }: QuizFormProps) {
 
     const [showSuccessDialog, setShowSuccessDialog] = useState(false)
     const [showUnsavedDialog, setShowUnsavedDialog] = useState(false)
+
+    const [quizId, setQuizId] = useState('')
 
     const [isPending, startTransition] = useTransition()
 
@@ -253,6 +256,7 @@ export function QuizForm({ mode, initialData }: QuizFormProps) {
                 return;
             }
 
+            setQuizId(result.quizId);
             setShowSuccessDialog(true);
         });
     }
@@ -271,6 +275,23 @@ export function QuizForm({ mode, initialData }: QuizFormProps) {
         })
     }
 
+    const handleConfirmStartQuiz = () => {
+        startTransition(async () => {
+            const result = await createSession(quizId);
+
+            if (result?.error) {
+                toast.error(result.error);
+                return;
+            }
+
+            if (result?.success) {
+                toast.success("Sessão criada com sucesso!");
+                router.push(
+                    `/play?sessionId=${result.sessionId}&quizId=${result.quizId}`
+                );
+            }
+        });
+    };
     return (
         <div className="flex min-h-screen flex-col bg-background mx-auto w-9/10">
             <header className="sticky top-0 z-10 border-b bg-background">
@@ -453,7 +474,7 @@ export function QuizForm({ mode, initialData }: QuizFormProps) {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel onClick={() => router.push('/')}>Voltar</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => {/* Lógica para iniciar quiz se necessário */ }}>
+                        <AlertDialogAction onClick={handleConfirmStartQuiz}>
                             Iniciar Agora
                         </AlertDialogAction>
                     </AlertDialogFooter>

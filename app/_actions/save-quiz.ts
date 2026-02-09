@@ -20,8 +20,13 @@ export async function saveQuiz(data: any, mode: 'create' | 'edit', id?: string) 
             return { error: "Erro ao salvar questionário." };
         }
 
+        const quiz = await response.json()
+
         revalidatePath('/'); // Atualiza a lista na home
-        return { success: true };
+        return { 
+            success: true,
+            quizId: quiz.id
+        };
     } catch (error) {
         return { error: "Erro de conexão." };
     }
