@@ -68,14 +68,14 @@ export function LobbyClient({ initialSession, initialPlayers, sessionId, quizId 
 
     const handleKickPlayer = () => {
         if (!playerToKick) return;
-        
+
         startTransition(async () => {
             const result = await kickPlayer(sessionId, playerToKick.id);
             if (result.success) {
                 setPlayers(prev => prev.filter(p => p.id !== playerToKick.id));
                 toast.success(`${playerToKick.nickname} removido.`);
                 setPlayerToKick(null);
-                
+
                 socketRef.current?.emit('kick_player', { sessionId, playerId: playerToKick.id });
             } else {
                 toast.error(result.error);
@@ -97,8 +97,7 @@ export function LobbyClient({ initialSession, initialPlayers, sessionId, quizId 
     };
 
     const handleStartQuiz = () => {
-        socketRef.current?.emit('quiz_started', { sessionId });
-        toast.success("Iniciando quiz...");
+        // TODO: Call enpoint to start quiz and change status to 'IN_PROGRESS
     };
 
     return (
@@ -185,7 +184,7 @@ export function LobbyClient({ initialSession, initialPlayers, sessionId, quizId 
                                 size="lg"
                                 disabled={players.length === 0 || isPending}
                             >
-                                {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Play className="mr-2 h-4 w-4" />}
+                                {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
                                 Iniciar Quiz
                             </Button>
                         </div>
