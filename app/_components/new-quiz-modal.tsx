@@ -29,39 +29,29 @@ export function NewQuizModal() {
             <DialogTitle>Criar Questionário</DialogTitle>
             <DialogDescription>Escolha como deseja criar seu questionário</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <Button
-              variant="outline"
-              className="h-auto flex-col items-start gap-2 p-4 bg-transparent"
-              asChild
+          <div className="grid grid-cols-2 gap-3 py-4">
+            <Link
+              href="/quizzes/new"
               onClick={() => setShowCreateModal(false)}
+              className="flex flex-col items-center gap-2 p-4 rounded-lg border border-border hover:bg-accent transition-colors text-center"
             >
-              <Link href="/quizzes/new">
-                <div className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  <span className="font-semibold">Criação Manual</span>
-                </div>
-                <p className="text-sm text-muted-foreground text-left">
-                  Crie seu questionário do zero, adicionando questões manualmente
-                </p>
-              </Link>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-auto flex-col items-start gap-2 p-4 bg-transparent"
-              asChild
+              <FileText className="h-8 w-8 text-muted-foreground" />
+              <span className="font-semibold text-sm">Criação Manual</span>
+              <p className="text-xs text-muted-foreground">
+                Crie do zero
+              </p>
+            </Link>
+            <Link
+              href="/quizzes/new-ai"
               onClick={() => setShowCreateModal(false)}
+              className="flex flex-col items-center gap-2 p-4 rounded-lg border border-border hover:bg-accent transition-colors text-center"
             >
-              <Link href="/quizzes/new-ai">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5" />
-                  <span className="font-semibold">Criar com IA</span>
-                </div>
-                <p className="text-sm text-muted-foreground text-left">
-                  Gere questões automaticamente usando <b>inteligência artificial</b>
-                </p>
-              </Link>
-            </Button>
+              <Sparkles className="h-8 w-8 text-muted-foreground" />
+              <span className="font-semibold text-sm">Criar com IA</span>
+              <p className="text-xs text-muted-foreground">
+                Gere com IA
+              </p>
+            </Link>
           </div>
         </DialogContent>
       </Dialog>
