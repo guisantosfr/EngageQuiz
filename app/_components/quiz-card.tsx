@@ -37,7 +37,8 @@ export default function QuizCard({ quiz }: { quiz: Quiz }) {
     return (
         <Card key={quiz.id}>
             <CardHeader className="pb-2">
-                <CardTitle>{quiz.title}</CardTitle>
+                <CardTitle className="line-clamp-2 min-h-8">{quiz.title}</CardTitle>
+
                 <CardDescription>
                     {quiz.questions} {quiz.questions === 1 ? 'questão' : 'questões'}
                 </CardDescription>
