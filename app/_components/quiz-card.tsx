@@ -9,7 +9,7 @@ import { Loader2, Pencil, Play } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { createSession } from "../_actions/create-session";
+import { createSession } from "../_actions/session-actions";
 import StartQuizDialog from "./start-quiz-dialog";
 
 export default function QuizCard({ quiz }: { quiz: Quiz }) {

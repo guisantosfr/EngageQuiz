@@ -2,8 +2,8 @@
 
 import { useCallback, useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { deleteQuiz } from '../_actions/delete-quiz';
-import { saveQuiz } from '../_actions/save-quiz';
+import { saveQuiz, deleteQuiz } from '../_actions/quiz-actions';
+import { createSession } from "../_actions/session-actions";
 import { Button } from "@/components/ui/button"
 import {
     AlertDialog,
@@ -25,7 +25,6 @@ import { ChevronLeft, Loader2, Plus, Save, Trash2 } from "lucide-react"
 import { Question } from "@/types/Question"
 import { QuestionCard } from "../_components/question-card"
 import { ErrorBoundary } from "@/components/error-boundary"
-import { createSession } from "../_actions/create-session";
 
 type Mode = 'create' | 'edit'
 

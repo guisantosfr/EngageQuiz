@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { QuizForm } from "../../_components/quiz-form";
-import { getQuiz } from "@/app/_actions/get-quiz";
+import { getQuiz } from "@/app/_actions/quiz-actions";
 
 interface PageProps {
     params: { id: string }

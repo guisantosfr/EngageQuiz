@@ -17,7 +17,7 @@ import { Slider } from "@/components/ui/slider";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { QuestionType } from "@/types/QuestionType";
 import { QuizForm } from "@/app/_components/quiz-form";
-import { generateAIQuiz } from "@/app/_actions/generate-ai-quiz";
+import { generateAIQuiz } from "@/app/_actions/quiz-actions";
 import { ErrorBoundary } from "@/components/error-boundary";
 
 function CreateAIQuizContent() {
