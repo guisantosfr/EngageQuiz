@@ -8,7 +8,8 @@ import {
     OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server, Namespace, Socket } from 'socket.io';
-import { Logger } from '@nestjs/common';
+import { Logger, forwardRef, Inject } from '@nestjs/common';
+import { SessionsService } from './sessions.service';
 
 interface PlayerSocketInfo {
     playerId: string;
@@ -33,6 +34,14 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
     // Maps for socket ↔ player association
     private socketToPlayer = new Map<string, PlayerSocketInfo>();
     private playerToSocket = new Map<string, string>();
+
+    // Host socket tracking: sessionId -> socketId
+    private hostSockets = new Map<string, string>();
+
+    constructor(
+        @Inject(forwardRef(() => SessionsService))
+        private readonly sessionsService: SessionsService,
+    ) { }
 
     private getSessionsNamespace(): Namespace {
         const s: any = this.server;
@@ -106,7 +115,24 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
     @SubscribeMessage('join_host')
     handleJoinHost(@MessageBody() data: { sessionId: string }, @ConnectedSocket() client: Socket) {
         client.join(data.sessionId);
+        this.hostSockets.set(data.sessionId, client.id);
         return { success: true };
+    }
+
+    @SubscribeMessage('submit_answer')
+    async handleSubmitAnswer(
+        @MessageBody() data: { sessionId: string; playerId: string; questionId: string; optionId: string },
+        @ConnectedSocket() client: Socket,
+    ) {
+        const { sessionId, playerId, questionId, optionId } = data;
+
+        try {
+            await this.sessionsService.submitAnswer(sessionId, questionId, { playerId, optionId });
+            return { success: true };
+        } catch (error) {
+            this.logger.error(`Error submitting answer: ${error.message}`);
+            return { success: false, error: error.message };
+        }
     }
 
     emitToSession(sessionId: string, event: string, data: any): void {
@@ -115,6 +141,33 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
 
     emitToAll(event: string, data: any): void {
         this.server.emit(event, data);
+    }
+
+    emitToPlayer(playerId: string, event: string, data: any): void {
+        const socketId = this.playerToSocket.get(playerId);
+        if (!socketId) return;
+
+        const socket = this.getSocketById(socketId);
+        socket?.emit(event, data);
+    }
+
+    emitPlayerAnswered(sessionId: string, data: {
+        questionId: string;
+        playerId: string;
+        playerNickname: string;
+        answeredAt: string;
+        totalAnswers: number;
+        totalPlayers: number;
+    }): void {
+        const hostSocketId = this.hostSockets.get(sessionId);
+        if (!hostSocketId) return;
+
+        const hostSocket = this.getSocketById(hostSocketId);
+        hostSocket?.emit('player_answered', {
+            sessionId,
+            ...data,
+            timestamp: new Date().toISOString(),
+        });
     }
 
     disconnectPlayer(playerId: string): void {

@@ -1,7 +1,7 @@
 import { Controller, Post, Body, Get, Param, Delete } from "@nestjs/common";
 import { Throttle, SkipThrottle } from "@nestjs/throttler";
 import { SessionsService } from "./sessions.service";
-import { CreateSessionDto, JoinSessionDto } from "./dto";
+import { CreateSessionDto, JoinSessionDto, SubmitAnswerDto } from "./dto";
 
 @Controller('sessions')
 export class SessionsController {
@@ -58,5 +58,24 @@ export class SessionsController {
     @Get(':sessionId/quiz/:quizId')
     async getSessionFullInfo(@Param('sessionId') sessionId: string, @Param('quizId') quizId: string) {
         return this.sessionsService.getSessionFullData(sessionId, quizId);
+    }
+
+    @Post(':id/start')
+    async start(@Param('id') sessionId: string) {
+        return this.sessionsService.start(sessionId);
+    }
+
+    @Post(':id/next-question')
+    async nextQuestion(@Param('id') sessionId: string) {
+        return this.sessionsService.nextQuestion(sessionId);
+    }
+
+    @Post(':id/questions/:questionId/answer')
+    async submitAnswer(
+        @Param('id') sessionId: string,
+        @Param('questionId') questionId: string,
+        @Body() submitAnswerDto: SubmitAnswerDto,
+    ) {
+        return this.sessionsService.submitAnswer(sessionId, questionId, submitAnswerDto);
     }
 }
