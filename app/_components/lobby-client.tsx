@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CircleX, Clock, Loader2, Play, User, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { cancelSession, getPlayers, kickPlayer } from "@/app/_actions/session-actions";
+import { cancelSession, getPlayers, kickPlayer, startQuiz } from "@/app/_actions/session-actions";
 import Player from "@/types/Player";
 
 const AVATAR_COLORS = [
@@ -21,9 +21,10 @@ interface LobbyClientProps {
     initialPlayers: Player[];
     sessionId: string;
     quizId: string;
+    onStart?: () => void;
 }
 
-export function LobbyClient({ initialSession, initialPlayers, sessionId, quizId }: LobbyClientProps) {
+export function LobbyClient({ initialSession, initialPlayers, sessionId, quizId, onStart }: LobbyClientProps) {
     const router = useRouter();
     const [players, setPlayers] = useState<Player[]>(initialPlayers);
     const [playerToKick, setPlayerToKick] = useState<Player | null>(null);
@@ -97,7 +98,14 @@ export function LobbyClient({ initialSession, initialPlayers, sessionId, quizId 
     };
 
     const handleStartQuiz = () => {
-        // TODO: Call enpoint to start quiz and change status to 'IN_PROGRESS
+        startTransition(async () => {
+            const result = await startQuiz(sessionId);
+            if (result.error) {
+                toast.error(result.error);
+                return;
+            }
+            onStart?.();
+        });
     };
 
     return (

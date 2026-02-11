@@ -3,29 +3,28 @@
 import { revalidatePath } from "next/cache";
 
 export async function createSession(quizId: string) {
-  try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/sessions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ quizId })
-    });
+    try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/sessions`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ quizId })
+        });
 
-    if (!response.ok) {
-      return { error: "Falha ao criar sessão." };
+        if (!response.ok) {
+            return { error: "Falha ao criar sessão." };
+        }
+
+        const data = await response.json();
+        return { success: true, sessionId: data.id, quizId: data.quizId };
+
+    } catch (error) {
+        console.error("Erro na server action:", error);
+        return { error: "Erro de conexão ao criar sessão." };
     }
-
-    const data = await response.json();
-    return { success: true, sessionId: data.id, quizId: data.quizId };
-
-  } catch (error) {
-    console.error("Erro na server action:", error);
-    return { error: "Erro de conexão ao criar sessão." };
-  }
 }
 
-// Busca inicial (Server Side)
 export async function getSession(sessionId: string, quizId: string) {
     try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/sessions/${sessionId}/quiz/${quizId}`, {
@@ -54,7 +53,7 @@ export async function kickPlayer(sessionId: string, playerId: string) {
             method: 'DELETE'
         });
         if (!res.ok) throw new Error();
-        revalidatePath(`/play`); 
+        revalidatePath(`/play`);
         return { success: true };
     } catch (error) {
         return { error: "Erro ao expulsar jogador." };
@@ -74,7 +73,36 @@ export async function cancelSession(sessionId: string) {
 }
 
 export async function startQuiz(sessionId: string) {
-    // Implemente a chamada para iniciar o status da sessão no backend, se houver endpoint
-    // Caso contrário, apenas retorne sucesso para que o socket emita o evento
-    return { success: true };
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/sessions/${sessionId}/start`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+    });
+    if (!response.ok) {
+        return { error: "Falha ao iniciar quiz." };
+    }
+    const data = await response.json();
+    return { success: true, session: data };
+}
+
+export async function nextQuestion(sessionId: string) {
+    try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/sessions/${sessionId}/next-question`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+        });
+
+        if (!response.ok) {
+            return { error: "Falha ao avançar para a próxima questão." };
+        }
+
+        const data = await response.json();
+        return { success: true, data };
+    } catch (error) {
+        console.error("Erro na server action:", error);
+        return { error: "Erro de conexão ao avançar questão." };
+    }
 }
