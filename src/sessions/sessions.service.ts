@@ -473,13 +473,13 @@ export class SessionsService {
 
         // Auto-close if all players have answered
         if (totalAnswers >= totalPlayers) {
-            await this.closeQuestion(sessionId, questionId, currentIndex);
+            await this.closeQuestion(sessionId, questionId, currentIndex, 'all_answered');
         }
 
         return response;
     }
 
-    async closeQuestion(sessionId: string, questionId: string, questionIndex: number) {
+    async closeQuestion(sessionId: string, questionId: string, questionIndex: number, reason: 'timeout' | 'all_answered') {
         // Mark question as closed (prevents more answers and double-closing)
         const closedSet = this.closedQuestions.get(sessionId);
         if (closedSet?.has(questionIndex)) {
@@ -528,6 +528,7 @@ export class SessionsService {
             sessionId,
             questionId,
             questionIndex,
+            reason,
             correctOptionId: correctOption?.id ?? null,
             stats: {
                 totalAnswers,
@@ -616,7 +617,7 @@ export class SessionsService {
         const timer = setTimeout(async () => {
             this.logger.log(`Timer expired for question ${questionIndex} in session ${sessionId}`);
             try {
-                await this.closeQuestion(sessionId, questionId, questionIndex);
+                await this.closeQuestion(sessionId, questionId, questionIndex, 'timeout');
             } catch (error) {
                 this.logger.error(`Error closing question on timeout: ${error.message}`);
             }
