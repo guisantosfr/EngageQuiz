@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback, useTransition } from "react";
+import { useEffect, useState, useCallback, useTransition, MutableRefObject } from "react";
 import { useRouter } from "next/navigation";
-import { io, Socket } from 'socket.io-client';
+import { Socket } from 'socket.io-client';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CircleX, Clock, Loader2, Play, User, Users, X } from "lucide-react";
@@ -21,17 +21,16 @@ interface LobbyClientProps {
     initialPlayers: Player[];
     sessionId: string;
     quizId: string;
+    socketRef: MutableRefObject<Socket | null>;
     onStart?: () => void;
 }
 
-export function LobbyClient({ initialSession, initialPlayers, sessionId, quizId, onStart }: LobbyClientProps) {
+export function LobbyClient({ initialSession, initialPlayers, sessionId, quizId, socketRef, onStart }: LobbyClientProps) {
     const router = useRouter();
     const [players, setPlayers] = useState<Player[]>(initialPlayers);
     const [playerToKick, setPlayerToKick] = useState<Player | null>(null);
     const [cancelSessionOpen, setCancelSessionOpen] = useState(false);
     const [isPending, startTransition] = useTransition();
-
-    const socketRef = useRef<Socket | null>(null);
 
     // Função auxiliar para atualizar jogadores
     const refreshPlayers = useCallback(async () => {
@@ -39,18 +38,10 @@ export function LobbyClient({ initialSession, initialPlayers, sessionId, quizId,
         setPlayers(updatedPlayers);
     }, [sessionId]);
 
+    // Registra listeners de lobby no socket compartilhado
     useEffect(() => {
-        socketRef.current = io(`${process.env.NEXT_PUBLIC_API_URL}/sessions`, {
-            transports: ["websocket"],
-            autoConnect: true,
-        });
-
         const socket = socketRef.current;
-
-        socket.on("connect", () => {
-            console.log("Connected to socket");
-            socket.emit("join_host", { sessionId });
-        });
+        if (!socket) return;
 
         const handlePlayerUpdate = (payload: any) => {
             if (!payload?.sessionId || payload.sessionId === sessionId) {
@@ -63,9 +54,11 @@ export function LobbyClient({ initialSession, initialPlayers, sessionId, quizId,
         socket.on("player_kicked", handlePlayerUpdate);
 
         return () => {
-            socket.disconnect();
+            socket.off("player_joined", handlePlayerUpdate);
+            socket.off("player_left", handlePlayerUpdate);
+            socket.off("player_kicked", handlePlayerUpdate);
         };
-    }, [sessionId, refreshPlayers]);
+    }, [sessionId, refreshPlayers, socketRef]);
 
     const handleKickPlayer = () => {
         if (!playerToKick) return;

@@ -5,6 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Check, CheckCircle2, ChevronRight, Eye, Home, Timer, Users, X } from "lucide-react";
 import { QuestionData } from "./play-content";
+import { nextQuestion } from "../_actions/session-actions";
+import { useState } from "react";
 
 const OPTION_SYMBOLS = ["\u25B2", "\u25CF", "\u25A0", "\u25C6"]
 
@@ -29,6 +31,7 @@ interface QuestionDisplayProps {
     totalPlayers: number;
     endReason: 'timeout' | 'all_answered' | null;
     correctOptionId: string | null;
+    showAnswer: boolean;
 }
 
 export function QuestionDisplay({
@@ -42,6 +45,7 @@ export function QuestionDisplay({
     totalPlayers,
     endReason,
     correctOptionId,
+    showAnswer
 }: QuestionDisplayProps) {
 
     if (!currentQuestion) {
@@ -63,8 +67,6 @@ export function QuestionDisplay({
             : optionCount === 3
                 ? "grid grid-cols-1 sm:grid-cols-3 gap-4"
                 : "grid grid-cols-1 md:grid-cols-2 gap-4";
-
-    const answersRevealed = correctOptionId !== null;
 
     return (
         <div className="flex min-h-screen flex-col items-center justify-center bg-background text-foreground p-4">
@@ -149,7 +151,7 @@ export function QuestionDisplay({
                             <div className={gridClass}>
                                 {currentQuestion.options?.map((option, index) => {
                                     const isCorrect = option.id === correctOptionId;
-                                    const optionClass = answersRevealed
+                                    const optionClass = showAnswer
                                         ? isCorrect
                                             ? "bg-green-600 ring-4 ring-green-400"
                                             : "bg-muted text-muted-foreground"
@@ -165,7 +167,7 @@ export function QuestionDisplay({
                                             </span>
                                             <span>
                                                 {option.text}
-                                                {answersRevealed && isCorrect && <Check className="inline ml-2 h-5 w-5" />}
+                                                {showAnswer && isCorrect && <Check className="inline ml-2 h-5 w-5" />}
                                             </span>
                                         </div>
                                     );
@@ -176,21 +178,21 @@ export function QuestionDisplay({
                 </Card>
 
                 <div className="flex justify-end gap-3">
-                    {endReason && !answersRevealed && (
+                    {endReason && !showAnswer && (
                         <>
-                            <Button variant="outline" className="gap-2 bg-transparent">
+                            <Button variant="outline" className="gap-2 bg-transparent" onClick={() => showAnswer = true}>
                                 <Eye className="h-4 w-4" />
                                 Revelar Resposta
                             </Button>
-                            <Button className="bg-green-600 hover:bg-green-700 text-white gap-2">
-                                {questionIndex === totalQuestions - 1 ? "Ver Resultados" : "Próxima"}
+                            <Button className="bg-green-600 hover:bg-green-700 text-white gap-2" onClick={() => nextQuestion(sessionId)}>
+                                {questionIndex === totalQuestions - 1 ? "Ver Resultados" : "Próxima Questão"}
                                 <ChevronRight className="h-4 w-4" />
                             </Button>
                         </>
                     )}
 
-                    {answersRevealed && (
-                        <Button className="bg-green-600 hover:bg-green-700 text-white gap-2 px-8">
+                    {showAnswer && (
+                        <Button onClick={() => nextQuestion(sessionId)} className="bg-green-600 hover:bg-green-700 text-white gap-2 px-8">
                             {questionIndex === totalQuestions - 1 ? "Ver Resultados" : "Próxima Questão"}
                             <ChevronRight className="h-4 w-4" />
                         </Button>

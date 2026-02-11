@@ -33,6 +33,7 @@ export function PlayContent({ initialSession, initialPlayers, sessionId, quizId 
     const [totalPlayers, setTotalPlayers] = useState<number>(0);
     const [endReason, setEndReason] = useState<'timeout' | 'all_answered' | null>(null);
     const [correctOptionId, setCorrectOptionId] = useState<string | null>(null);
+    const [showAnswer, setShowAnswer] = useState<boolean>(false);
 
     const timerRef = useRef<NodeJS.Timeout | null>(null);
     const socketRef = useRef<Socket | null>(null);
@@ -65,9 +66,8 @@ export function PlayContent({ initialSession, initialPlayers, sessionId, quizId 
         setCorrectOptionId(null);
     }, []);
 
+    // Socket centralizado — criado uma única vez no mount
     useEffect(() => {
-        if (sessionStatus !== 'IN_PROGRESS') return;
-
         socketRef.current = io(`${process.env.NEXT_PUBLIC_API_URL}/sessions`, {
             transports: ["websocket"],
             autoConnect: true,
@@ -76,15 +76,17 @@ export function PlayContent({ initialSession, initialPlayers, sessionId, quizId 
         const socket = socketRef.current;
 
         socket.on("connect", () => {
-            console.log("[QuestionDisplay] Connected to socket");
+            console.log("[PlayContent] Connected to socket");
             socket.emit("join_host", { sessionId });
         });
 
         socket.on("quiz_started", (data) => {
             console.log("[quiz_started]", data);
+            setSessionStatus('IN_PROGRESS');
             setTotalQuestions(data.totalQuestions);
             showQuestion(data.firstQuestion);
             startCountdown(data.firstQuestion.timeLimit);
+            setShowAnswer(false);
         });
 
         socket.on("player_answered", (data) => {
@@ -104,13 +106,14 @@ export function PlayContent({ initialSession, initialPlayers, sessionId, quizId 
             console.log("[next_question]", data);
             showQuestion(data.question);
             startCountdown(data.question.timeLimit);
+            setShowAnswer(false);
         });
 
         return () => {
             clearCountdown();
             socket.disconnect();
         };
-    }, [sessionStatus, sessionId, showQuestion, startCountdown, clearCountdown]);
+    }, [sessionId, showQuestion, startCountdown, clearCountdown]);
 
     const handleStart = () => {
         setSessionStatus('IN_PROGRESS');
@@ -124,6 +127,7 @@ export function PlayContent({ initialSession, initialPlayers, sessionId, quizId 
                     initialPlayers={initialPlayers}
                     sessionId={sessionId}
                     quizId={quizId}
+                    socketRef={socketRef}
                     onStart={handleStart}
                 />
             );
@@ -140,6 +144,7 @@ export function PlayContent({ initialSession, initialPlayers, sessionId, quizId 
                     totalPlayers={totalPlayers}
                     endReason={endReason}
                     correctOptionId={correctOptionId}
+                    showAnswer={showAnswer}
                 />
             );
         default:
