@@ -6,7 +6,6 @@ import { Progress } from "@/components/ui/progress";
 import { Check, CheckCircle2, ChevronRight, Eye, Home, Timer, Users, X } from "lucide-react";
 import { QuestionData } from "./play-content";
 import { nextQuestion } from "../_actions/session-actions";
-import { useState } from "react";
 
 const OPTION_SYMBOLS = ["\u25B2", "\u25CF", "\u25A0", "\u25C6"]
 
@@ -32,6 +31,7 @@ interface QuestionDisplayProps {
     endReason: 'timeout' | 'all_answered' | null;
     correctOptionId: string | null;
     showAnswer: boolean;
+    onRevealAnswer: () => void;
 }
 
 export function QuestionDisplay({
@@ -45,7 +45,8 @@ export function QuestionDisplay({
     totalPlayers,
     endReason,
     correctOptionId,
-    showAnswer
+    showAnswer,
+    onRevealAnswer
 }: QuestionDisplayProps) {
 
     if (!currentQuestion) {
@@ -180,7 +181,7 @@ export function QuestionDisplay({
                 <div className="flex justify-end gap-3">
                     {endReason && !showAnswer && (
                         <>
-                            <Button variant="outline" className="gap-2 bg-transparent" onClick={() => showAnswer = true}>
+                            <Button variant="outline" className="gap-2 bg-transparent" onClick={onRevealAnswer}>
                                 <Eye className="h-4 w-4" />
                                 Revelar Resposta
                             </Button>

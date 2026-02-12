@@ -19,47 +19,19 @@ const AVATAR_COLORS = [
 
 interface LobbyClientProps {
     initialSession: any;
-    initialPlayers: Player[];
+    players: Player[];
     sessionId: string;
     quizId: string;
-    socketRef: MutableRefObject<Socket | null>;
+    socket: Socket;
     onStart?: () => void;
 }
 
-export function LobbyClient({ initialSession, initialPlayers, sessionId, quizId, socketRef, onStart }: LobbyClientProps) {
+export function LobbyClient({ initialSession, players, sessionId, quizId, socket, onStart }: LobbyClientProps) {
     const router = useRouter();
-    const [players, setPlayers] = useState<Player[]>(initialPlayers);
+    const [playersList, setPlayersList] = useState<Player[]>(players);
     const [playerToKick, setPlayerToKick] = useState<Player | null>(null);
     const [cancelSessionOpen, setCancelSessionOpen] = useState(false);
     const [isPending, startTransition] = useTransition();
-
-    // Função auxiliar para atualizar jogadores
-    const refreshPlayers = useCallback(async () => {
-        const updatedPlayers = await getPlayers(sessionId);
-        setPlayers(updatedPlayers);
-    }, [sessionId]);
-
-    // Registra listeners de lobby no socket compartilhado
-    useEffect(() => {
-        const socket = socketRef.current;
-        if (!socket) return;
-
-        const handlePlayerUpdate = (payload: any) => {
-            if (!payload?.sessionId || payload.sessionId === sessionId) {
-                refreshPlayers();
-            }
-        };
-
-        socket.on("player_joined", handlePlayerUpdate);
-        socket.on("player_left", handlePlayerUpdate);
-        socket.on("player_kicked", handlePlayerUpdate);
-
-        return () => {
-            socket.off("player_joined", handlePlayerUpdate);
-            socket.off("player_left", handlePlayerUpdate);
-            socket.off("player_kicked", handlePlayerUpdate);
-        };
-    }, [sessionId, refreshPlayers, socketRef]);
 
     const handleKickPlayer = () => {
         if (!playerToKick) return;
@@ -67,11 +39,11 @@ export function LobbyClient({ initialSession, initialPlayers, sessionId, quizId,
         startTransition(async () => {
             const result = await kickPlayer(sessionId, playerToKick.id);
             if (result.success) {
-                setPlayers(prev => prev.filter(p => p.id !== playerToKick.id));
+                setPlayersList(prev => prev.filter(p => p.id !== playerToKick.id));
                 toast.success(`${playerToKick.nickname} removido.`);
                 setPlayerToKick(null);
 
-                socketRef.current?.emit('kick_player', { sessionId, playerId: playerToKick.id });
+                socket?.emit('kick_player', { sessionId, playerId: playerToKick.id });
             } else {
                 toast.error(result.error);
             }
@@ -82,7 +54,7 @@ export function LobbyClient({ initialSession, initialPlayers, sessionId, quizId,
         startTransition(async () => {
             const result = await cancelSession(sessionId);
             if (result.success) {
-                socketRef.current?.emit('session_ended', { sessionId });
+                socket?.emit('session_ended', { sessionId });
                 toast.info('Sessão Cancelada');
                 router.replace('/');
             } else {
@@ -128,19 +100,19 @@ export function LobbyClient({ initialSession, initialPlayers, sessionId, quizId,
                             <div className="flex items-center justify-between mb-4 px-1">
                                 <div className="flex items-center gap-2 text-muted-foreground">
                                     <Users className="h-5 w-5" />
-                                    <span>Jogadores ({players.length})</span>
+                                    <span>Jogadores ({playersList.length})</span>
                                 </div>
                             </div>
 
                             <div className="rounded-xl border bg-card/50 p-4 min-h-30 max-h-75 overflow-y-auto">
-                                {players.length === 0 ? (
+                                {playersList.length === 0 ? (
                                     <div className="h-full flex flex-col items-center justify-center text-muted-foreground py-8">
                                         <Loader2 className="h-8 w-8 animate-spin mb-2 opacity-20" />
                                         <p>Aguardando jogadores...</p>
                                     </div>
                                 ) : (
                                     <div className="flex flex-wrap gap-3 justify-center">
-                                        {players.map((p, i) => (
+                                        {playersList.map((p, i) => (
                                             <PlayerCard
                                                 key={p.id}
                                                 player={p}
@@ -173,7 +145,7 @@ export function LobbyClient({ initialSession, initialPlayers, sessionId, quizId,
                                 onClick={handleStartQuiz}
                                 className="w-full sm:w-auto min-w-50"
                                 size="lg"
-                                disabled={players.length === 0 || isPending}
+                                disabled={playersList.length === 0 || isPending}
                             >
                                 {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
                                 Iniciar Quiz

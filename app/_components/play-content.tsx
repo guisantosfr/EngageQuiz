@@ -5,6 +5,7 @@ import { io, Socket } from 'socket.io-client';
 import { LobbyClient } from "./lobby-client";
 import { QuestionDisplay } from "./question-display";
 import Player from "@/types/Player";
+import { getPlayers } from "../_actions/session-actions";
 
 export interface QuestionData {
     index: number;
@@ -23,7 +24,9 @@ interface PlayContentProps {
 }
 
 export function PlayContent({ initialSession, initialPlayers, sessionId, quizId }: PlayContentProps) {
+    const [websocket, setWebsocket] = useState<Socket | null>(null);
     const [sessionStatus, setSessionStatus] = useState<string>(initialSession.status);
+    const [players, setPlayers] = useState<Player[]>(initialPlayers);
 
     // Question state
     const [currentQuestion, setCurrentQuestion] = useState<QuestionData | null>(null);
@@ -36,7 +39,12 @@ export function PlayContent({ initialSession, initialPlayers, sessionId, quizId 
     const [showAnswer, setShowAnswer] = useState<boolean>(false);
 
     const timerRef = useRef<NodeJS.Timeout | null>(null);
-    const socketRef = useRef<Socket | null>(null);
+
+    // Função auxiliar para atualizar jogadores
+    const refreshPlayers = useCallback(async () => {
+        const updatedPlayers = await getPlayers(sessionId);
+        setPlayers(updatedPlayers);
+    }, [sessionId]);
 
     const clearCountdown = useCallback(() => {
         if (timerRef.current) {
@@ -68,17 +76,27 @@ export function PlayContent({ initialSession, initialPlayers, sessionId, quizId 
 
     // Socket centralizado — criado uma única vez no mount
     useEffect(() => {
-        socketRef.current = io(`${process.env.NEXT_PUBLIC_API_URL}/sessions`, {
+        const socket = io(`${process.env.NEXT_PUBLIC_API_URL}/sessions`, {
             transports: ["websocket"],
             autoConnect: true,
         });
 
-        const socket = socketRef.current;
+        setWebsocket(socket);
+
+        const handlePlayerUpdate = (payload: any) => {
+            if (!payload?.sessionId || payload.sessionId === sessionId) {
+                refreshPlayers();
+            }
+        };
 
         socket.on("connect", () => {
             console.log("[PlayContent] Connected to socket");
             socket.emit("join_host", { sessionId });
         });
+
+        socket.on("player_joined", handlePlayerUpdate);
+        socket.on("player_left", handlePlayerUpdate);
+        socket.on("player_kicked", handlePlayerUpdate);
 
         socket.on("quiz_started", (data) => {
             console.log("[quiz_started]", data);
@@ -111,47 +129,53 @@ export function PlayContent({ initialSession, initialPlayers, sessionId, quizId 
 
         return () => {
             clearCountdown();
+            socket.off("player_joined", handlePlayerUpdate);
+            socket.off("player_left", handlePlayerUpdate);
+            socket.off("player_kicked", handlePlayerUpdate);
             socket.disconnect();
         };
     }, [sessionId, showQuestion, startCountdown, clearCountdown]);
 
-    const handleStart = () => {
-        setSessionStatus('IN_PROGRESS');
-    };
-
-    switch (sessionStatus) {
-        case 'CREATED':
-            return (
-                <LobbyClient
-                    initialSession={initialSession}
-                    initialPlayers={initialPlayers}
-                    sessionId={sessionId}
-                    quizId={quizId}
-                    socketRef={socketRef}
-                    onStart={handleStart}
-                />
-            );
-        case 'IN_PROGRESS':
-            return (
-                <QuestionDisplay
-                    sessionId={sessionId}
-                    quizId={quizId}
-                    quizTitle={initialSession.quiz?.title ?? ""}
-                    currentQuestion={currentQuestion}
-                    totalQuestions={totalQuestions}
-                    timeLeft={timeLeft}
-                    totalAnswers={totalAnswers}
-                    totalPlayers={totalPlayers}
-                    endReason={endReason}
-                    correctOptionId={correctOptionId}
-                    showAnswer={showAnswer}
-                />
-            );
-        default:
-            return (
-                <div className="flex items-center justify-center min-h-screen">
-                    <p className="text-muted-foreground">Sessão encerrada.</p>
-                </div>
-            );
+    if (sessionStatus === "CREATED" || !websocket) {
+        // loader curto pra evitar render antes do socket existir
+        return <div className="p-6 text-muted-foreground">Conectando...</div>;
+    }
+    else {
+        switch (sessionStatus) {
+            case 'CREATED':
+                return (
+                    <LobbyClient
+                        initialSession={initialSession}
+                        players={players}
+                        sessionId={sessionId}
+                        quizId={quizId}
+                        socket={websocket}
+                        onStart={() => setSessionStatus("IN_PROGRESS")}
+                    />
+                );
+            case 'IN_PROGRESS':
+                return (
+                    <QuestionDisplay
+                        sessionId={sessionId}
+                        quizId={quizId}
+                        quizTitle={initialSession.quiz?.title ?? ""}
+                        currentQuestion={currentQuestion}
+                        totalQuestions={totalQuestions}
+                        timeLeft={timeLeft}
+                        totalAnswers={totalAnswers}
+                        totalPlayers={totalPlayers}
+                        endReason={endReason}
+                        correctOptionId={correctOptionId}
+                        showAnswer={showAnswer}
+                        onRevealAnswer={() => setShowAnswer(true)}
+                    />
+                );
+            default:
+                return (
+                    <div className="flex items-center justify-center min-h-screen">
+                        <p className="text-muted-foreground">Sessão encerrada.</p>
+                    </div>
+                );
+        }
     }
 }
