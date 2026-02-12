@@ -440,8 +440,12 @@ export function QuizForm({ mode, initialData }: QuizFormProps) {
                         <Button type="button" variant="outline" onClick={handleBack} className="cursor-pointer">
                             Cancelar
                         </Button>
-                        <Button type="submit" disabled={questions.length === 0 || title.length === 0} className="cursor-pointer">
-                            <Save className="h-4 w-4" />
+                        <Button 
+                        type="submit" 
+                        disabled={questions.length === 0 || title.length === 0} 
+                        className="cursor-pointer"
+                        >
+                            {isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4" />}
                             Salvar Questionário
                         </Button>
                     </div>

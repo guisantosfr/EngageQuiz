@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { cancelSession, getPlayers, kickPlayer, startQuiz } from "@/app/_actions/session-actions";
 import Player from "@/types/Player";
+import PlayerCard from "./player-card";
 
 const AVATAR_COLORS = [
     "bg-blue-500", "bg-emerald-500", "bg-amber-500", "bg-rose-500",
@@ -140,24 +141,13 @@ export function LobbyClient({ initialSession, initialPlayers, sessionId, quizId,
                                 ) : (
                                     <div className="flex flex-wrap gap-3 justify-center">
                                         {players.map((p, i) => (
-                                            <div
+                                            <PlayerCard
                                                 key={p.id}
-                                                className="group relative flex items-center gap-2 bg-background border rounded-full pl-2 pr-4 py-1.5 shadow-sm animate-in zoom-in duration-300"
-                                            >
-                                                <div className={`${AVATAR_COLORS[i % AVATAR_COLORS.length]} h-7 w-7 rounded-full flex items-center justify-center shrink-0`}>
-                                                    <User className="h-4 w-4 text-white" />
-                                                </div>
-                                                <span className="font-medium text-sm max-w-25 truncate" title={p.nickname}>
-                                                    {p.nickname}
-                                                </span>
-                                                <button
-                                                    onClick={() => setPlayerToKick(p)}
-                                                    className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-1 -right-1 h-5 w-5 bg-destructive text-white rounded-full flex items-center justify-center hover:scale-110"
-                                                    title="Expulsar"
-                                                >
-                                                    <X className="h-3 w-3" />
-                                                </button>
-                                            </div>
+                                                player={p}
+                                                colorClass={AVATAR_COLORS[i % AVATAR_COLORS.length]}
+                                                onKick={setPlayerToKick}
+                                                disabled={isPending}
+                                            />
                                         ))}
                                     </div>
                                 )}
