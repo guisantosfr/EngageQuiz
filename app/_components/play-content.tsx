@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { io, Socket } from 'socket.io-client';
 import { LobbyClient } from "./lobby-client";
 import { QuestionDisplay } from "./question-display";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import Player from "@/types/Player";
-import { getPlayers } from "../_actions/session-actions";
+import { cancelSession, getPlayers } from "../_actions/session-actions";
 
 export interface QuestionData {
     index: number;
@@ -24,9 +26,12 @@ interface PlayContentProps {
 }
 
 export function PlayContent({ initialSession, initialPlayers, sessionId, quizId }: PlayContentProps) {
+    const router = useRouter();
     const [websocket, setWebsocket] = useState<Socket | null>(null);
     const [sessionStatus, setSessionStatus] = useState<string>(initialSession.status);
     const [players, setPlayers] = useState<Player[]>(initialPlayers);
+    const [showLeaveDialog, setShowLeaveDialog] = useState(false);
+    const [isLeaving, startLeavingTransition] = useTransition();
 
     // Question state
     const [currentQuestion, setCurrentQuestion] = useState<QuestionData | null>(null);
@@ -136,11 +141,32 @@ export function PlayContent({ initialSession, initialPlayers, sessionId, quizId 
         };
     }, [sessionId, showQuestion, startCountdown, clearCountdown]);
 
-    if (sessionStatus === "CREATED" || !websocket) {
-        // loader curto pra evitar render antes do socket existir
-        return <div className="p-6 text-muted-foreground">Conectando...</div>;
-    }
-    else {
+    // Intercepta o botão voltar do navegador
+    useEffect(() => {
+        history.pushState(null, '', window.location.href);
+
+        const handlePopState = () => {
+            history.pushState(null, '', window.location.href);
+            setShowLeaveDialog(true);
+        };
+
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, []);
+
+    const handleConfirmLeave = () => {
+        startLeavingTransition(async () => {
+            await cancelSession(sessionId);
+            websocket?.emit('session_ended', { sessionId });
+            router.replace('/');
+        });
+    };
+
+    const renderContent = () => {
+        if (sessionStatus === "CREATED" || !websocket) {
+            return <div className="p-6 text-muted-foreground">Conectando...</div>;
+        }
+
         switch (sessionStatus) {
             case 'CREATED':
                 return (
@@ -177,5 +203,32 @@ export function PlayContent({ initialSession, initialPlayers, sessionId, quizId 
                     </div>
                 );
         }
-    }
+    };
+
+    return (
+        <>
+            {renderContent()}
+
+            <AlertDialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Sair da sessão?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            A sessão será cancelada e todos os jogadores serão desconectados. Esta ação não pode ser desfeita.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isLeaving}>Continuar</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleConfirmLeave}
+                            disabled={isLeaving}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                            {isLeaving ? "Cancelando..." : "Sair e cancelar sessão"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
+    );
 }
