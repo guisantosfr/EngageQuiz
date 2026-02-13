@@ -136,17 +136,46 @@ export function QuestionDisplay({
 
                         <h3 className="text-2xl font-bold mb-6 text-center">{currentQuestion.text}</h3>
 
-                        {/* Options */}
                         {currentQuestion.type === "TRUE_FALSE" ? (
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="p-6 rounded-lg text-center font-bold text-xl cursor-default transition-all text-white bg-green-600">
-                                    <Check className="h-8 w-8 mx-auto mb-2" />
-                                    Verdadeiro
-                                </div>
-                                <div className="p-6 rounded-lg text-center font-bold text-xl cursor-default transition-all text-white bg-red-600">
-                                    <X className="h-8 w-8 mx-auto mb-2" />
-                                    Falso
-                                </div>
+                                {(() => {
+                                    const options = currentQuestion.options ?? [];
+                                    const trueOption = options.find(o => o.text?.toLowerCase() === "verdadeiro" || o.text?.toLowerCase() === "true");
+                                    const falseOption = options.find(o => o.text?.toLowerCase() === "falso" || o.text?.toLowerCase() === "false");
+
+                                    const trueIsCorrect = !!trueOption && trueOption.id === correctOptionId;
+                                    const falseIsCorrect = !!falseOption && falseOption.id === correctOptionId;
+
+                                    const base = "p-6 rounded-lg text-center font-bold text-xl cursor-default transition-all text-white";
+
+                                    const trueClass = showAnswer
+                                        ? trueIsCorrect
+                                            ? "bg-green-600 ring-4 ring-green-400"
+                                            : "bg-muted text-muted-foreground"
+                                        : "bg-green-600 hover:scale-105";
+
+                                    const falseClass = showAnswer
+                                        ? falseIsCorrect
+                                            ? "bg-green-600 ring-4 ring-green-400"
+                                            : "bg-muted text-muted-foreground"
+                                        : "bg-red-600 hover:scale-105";
+
+                                    return (
+                                        <>
+                                            <div className={`${base} ${trueClass}`}>
+                                                <Check className="h-8 w-8 mx-auto mb-2" />
+                                                Verdadeiro
+                                                {showAnswer && trueIsCorrect && <Check className="inline ml-2 h-5 w-5" />}
+                                            </div>
+
+                                            <div className={`${base} ${falseClass}`}>
+                                                <X className="h-8 w-8 mx-auto mb-2" />
+                                                Falso
+                                                {showAnswer && falseIsCorrect && <Check className="inline ml-2 h-5 w-5" />}
+                                            </div>
+                                        </>
+                                    );
+                                })()}
                             </div>
                         ) : (
                             <div className={gridClass}>

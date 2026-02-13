@@ -22,7 +22,7 @@ interface LobbyClientProps {
     players: Player[];
     sessionId: string;
     quizId: string;
-    socket: Socket;
+    socket: Socket | null;
     onStart?: () => void;
 }
 
@@ -32,6 +32,11 @@ export function LobbyClient({ initialSession, players, sessionId, quizId, socket
     const [playerToKick, setPlayerToKick] = useState<Player | null>(null);
     const [cancelSessionOpen, setCancelSessionOpen] = useState(false);
     const [isPending, startTransition] = useTransition();
+
+    // Sincroniza o state local quando a prop players muda (via socket em PlayContent)
+    useEffect(() => {
+        setPlayersList(players);
+    }, [players]);
 
     const handleKickPlayer = () => {
         if (!playerToKick) return;

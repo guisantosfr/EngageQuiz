@@ -134,12 +134,9 @@ export function PlayContent({ initialSession, initialPlayers, sessionId, quizId 
 
         return () => {
             clearCountdown();
-            socket.off("player_joined", handlePlayerUpdate);
-            socket.off("player_left", handlePlayerUpdate);
-            socket.off("player_kicked", handlePlayerUpdate);
             socket.disconnect();
         };
-    }, [sessionId, showQuestion, startCountdown, clearCountdown]);
+    }, [sessionId, showQuestion, startCountdown, clearCountdown, refreshPlayers]);
 
     // Intercepta o botão voltar do navegador
     useEffect(() => {
@@ -163,10 +160,6 @@ export function PlayContent({ initialSession, initialPlayers, sessionId, quizId 
     };
 
     const renderContent = () => {
-        if (sessionStatus === "CREATED" || !websocket) {
-            return <div className="p-6 text-muted-foreground">Conectando...</div>;
-        }
-
         switch (sessionStatus) {
             case 'CREATED':
                 return (
