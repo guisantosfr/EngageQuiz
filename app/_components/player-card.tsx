@@ -17,7 +17,7 @@ export default function PlayerCard({ player, colorClass, onKick, disabled }: Pla
         <User className="h-4 w-4 text-white" />
       </div>
 
-      <span className="font-medium text-sm max-w-25 truncate" title={player.nickname}>
+      <span className="font-medium text-sm max-w-50 truncate" title={player.nickname}>
         {player.nickname}
       </span>
 
