@@ -1,8 +1,10 @@
 'use client';
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Check, CheckCircle2, ChevronRight, Eye, Home, Timer, Users, X } from "lucide-react";
 import { QuestionData } from "./play-content";
 import { nextQuestion } from "../_actions/session-actions";
@@ -32,6 +34,7 @@ interface QuestionDisplayProps {
     correctOptionId: string | null;
     showAnswer: boolean;
     onRevealAnswer: () => void;
+    onCancelSession: () => void;
 }
 
 export function QuestionDisplay({
@@ -46,8 +49,11 @@ export function QuestionDisplay({
     endReason,
     correctOptionId,
     showAnswer,
-    onRevealAnswer
+    onRevealAnswer,
+    onCancelSession
 }: QuestionDisplayProps) {
+
+    const [cancelSessionOpen, setCancelSessionOpen] = useState(false);
 
     if (!currentQuestion) {
         return (
@@ -76,6 +82,7 @@ export function QuestionDisplay({
                     <Button
                         variant="outline"
                         size="sm"
+                        onClick={() => setCancelSessionOpen(true)}
                     >
                         <Home className="mr-2 h-4 w-4" />
                         Sair
@@ -88,7 +95,7 @@ export function QuestionDisplay({
                         </p>
                     </div>
 
-                    <div className="text-center">
+                    <div className={`text-center ${endReason ? "invisible" : ""}`}>
                         <div className={`text-3xl font-bold ${timeLeft <= 5 ? "text-red-500 animate-pulse" : ""}`}>
                             {timeLeft}
                         </div>
@@ -96,7 +103,10 @@ export function QuestionDisplay({
                     </div>
                 </div>
 
-                <Progress value={(timeLeft / currentQuestion.timeLimit) * 100} className="h-2 mb-6" />
+                {!endReason && (
+                    <Progress value={(timeLeft / currentQuestion.timeLimit) * 100} className="h-2 mb-6" />
+                )}
+                {endReason && <div className="h-2 mb-6" />}
 
                 <Card className="mb-6">
                     <CardContent className="p-6">
@@ -229,6 +239,23 @@ export function QuestionDisplay({
                     )}
                 </div>
             </div>
+
+            <AlertDialog open={cancelSessionOpen} onOpenChange={setCancelSessionOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Cancelar Sessão?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Todos os jogadores serão desconectados. Esta ação não pode ser desfeita.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Voltar</AlertDialogCancel>
+                        <AlertDialogAction onClick={onCancelSession} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            Encerrar Sessão
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

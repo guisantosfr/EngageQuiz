@@ -8,6 +8,7 @@ import { QuestionDisplay } from "./question-display";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import Player from "@/types/Player";
 import { cancelSession, getPlayers } from "../_actions/session-actions";
+import { toast } from "sonner";
 
 export interface QuestionData {
     index: number;
@@ -153,9 +154,15 @@ export function PlayContent({ initialSession, initialPlayers, sessionId, quizId 
 
     const handleConfirmLeave = () => {
         startLeavingTransition(async () => {
-            await cancelSession(sessionId);
-            websocket?.emit('session_ended', { sessionId });
-            router.replace('/');
+            const result = await cancelSession(sessionId);
+
+            if(result.success) {
+                websocket?.emit('session_ended', { sessionId });
+                toast.info('Sessão Cancelada');
+                router.replace('/');
+            } else {
+                    toast.error(result.error);
+                }
         });
     };
 
@@ -170,6 +177,7 @@ export function PlayContent({ initialSession, initialPlayers, sessionId, quizId 
                         quizId={quizId}
                         socket={websocket}
                         onStart={() => setSessionStatus("IN_PROGRESS")}
+                        onCancelSession={handleConfirmLeave}
                     />
                 );
             case 'IN_PROGRESS':
@@ -187,6 +195,7 @@ export function PlayContent({ initialSession, initialPlayers, sessionId, quizId 
                         correctOptionId={correctOptionId}
                         showAnswer={showAnswer}
                         onRevealAnswer={() => setShowAnswer(true)}
+                        onCancelSession={handleConfirmLeave}
                     />
                 );
             default:

@@ -24,9 +24,10 @@ interface LobbyClientProps {
     quizId: string;
     socket: Socket | null;
     onStart?: () => void;
+    onCancelSession?: () => void;
 }
 
-export function LobbyClient({ initialSession, players, sessionId, quizId, socket, onStart }: LobbyClientProps) {
+export function LobbyClient({ initialSession, players, sessionId, quizId, socket, onStart, onCancelSession }: LobbyClientProps) {
     const router = useRouter();
     const [playersList, setPlayersList] = useState<Player[]>(players);
     const [playerToKick, setPlayerToKick] = useState<Player | null>(null);
@@ -49,19 +50,6 @@ export function LobbyClient({ initialSession, players, sessionId, quizId, socket
                 setPlayerToKick(null);
 
                 socket?.emit('kick_player', { sessionId, playerId: playerToKick.id });
-            } else {
-                toast.error(result.error);
-            }
-        });
-    };
-
-    const handleCancelSession = () => {
-        startTransition(async () => {
-            const result = await cancelSession(sessionId);
-            if (result.success) {
-                socket?.emit('session_ended', { sessionId });
-                toast.info('Sessão Cancelada');
-                router.replace('/');
             } else {
                 toast.error(result.error);
             }
@@ -187,7 +175,7 @@ export function LobbyClient({ initialSession, players, sessionId, quizId, socket
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel disabled={isPending}>Voltar</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleCancelSession} disabled={isPending} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        <AlertDialogAction onClick={onCancelSession} disabled={isPending} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                             {isPending ? "Cancelando..." : "Encerrar Sessão"}
                         </AlertDialogAction>
                     </AlertDialogFooter>
