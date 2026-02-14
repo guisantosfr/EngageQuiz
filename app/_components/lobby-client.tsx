@@ -75,11 +75,11 @@ export function LobbyClient({ initialSession, players, sessionId, quizId, socket
                 </div>
             </header>
 
-            <div className="flex min-h-screen flex-col items-center justify-start mt-5 p-4">
-                <Card className="w-full max-w-3xl bg-white/10 backdrop-blur-sm border-none shadow-xl">
-                    <CardContent className="p-6 md:p-8 flex flex-col items-center text-center">
+            <div className="flex min-h-screen flex-col items-center justify-start mt-4 p-3">
+                <Card className="w-full max-w-4xl bg-white/10 backdrop-blur-sm border-none shadow-xl">
+                    <CardContent className="p-4 md:p-6 flex flex-col items-center text-center">
                         <h1 className="text-2xl md:text-3xl font-bold mb-2 text-foreground">{initialSession.quiz?.title}</h1>
-                        <p className="text-muted-foreground mb-6">{initialSession.quiz?.description}</p>
+                        <p className="text-muted-foreground mb-6 w-3/4">{initialSession.quiz?.description}</p>
 
                         <div className="mb-8 w-full max-w-md bg-secondary/50 p-6 rounded-2xl border border-border/50">
                             <p className="text-lg mb-2 font-medium">Código de Acesso</p>
@@ -109,7 +109,7 @@ export function LobbyClient({ initialSession, players, sessionId, quizId, socket
                                             <PlayerCard
                                                 key={p.id}
                                                 player={p}
-                                                colorClass={AVATAR_COLORS[i % AVATAR_COLORS.length]}
+                                                colorClass={AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)]}
                                                 onKick={setPlayerToKick}
                                                 disabled={isPending}
                                             />

@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Check, CheckCircle2, ChevronRight, Eye, Home, Timer, Users, X } from "lucide-react";
+import { Check, CheckCircle2, ChevronRight, Eye, Home, Timer, Users, X, Diamond, Circle, Square, Star } from "lucide-react";
 import { QuestionData } from "./play-content";
 import { nextQuestion } from "../_actions/session-actions";
 
-const OPTION_SYMBOLS = ["\u25B2", "\u25CF", "\u25A0", "\u25C6"]
+// diamond, circle, square, star
+const OPTION_SYMBOLS = [Diamond, Circle, Square, Star];
 
 function getOptionColor(index: number) {
     const colors = [
@@ -160,13 +161,13 @@ export function QuestionDisplay({
 
                                     const trueClass = showAnswer
                                         ? trueIsCorrect
-                                            ? "bg-green-600 ring-4 ring-green-400"
+                                            ? "bg-green-600 ring-4 ring-green-300"
                                             : "bg-muted text-muted-foreground"
                                         : "bg-green-600 hover:scale-105";
 
                                     const falseClass = showAnswer
                                         ? falseIsCorrect
-                                            ? "bg-green-600 ring-4 ring-green-400"
+                                            ? "bg-red-600 ring-4 ring-red-300"
                                             : "bg-muted text-muted-foreground"
                                         : "bg-red-600 hover:scale-105";
 
@@ -193,17 +194,19 @@ export function QuestionDisplay({
                                     const isCorrect = option.id === correctOptionId;
                                     const optionClass = showAnswer
                                         ? isCorrect
-                                            ? "bg-green-600 ring-4 ring-green-400"
+                                            ? `${getOptionColor(index)} ring-3 ring-white`
                                             : "bg-muted text-muted-foreground"
                                         : `${getOptionColor(index)} hover:scale-105`;
+
+                                    const Icon = OPTION_SYMBOLS[index];
 
                                     return (
                                         <div
                                             key={option.id}
                                             className={`p-4 rounded-lg text-center font-bold text-lg cursor-default transition-all text-white flex flex-col items-center gap-2 ${optionClass}`}
                                         >
-                                            <span className="text-2xl leading-none" aria-hidden="true">
-                                                {OPTION_SYMBOLS[index]}
+                                            <span className="leading-none" aria-hidden="true">
+                                                <Icon className="w-7 h-7" />
                                             </span>
                                             <span>
                                                 {option.text}
