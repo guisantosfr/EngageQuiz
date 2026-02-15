@@ -418,6 +418,8 @@ export class QuizzesService {
             }
         });
 
+        console.log('response from AI', response);
+
         if (!response || !response.text) {
             throw new BadRequestException('Falha ao gerar quiz via IA');
         }
