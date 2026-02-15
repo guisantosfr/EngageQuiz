@@ -141,17 +141,32 @@ export class SessionsService {
 
         this.cancelQuestionTimeout(sessionId);
 
-        const updatedSession = await this.prisma.session.update({
-            where: { id: sessionId },
-            data: {
-                status: StatusType.CANCELED,
-                endedAt: new Date(),
-            },
+        return this.prisma.$transaction(async (tx) => {
+            const updatedSession = await tx.session.update({
+                where: { id: sessionId },
+                data: {
+                    status: StatusType.CANCELED,
+                    endedAt: new Date(),
+                },
+            });
+
+            const activePlayers = await tx.player.findMany({
+                where: { sessionId, leftAt: null },
+            });
+
+            await tx.player.updateMany({
+                where: { sessionId, leftAt: null },
+                data: { leftAt: new Date() },
+            });
+
+            this.gateway.emitSessionCanceled(sessionId);
+
+            for (const player of activePlayers) {
+                this.gateway.disconnectPlayer(player.id);
+            }
+
+            return updatedSession;
         });
-
-        this.gateway.emitSessionCanceled(sessionId);
-
-        return updatedSession;
     }
 
     async removePlayer(sessionId: string, playerId: string, kicked: boolean = false) {
