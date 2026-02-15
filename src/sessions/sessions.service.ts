@@ -77,7 +77,7 @@ export class SessionsService {
             });
 
             if (!session) {
-                throw new NotFoundException(`Session not found or not joinable`);
+                throw new NotFoundException(`Sessão não encontrada / Código inválido`);
             }
 
             const existingPlayer = await tx.player.findFirst({
@@ -89,7 +89,7 @@ export class SessionsService {
             });
 
             if (existingPlayer) {
-                throw new BadRequestException(`Nickname "${nickname}" is already taken in this session`);
+                throw new BadRequestException(`Já existe um jogador com o nickname "${nickname}" na sessão`);
             }
 
             const player = await tx.player.create({
