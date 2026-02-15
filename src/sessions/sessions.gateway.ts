@@ -221,6 +221,19 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
         });
     }
 
+    emitSessionFinished(sessionId: string): void {
+        this.logger.log(`Session finished: ${sessionId}`);
+        this.emitToSession(sessionId, 'session_finished', {
+            sessionId,
+            timestamp: new Date().toISOString(),
+        });
+    }
+
+    cleanupSession(sessionId: string): void {
+        this.hostSockets.delete(sessionId);
+        this.logger.log(`Session ${sessionId} cleaned up from gateway`);
+    }
+
     getPlayerInfo(playerId: string): PlayerSocketInfo | undefined {
         const socketId = this.playerToSocket.get(playerId);
         if (socketId) {

@@ -594,7 +594,7 @@ export class SessionsService {
         const nextIndex = currentIndex + 1;
 
         if (nextIndex >= session.quiz.questions.length) {
-            throw new BadRequestException(`No more questions available`);
+            return this.finish(sessionId);
         }
 
         // Update currentQuestionIndex
@@ -623,6 +623,224 @@ export class SessionsService {
         this.scheduleQuestionTimeout(sessionId, nextQuestionData.id, nextIndex, nextQuestionData.timeLimit);
 
         return { questionIndex: nextIndex, questionId: nextQuestionData.id };
+    }
+
+    async finish(sessionId: string) {
+        const session = await this.prisma.session.findUnique({
+            where: { id: sessionId },
+        });
+
+        if (!session) {
+            throw new NotFoundException(`Session not found`);
+        }
+
+        if (session.status !== StatusType.IN_PROGRESS) {
+            throw new BadRequestException(`Session is not in progress`);
+        }
+
+        // Cancel pending timers and clean up tracking
+        this.cancelQuestionTimeout(sessionId);
+        this.closedQuestions.delete(sessionId);
+
+        // Update session status
+        await this.prisma.session.update({
+            where: { id: sessionId },
+            data: {
+                status: StatusType.FINISHED,
+                endedAt: new Date(),
+            },
+        });
+
+        // Emit session_finished to all clients in the room
+        this.gateway.emitSessionFinished(sessionId);
+
+        // Disconnect all active players and clean up gateway maps
+        const activePlayers = await this.prisma.player.findMany({
+            where: { sessionId, leftAt: null },
+        });
+
+        for (const player of activePlayers) {
+            this.gateway.disconnectPlayer(player.id);
+        }
+
+        this.gateway.cleanupSession(sessionId);
+
+        // Return general results
+        return this.getSessionResults(sessionId);
+    }
+
+    async getSessionResults(sessionId: string) {
+        const session = await this.prisma.session.findUnique({
+            where: { id: sessionId },
+            include: {
+                quiz: {
+                    include: {
+                        questions: {
+                            orderBy: { createdAt: 'asc' },
+                            include: {
+                                options: true,
+                                responses: {
+                                    where: {
+                                        player: { sessionId, leftAt: null },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+                players: {
+                    where: { leftAt: null },
+                    include: {
+                        responses: {
+                            include: { question: true },
+                        },
+                    },
+                },
+            },
+        });
+
+        if (!session) {
+            throw new NotFoundException(`Session not found`);
+        }
+
+        if (session.status !== StatusType.FINISHED) {
+            throw new BadRequestException(`Session has not finished yet`);
+        }
+
+        // Build ranking
+        const playerStats = session.players.map((player) => {
+            const correctAnswers = player.responses.filter((r) => r.isCorrect).length;
+            const totalAnswers = player.responses.length;
+            return {
+                playerId: player.id,
+                nickname: player.nickname,
+                correctAnswers,
+                totalAnswers,
+                accuracy: totalAnswers > 0 ? Math.round((correctAnswers / totalAnswers) * 100) : 0,
+            };
+        });
+
+        playerStats.sort((a, b) => b.correctAnswers - a.correctAnswers || b.accuracy - a.accuracy);
+
+        const ranking = playerStats.map((p, i) => ({
+            position: i + 1,
+            ...p,
+        }));
+
+        // Build per-question stats
+        const questions = session.quiz.questions.map((q, index) => {
+            const totalAnswers = q.responses.length;
+            const correctAnswers = q.responses.filter((r) => r.isCorrect).length;
+
+            const optionBreakdown = q.options.map((opt) => {
+                const count = q.responses.filter((r) => r.optionId === opt.id).length;
+                return {
+                    optionId: opt.id,
+                    text: opt.text,
+                    count,
+                    percentage: totalAnswers > 0 ? Math.round((count / totalAnswers) * 100) : 0,
+                    isCorrect: opt.isCorrect,
+                };
+            });
+
+            return {
+                index,
+                id: q.id,
+                text: q.text,
+                stats: { totalAnswers, correctAnswers, optionBreakdown },
+            };
+        });
+
+        return {
+            session: {
+                id: session.id,
+                code: session.code,
+                status: session.status,
+                startedAt: session.startedAt,
+                endedAt: session.endedAt,
+            },
+            quiz: {
+                id: session.quiz.id,
+                title: session.quiz.title,
+                numberOfQuestions: session.quiz.questions.length,
+            },
+            ranking,
+            questions,
+        };
+    }
+
+    async getPlayerResults(sessionId: string, playerId: string) {
+        const session = await this.prisma.session.findUnique({
+            where: { id: sessionId },
+            include: {
+                quiz: {
+                    include: {
+                        questions: {
+                            orderBy: { createdAt: 'asc' },
+                            include: { options: true },
+                        },
+                    },
+                },
+                players: {
+                    where: { leftAt: null },
+                    include: { responses: true },
+                },
+            },
+        });
+
+        if (!session) {
+            throw new NotFoundException(`Session not found`);
+        }
+
+        if (session.status !== StatusType.FINISHED) {
+            throw new BadRequestException(`Session has not finished yet`);
+        }
+
+        const player = session.players.find((p) => p.id === playerId);
+
+        if (!player) {
+            throw new NotFoundException(`Player not found in this session`);
+        }
+
+        // Calculate all players' scores for ranking
+        const allScores = session.players.map((p) => ({
+            playerId: p.id,
+            correctAnswers: p.responses.filter((r) => r.isCorrect).length,
+        }));
+        allScores.sort((a, b) => b.correctAnswers - a.correctAnswers);
+        const position = allScores.findIndex((s) => s.playerId === playerId) + 1;
+
+        // Build per-question answers for this player
+        const correctAnswers = player.responses.filter((r) => r.isCorrect).length;
+        const totalAnswers = player.responses.length;
+
+        const answers = session.quiz.questions.map((q, index) => {
+            const response = player.responses.find((r) => r.questionId === q.id);
+            const selectedOption = q.options.find((o) => o.id === response?.optionId);
+            const correctOption = q.options.find((o) => o.isCorrect);
+
+            return {
+                questionIndex: index,
+                questionText: q.text,
+                selectedOption: selectedOption ? { id: selectedOption.id, text: selectedOption.text } : null,
+                correctOption: correctOption ? { id: correctOption.id, text: correctOption.text } : null,
+                isCorrect: response?.isCorrect ?? false,
+            };
+        });
+
+        return {
+            session: { id: session.id, code: session.code },
+            quiz: { title: session.quiz.title, numberOfQuestions: session.quiz.questions.length },
+            player: { id: player.id, nickname: player.nickname },
+            performance: {
+                correctAnswers,
+                totalAnswers,
+                accuracy: totalAnswers > 0 ? Math.round((correctAnswers / totalAnswers) * 100) : 0,
+                position,
+                totalPlayers: session.players.length,
+            },
+            answers,
+        };
     }
 
     private scheduleQuestionTimeout(sessionId: string, questionId: string, questionIndex: number, timeLimitSeconds: number) {

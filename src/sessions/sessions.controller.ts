@@ -78,4 +78,22 @@ export class SessionsController {
     ) {
         return this.sessionsService.submitAnswer(sessionId, questionId, submitAnswerDto);
     }
+
+    @Post(':id/finish')
+    async finish(@Param('id') sessionId: string) {
+        return this.sessionsService.finish(sessionId);
+    }
+
+    @Get(':id/results')
+    async getSessionResults(@Param('id') sessionId: string) {
+        return this.sessionsService.getSessionResults(sessionId);
+    }
+
+    @Get(':id/results/:playerId')
+    async getPlayerResults(
+        @Param('id') sessionId: string,
+        @Param('playerId') playerId: string,
+    ) {
+        return this.sessionsService.getPlayerResults(sessionId, playerId);
+    }
 }
