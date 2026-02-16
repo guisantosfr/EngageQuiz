@@ -7,8 +7,9 @@ import { LobbyClient } from "./lobby-client";
 import { QuestionDisplay } from "./question-display";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import Player from "@/types/Player";
-import { cancelSession, getPlayers } from "../_actions/session-actions";
+import { cancelSession, finishQuiz, getPlayers } from "../_actions/session-actions";
 import { toast } from "sonner";
+import FinalResults from "./final-results";
 
 export interface QuestionData {
     index: number;
@@ -33,6 +34,7 @@ export function PlayContent({ initialSession, initialPlayers, sessionId, quizId 
     const [players, setPlayers] = useState<Player[]>(initialPlayers);
     const [showLeaveDialog, setShowLeaveDialog] = useState(false);
     const [isLeaving, startLeavingTransition] = useTransition();
+    const [ranking, setRanking] = useState<any[]>([]);
 
     // Question state
     const [currentQuestion, setCurrentQuestion] = useState<QuestionData | null>(null);
@@ -156,14 +158,24 @@ export function PlayContent({ initialSession, initialPlayers, sessionId, quizId 
         startLeavingTransition(async () => {
             const result = await cancelSession(sessionId);
 
-            if(result.success) {
+            if (result.success) {
                 websocket?.emit('session_ended', { sessionId });
                 toast.info('Sessão Cancelada');
                 router.replace('/');
             } else {
-                    toast.error(result.error);
-                }
+                toast.error(result.error);
+            }
         });
+    };
+
+    const handleFinishQuiz = async () => {
+        const result = await finishQuiz(sessionId);
+        if (result.error) {
+            toast.error(result.error);
+            return;
+        }
+        setRanking(result.data.ranking ?? []);
+        setSessionStatus('FINISHED');
     };
 
     const renderContent = () => {
@@ -196,7 +208,12 @@ export function PlayContent({ initialSession, initialPlayers, sessionId, quizId 
                         showAnswer={showAnswer}
                         onRevealAnswer={() => setShowAnswer(true)}
                         onCancelSession={handleConfirmLeave}
+                        onFinishQuiz={handleFinishQuiz}
                     />
+                );
+            case 'FINISHED':
+                return (
+                    <FinalResults ranking={ranking} />
                 );
             default:
                 return (

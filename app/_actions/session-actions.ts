@@ -106,3 +106,24 @@ export async function nextQuestion(sessionId: string) {
         return { error: "Erro de conexão ao avançar questão." };
     }
 }
+
+export async function finishQuiz(sessionId: string) {
+    try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/sessions/${sessionId}/finish`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+        });
+
+        if (!response.ok) {
+            return { error: "Falha ao finalizar quiz." };
+        }
+
+        const data = await response.json();
+        return { success: true, data };
+    } catch (error) {
+        console.error("Erro na server action:", error);
+        return { error: "Erro de conexão ao finalizar quiz." };
+    }
+}

@@ -36,6 +36,7 @@ interface QuestionDisplayProps {
     showAnswer: boolean;
     onRevealAnswer: () => void;
     onCancelSession: () => void;
+    onFinishQuiz: () => void;
 }
 
 export function QuestionDisplay({
@@ -51,7 +52,8 @@ export function QuestionDisplay({
     correctOptionId,
     showAnswer,
     onRevealAnswer,
-    onCancelSession
+    onCancelSession,
+    onFinishQuiz,
 }: QuestionDisplayProps) {
 
     const [cancelSessionOpen, setCancelSessionOpen] = useState(false);
@@ -227,7 +229,10 @@ export function QuestionDisplay({
                                 <Eye className="h-4 w-4" />
                                 Revelar Resposta
                             </Button>
-                            <Button className="bg-green-600 hover:bg-green-700 text-white gap-2" onClick={() => nextQuestion(sessionId)}>
+                            <Button
+                                className="bg-green-600 hover:bg-green-700 text-white gap-2"
+                                onClick={() => questionIndex === totalQuestions - 1 ? onFinishQuiz() : nextQuestion(sessionId)}
+                            >
                                 {questionIndex === totalQuestions - 1 ? "Ver Resultados" : "Próxima Questão"}
                                 <ChevronRight className="h-4 w-4" />
                             </Button>
@@ -235,7 +240,10 @@ export function QuestionDisplay({
                     )}
 
                     {showAnswer && (
-                        <Button onClick={() => nextQuestion(sessionId)} className="bg-green-600 hover:bg-green-700 text-white gap-2 px-8">
+                        <Button
+                            onClick={() => questionIndex === totalQuestions - 1 ? onFinishQuiz() : nextQuestion(sessionId)}
+                            className="bg-green-600 hover:bg-green-700 text-white gap-2 px-8"
+                        >
                             {questionIndex === totalQuestions - 1 ? "Ver Resultados" : "Próxima Questão"}
                             <ChevronRight className="h-4 w-4" />
                         </Button>
