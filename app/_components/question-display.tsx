@@ -163,9 +163,9 @@ export function QuestionDisplay({
 
                                     const trueClass = showAnswer
                                         ? trueIsCorrect
-                                            ? "bg-green-600 ring-4 ring-green-300"
+                                            ? "bg-blue-600 ring-4 ring-blue-300"
                                             : "bg-muted text-muted-foreground"
-                                        : "bg-green-600 hover:scale-105";
+                                        : "bg-blue-600 hover:scale-105";
 
                                     const falseClass = showAnswer
                                         ? falseIsCorrect
