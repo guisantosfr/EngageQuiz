@@ -39,6 +39,10 @@ export function LobbyClient({ initialSession, players, sessionId, quizId, socket
         setPlayersList(players);
     }, [players]);
 
+    const getRandomColor = (playerId: string) => {
+        return AVATAR_COLORS[playerId.split('').reduce((acc: number, c: string) => acc + c.charCodeAt(0), 0) % AVATAR_COLORS.length]
+    }
+
     const handleKickPlayer = () => {
         if (!playerToKick) return;
 
@@ -109,7 +113,7 @@ export function LobbyClient({ initialSession, players, sessionId, quizId, socket
                                             <PlayerCard
                                                 key={p.id}
                                                 player={p}
-                                                colorClass={AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)]}
+                                                colorClass={getRandomColor(p.id)}
                                                 onKick={setPlayerToKick}
                                                 disabled={isPending}
                                             />
