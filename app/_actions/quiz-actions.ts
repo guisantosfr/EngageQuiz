@@ -2,6 +2,31 @@
 
 import { revalidatePath } from "next/cache";
 import { Question } from "@/types/Question";
+import { Quiz } from "@/types/Quiz";
+
+export async function getQuizzes(): Promise<Quiz[]> {
+    try {
+        const res = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/quizzes`,
+            {
+                method: 'GET',
+                cache: 'no-store',
+            }
+        );
+
+        if (!res.ok) {
+            console.error('Failed to fetch quizzes:', res.status);
+            return [];
+        }
+
+        const data = await res.json();
+
+        return Array.isArray(data) ? data : [];
+    } catch (error) {
+        console.error('Failed to fetch quizzes:', error);
+        return [];
+    }
+}
 
 export async function getQuiz(id: string) {
     try {
@@ -17,10 +42,10 @@ export async function getQuiz(id: string) {
 }
 
 export async function saveQuiz(data: any, mode: 'create' | 'edit', id?: string) {
-    const url = mode === 'create' 
+    const url = mode === 'create'
         ? `${process.env.NEXT_PUBLIC_API_URL}/quizzes`
         : `${process.env.NEXT_PUBLIC_API_URL}/quizzes/${id}`;
-    
+
     const method = mode === 'create' ? 'POST' : 'PUT';
 
     try {
@@ -37,7 +62,7 @@ export async function saveQuiz(data: any, mode: 'create' | 'edit', id?: string) 
         const quiz = await response.json()
 
         revalidatePath('/'); // Atualiza a lista na home
-        return { 
+        return {
             success: true,
             quizId: quiz.id
         };
@@ -92,8 +117,8 @@ export async function generateAIQuiz(payload: any) {
             correctAnswer: question.correctAnswer
         }));
 
-        return { 
-            success: true, 
+        return {
+            success: true,
             data: {
                 title: data.title,
                 description: data.description,

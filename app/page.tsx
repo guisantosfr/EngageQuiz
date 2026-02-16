@@ -4,21 +4,10 @@ import { Quiz } from "@/types/Quiz"
 import { NewQuizModal } from "./_components/new-quiz-modal"
 import QuizCard from "./_components/quiz-card"
 import { ErrorBoundary } from "@/components/error-boundary"
+import { getQuizzes } from "./_actions/quiz-actions"
 
 export default async function Home() {
-  let quizzes: Quiz[] = [];
-
-  try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/quizzes`);
-
-    if (res.ok) {
-      const data = await res.json();
-      quizzes = Array.isArray(data) ? data : [];
-    }
-  } catch (error) {
-    console.error('Failed to fetch quizzes:', error);
-    quizzes = [];
-  }
+  const quizzes: Quiz[] = await getQuizzes();
 
   return (
     <div className="flex flex-col h-full">
