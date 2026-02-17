@@ -125,7 +125,9 @@ export function LobbyClient({ initialSession, players, sessionId, quizId, socket
 
                         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-8 bg-secondary/30 px-3 py-1 rounded-full">
                             <Clock className="h-4 w-4" />
-                            <span>{initialSession.quiz?.numberOfQuestions ?? 0} questões</span>
+                            <span>
+                                {initialSession.quiz?.numberOfQuestions ?? 0} {initialSession.quiz?.numberOfQuestions === 1 ? "questão" : "questões"}
+                            </span>
                         </div>
 
                         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
