@@ -112,6 +112,7 @@ export function PlayContent({ initialSession, initialPlayers, sessionId, quizId 
             setTotalQuestions(data.totalQuestions);
             showQuestion(data.firstQuestion);
             startCountdown(data.firstQuestion.timeLimit);
+            setTotalPlayers(data.totalPlayers);
             setShowAnswer(false);
         });
 
