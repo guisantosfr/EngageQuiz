@@ -359,6 +359,7 @@ export class SessionsService {
             sessionId,
             quizId: session.quiz.id,
             totalQuestions: session.quiz.questions.length,
+            totalPlayers: session.players.length,
             firstQuestion: {
                 index: 0,
                 id: firstQuestion.id,
