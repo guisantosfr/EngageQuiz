@@ -1,6 +1,7 @@
 "use client"
 
 import { memo } from 'react'
+import { Control, useWatch } from 'react-hook-form'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -10,21 +11,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { ArrowUp, ArrowDown, Trash2, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Question } from "@/types/Question"
+import { FormQuestion, QuizFormValues } from "./quiz-form"
 
 interface QuestionCardProps {
-    question: Question
+    control: Control<QuizFormValues>
     index: number
     totalQuestions: number
-    onRemove: (id: string) => void
+    onRemove: (index: number) => void
     onMove: (index: number, direction: "up" | "down") => void
-    onUpdate: (id: string, field: keyof Question, value: any) => void
-    onUpdateOption: (questionId: string, optionIndex: number, value: string) => void
-    onSetCorrectOption: (questionId: string, optionIndex: number) => void
+    onUpdate: (index: number, field: keyof FormQuestion, value: any) => void
+    onUpdateOption: (questionIndex: number, optionIndex: number, value: string) => void
+    onSetCorrectOption: (questionIndex: number, optionIndex: number) => void
 }
 
 function QuestionCardComponent({
-    question,
+    control,
     index,
     totalQuestions,
     onRemove,
@@ -33,7 +34,10 @@ function QuestionCardComponent({
     onUpdateOption,
     onSetCorrectOption,
 }: QuestionCardProps) {
-    const canChangeType = question?.id.startsWith('NEW_QUESTION');
+    // useWatch garante reatividade: re-renderiza sempre que os campos desta questão mudam
+    const question = useWatch({ control, name: `questions.${index}` }) as FormQuestion
+
+    const canChangeType = question?.isNew === true;
 
     return (
         <Card>
@@ -53,7 +57,7 @@ function QuestionCardComponent({
                                 disabled={index === 0}
                                 asChild
                             >
-                                <ArrowUp size="48"/>
+                                <ArrowUp size="48" />
                             </Button>
                             <Button
                                 type="button"
@@ -83,7 +87,7 @@ function QuestionCardComponent({
                             size="lg"
                             onClick={(e) => {
                                 e.stopPropagation()
-                                onRemove(question.id)
+                                onRemove(index)
                             }}
                         >
                             <Trash2 className="h-4 w-4 text-red-500" />
@@ -97,9 +101,9 @@ function QuestionCardComponent({
                     <div className="space-y-2">
                         <Label>Tipo de Questão</Label>
                         <Select
-                            value={question.type}
+                            value={question?.type}
                             disabled={!canChangeType}
-                            onValueChange={(value) => onUpdate(question.id, "type", value)}
+                            onValueChange={(value) => onUpdate(index, "type", value)}
                         >
                             <SelectTrigger>
                                 <SelectValue />
@@ -116,9 +120,9 @@ function QuestionCardComponent({
                     <div className="space-y-2">
                         <Label>Tempo Limite</Label>
                         <Select
-                            value={question.timeLimit.toString()}
+                            value={question?.timeLimit?.toString()}
                             onValueChange={(value) =>
-                                onUpdate(question.id, "timeLimit", Number.parseInt(value))
+                                onUpdate(index, "timeLimit", Number.parseInt(value))
                             }
                         >
                             <SelectTrigger>
@@ -140,8 +144,8 @@ function QuestionCardComponent({
                     </Label>
                     <Textarea
                         placeholder="Digite o texto da questão"
-                        value={question.text}
-                        onChange={(e) => onUpdate(question.id, "text", e.target.value)}
+                        value={question?.text ?? ""}
+                        onChange={(e) => onUpdate(index, "text", e.target.value)}
                         required
                         rows={3}
                     />
@@ -155,11 +159,11 @@ function QuestionCardComponent({
                         </span>
                     </Label>
 
-                    {question.type === "TRUE_FALSE" ? (
+                    {question?.type === "TRUE_FALSE" ? (
                         <RadioGroup
                             value={question.correctAnswer ? "true" : "false"}
                             onValueChange={(value) =>
-                                onUpdate(question.id, "correctAnswer", value === "true")
+                                onUpdate(index, "correctAnswer", value === "true")
                             }
                         >
                             <div className="space-y-2">
@@ -167,7 +171,7 @@ function QuestionCardComponent({
                                     className={cn(
                                         "flex items-center space-x-2 p-3 border rounded-lg transition-colors",
                                         question.correctAnswer === true &&
-                                            "bg-green-50 border-green-500 dark:bg-green-950"
+                                        "bg-green-50 border-green-500 dark:bg-green-950"
                                     )}
                                 >
                                     <RadioGroupItem value="true" id={`${question.id}-true`} />
@@ -186,7 +190,7 @@ function QuestionCardComponent({
                                     className={cn(
                                         "flex items-center space-x-2 p-3 border rounded-lg transition-colors",
                                         question.correctAnswer === false &&
-                                            "bg-green-50 border-green-500 dark:bg-green-950"
+                                        "bg-green-50 border-green-500 dark:bg-green-950"
                                     )}
                                 >
                                     <RadioGroupItem value="false" id={`${question.id}-false`} />
@@ -203,13 +207,13 @@ function QuestionCardComponent({
                             </div>
                         </RadioGroup>
                     ) : (
-                        question.options && (
+                        question?.options && (
                             <RadioGroup
                                 value={question.options
                                     .findIndex((opt) => opt.isCorrect)
                                     .toString()}
                                 onValueChange={(value) =>
-                                    onSetCorrectOption(question.id, Number.parseInt(value))
+                                    onSetCorrectOption(index, Number.parseInt(value))
                                 }
                             >
                                 <div className="space-y-2">
@@ -219,7 +223,7 @@ function QuestionCardComponent({
                                             className={cn(
                                                 "flex items-center space-x-2 p-3 border rounded-lg transition-colors",
                                                 option.isCorrect &&
-                                                    "bg-green-50 border-green-500 dark:bg-green-950"
+                                                "bg-green-50 border-green-500 dark:bg-green-950"
                                             )}
                                         >
                                             <RadioGroupItem
@@ -227,16 +231,11 @@ function QuestionCardComponent({
                                                 id={`${question.id}-${optionIndex}`}
                                             />
                                             <Input
-                                                placeholder={`Opção ${optionIndex + 1}${
-                                                    optionIndex >= 2 ? " (opcional)" : ""
-                                                }`}
+                                                placeholder={`Opção ${optionIndex + 1}${optionIndex >= 2 ? " (opcional)" : ""
+                                                    }`}
                                                 value={option.text}
                                                 onChange={(e) =>
-                                                    onUpdateOption(
-                                                        question.id,
-                                                        optionIndex,
-                                                        e.target.value
-                                                    )
+                                                    onUpdateOption(index, optionIndex, e.target.value)
                                                 }
                                                 required={optionIndex < 2}
                                                 className="flex-1 border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
@@ -256,10 +255,8 @@ function QuestionCardComponent({
     )
 }
 
+// Memo simples: re-renderiza quando index ou totalQuestions muda.
+// Os valores dos campos são gerenciados internamente via useWatch.
 export const QuestionCard = memo(QuestionCardComponent, (prev, next) => {
-    return (
-        prev.question === next.question &&
-        prev.index === next.index &&
-        prev.totalQuestions === next.totalQuestions
-    );
+    return prev.index === next.index && prev.totalQuestions === next.totalQuestions;
 });
