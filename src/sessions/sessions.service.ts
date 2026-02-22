@@ -1,8 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, forwardRef, Inject, Logger } from "@nestjs/common";
+import { Injectable, NotFoundException, BadRequestException, Logger } from "@nestjs/common";
+import { EventEmitter2 } from "@nestjs/event-emitter";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateSessionDto, JoinSessionDto, SubmitAnswerDto } from "./dto";
 import { StatusType } from "../generated/prisma/enums";
-import { SessionsGateway } from "./sessions.gateway";
+import { SESSION_EVENTS } from "./session.events";
 
 @Injectable()
 export class SessionsService {
@@ -13,8 +14,7 @@ export class SessionsService {
 
     constructor(
         private readonly prisma: PrismaService,
-        @Inject(forwardRef(() => SessionsGateway))
-        private readonly gateway: SessionsGateway,
+        private readonly eventEmitter: EventEmitter2,
     ) { }
 
     private generateSessionCode(): string {
@@ -74,10 +74,21 @@ export class SessionsService {
                     code,
                     status: StatusType.CREATED,
                 },
+                include: {
+                    quiz: {
+                        select: {
+                            id: true,
+                            title: true,
+                            _count: {
+                                select: { questions: true }
+                            }
+                        },
+                    },
+                },
             });
 
             if (!session) {
-                throw new NotFoundException(`Sessão não encontrada / Código inválido`);
+                throw new NotFoundException(`Session not found or not joinable`);
             }
 
             const existingPlayer = await tx.player.findFirst({
@@ -89,7 +100,7 @@ export class SessionsService {
             });
 
             if (existingPlayer) {
-                throw new BadRequestException(`Já existe um jogador com o nickname "${nickname}" na sessão`);
+                throw new BadRequestException(`Nickname "${nickname}" is already taken in this session`);
             }
 
             const player = await tx.player.create({
@@ -105,6 +116,11 @@ export class SessionsService {
                     id: session.id,
                     code: session.code,
                     status: session.status,
+                    quiz: {
+                        id: session.quiz.id,
+                        title: session.quiz.title,
+                        numberOfQuestions: session.quiz._count.questions
+                    }
                 },
             };
         });
@@ -141,32 +157,20 @@ export class SessionsService {
 
         this.cancelQuestionTimeout(sessionId);
 
-        return this.prisma.$transaction(async (tx) => {
-            const updatedSession = await tx.session.update({
-                where: { id: sessionId },
-                data: {
-                    status: StatusType.CANCELED,
-                    endedAt: new Date(),
-                },
-            });
-
-            const activePlayers = await tx.player.findMany({
-                where: { sessionId, leftAt: null },
-            });
-
-            await tx.player.updateMany({
-                where: { sessionId, leftAt: null },
-                data: { leftAt: new Date() },
-            });
-
-            this.gateway.emitSessionCanceled(sessionId);
-
-            for (const player of activePlayers) {
-                this.gateway.disconnectPlayer(player.id);
-            }
-
-            return updatedSession;
+        const updatedSession = await this.prisma.session.update({
+            where: { id: sessionId },
+            data: {
+                status: StatusType.CANCELED,
+                endedAt: new Date(),
+            },
         });
+
+        this.eventEmitter.emit(SESSION_EVENTS.SESSION_CANCELED, {
+            sessionId,
+            timestamp: new Date().toISOString(),
+        });
+
+        return updatedSession;
     }
 
     async removePlayer(sessionId: string, playerId: string, kicked: boolean = false) {
@@ -194,13 +198,22 @@ export class SessionsService {
             });
 
             const playerData = { playerId: updatedPlayer.id, nickname: updatedPlayer.nickname };
+
             if (kicked) {
-                this.gateway.emitPlayerKicked(sessionId, playerData);
+                this.eventEmitter.emit(SESSION_EVENTS.PLAYER_KICKED, {
+                    sessionId,
+                    player: playerData,
+                    timestamp: new Date().toISOString(),
+                });
             } else {
-                this.gateway.emitPlayerLeft(sessionId, playerData);
+                this.eventEmitter.emit(SESSION_EVENTS.PLAYER_LEFT, {
+                    sessionId,
+                    player: playerData,
+                    timestamp: new Date().toISOString(),
+                });
             }
 
-            this.gateway.disconnectPlayer(playerId);
+            this.eventEmitter.emit(SESSION_EVENTS.PLAYER_DISCONNECT, { playerId });
 
             return updatedPlayer;
         });
@@ -351,11 +364,9 @@ export class SessionsService {
 
         const firstQuestion = session.quiz.questions[0];
 
-        // Initialize closed questions tracking for this session
         this.closedQuestions.set(sessionId, new Set());
 
-        // Emit quiz_started with first question data
-        this.gateway.emitToSession(sessionId, 'quiz_started', {
+        this.eventEmitter.emit(SESSION_EVENTS.QUIZ_STARTED, {
             sessionId,
             quizId: session.quiz.id,
             totalQuestions: session.quiz.questions.length,
@@ -371,7 +382,6 @@ export class SessionsService {
             timestamp: new Date().toISOString(),
         });
 
-        // Schedule timer for first question
         this.scheduleQuestionTimeout(sessionId, firstQuestion.id, 0, firstQuestion.timeLimit);
 
         return updatedSession;
@@ -401,7 +411,6 @@ export class SessionsService {
             throw new BadRequestException(`Session is not in progress`);
         }
 
-        // Verify the question matches the current question
         const currentIndex = session.currentQuestionIndex ?? 0;
         const currentQuestion = session.quiz.questions[currentIndex];
 
@@ -409,13 +418,11 @@ export class SessionsService {
             throw new BadRequestException(`This is not the current active question`);
         }
 
-        // Check if question is already closed
         const closedSet = this.closedQuestions.get(sessionId);
         if (closedSet?.has(currentIndex)) {
             throw new BadRequestException(`Time is up for this question`);
         }
 
-        // Verify player
         const player = await this.prisma.player.findUnique({
             where: { id: playerId },
         });
@@ -428,19 +435,14 @@ export class SessionsService {
             throw new BadRequestException(`Player does not belong to this session or has left`);
         }
 
-        // Check for duplicate answer
         const existingResponse = await this.prisma.response.findFirst({
-            where: {
-                playerId,
-                questionId,
-            },
+            where: { playerId, questionId },
         });
 
         if (existingResponse) {
             throw new BadRequestException(`Player has already answered this question`);
         }
 
-        // Verify option belongs to the question
         const option = await this.prisma.option.findUnique({
             where: { id: optionId },
         });
@@ -449,7 +451,6 @@ export class SessionsService {
             throw new BadRequestException(`Option does not belong to this question`);
         }
 
-        // Create response
         const response = await this.prisma.response.create({
             data: {
                 playerId,
@@ -459,15 +460,14 @@ export class SessionsService {
             },
         });
 
-        // Emit answer_result only to the player who answered
-        this.gateway.emitToPlayer(playerId, 'answer_result', {
+        this.eventEmitter.emit(SESSION_EVENTS.ANSWER_RESULT, {
+            playerId,
             sessionId,
             questionId,
             received: true,
             timestamp: new Date().toISOString(),
         });
 
-        // Count answers and active players
         const [totalAnswers, totalPlayers] = await Promise.all([
             this.prisma.response.count({
                 where: { questionId, player: { sessionId, leftAt: null } },
@@ -477,8 +477,8 @@ export class SessionsService {
             }),
         ]);
 
-        // Emit player_answered to host
-        this.gateway.emitPlayerAnswered(sessionId, {
+        this.eventEmitter.emit(SESSION_EVENTS.PLAYER_ANSWERED, {
+            sessionId,
             questionId,
             playerId,
             playerNickname: player.nickname,
@@ -487,7 +487,6 @@ export class SessionsService {
             totalPlayers,
         });
 
-        // Auto-close if all players have answered
         if (totalAnswers >= totalPlayers) {
             await this.closeQuestion(sessionId, questionId, currentIndex, 'all_answered');
         }
@@ -496,17 +495,14 @@ export class SessionsService {
     }
 
     async closeQuestion(sessionId: string, questionId: string, questionIndex: number, reason: 'timeout' | 'all_answered') {
-        // Mark question as closed (prevents more answers and double-closing)
         const closedSet = this.closedQuestions.get(sessionId);
         if (closedSet?.has(questionIndex)) {
-            return; // Already closed
+            return;
         }
         closedSet?.add(questionIndex);
 
-        // Cancel any pending timer
         this.cancelQuestionTimeout(sessionId);
 
-        // Get stats for the question
         const question = await this.prisma.question.findUnique({
             where: { id: questionId },
             include: {
@@ -540,7 +536,7 @@ export class SessionsService {
 
         const correctOption = question.options.find((opt) => opt.isCorrect);
 
-        this.gateway.emitToSession(sessionId, 'question_closed', {
+        this.eventEmitter.emit(SESSION_EVENTS.QUESTION_CLOSED, {
             sessionId,
             questionId,
             questionIndex,
@@ -554,7 +550,7 @@ export class SessionsService {
             timestamp: new Date().toISOString(),
         });
 
-        this.logger.log(`Question ${questionIndex} closed for session ${sessionId}`);
+        this.logger.log(`Question ${questionIndex} closed for session ${sessionId} (${reason})`);
     }
 
     async nextQuestion(sessionId: string) {
@@ -586,7 +582,6 @@ export class SessionsService {
 
         const currentIndex = session.currentQuestionIndex ?? 0;
 
-        // Verify current question has been closed
         const closedSet = this.closedQuestions.get(sessionId);
         if (!closedSet?.has(currentIndex)) {
             throw new BadRequestException(`Current question has not been closed yet`);
@@ -598,7 +593,6 @@ export class SessionsService {
             return this.finish(sessionId);
         }
 
-        // Update currentQuestionIndex
         await this.prisma.session.update({
             where: { id: sessionId },
             data: { currentQuestionIndex: nextIndex },
@@ -606,8 +600,7 @@ export class SessionsService {
 
         const nextQuestionData = session.quiz.questions[nextIndex];
 
-        // Emit next_question
-        this.gateway.emitToSession(sessionId, 'next_question', {
+        this.eventEmitter.emit(SESSION_EVENTS.NEXT_QUESTION, {
             sessionId,
             question: {
                 index: nextIndex,
@@ -620,7 +613,6 @@ export class SessionsService {
             timestamp: new Date().toISOString(),
         });
 
-        // Schedule timer for this question
         this.scheduleQuestionTimeout(sessionId, nextQuestionData.id, nextIndex, nextQuestionData.timeLimit);
 
         return { questionIndex: nextIndex, questionId: nextQuestionData.id };
@@ -639,11 +631,9 @@ export class SessionsService {
             throw new BadRequestException(`Session is not in progress`);
         }
 
-        // Cancel pending timers and clean up tracking
         this.cancelQuestionTimeout(sessionId);
         this.closedQuestions.delete(sessionId);
 
-        // Update session status
         await this.prisma.session.update({
             where: { id: sessionId },
             data: {
@@ -652,21 +642,21 @@ export class SessionsService {
             },
         });
 
-        // Emit session_finished to all clients in the room
-        this.gateway.emitSessionFinished(sessionId);
+        this.eventEmitter.emit(SESSION_EVENTS.SESSION_FINISHED, {
+            sessionId,
+            timestamp: new Date().toISOString(),
+        });
 
-        // Disconnect all active players and clean up gateway maps
         const activePlayers = await this.prisma.player.findMany({
             where: { sessionId, leftAt: null },
         });
 
         for (const player of activePlayers) {
-            this.gateway.disconnectPlayer(player.id);
+            this.eventEmitter.emit(SESSION_EVENTS.PLAYER_DISCONNECT, { playerId: player.id });
         }
 
-        this.gateway.cleanupSession(sessionId);
+        this.eventEmitter.emit(SESSION_EVENTS.SESSION_CLEANUP, { sessionId });
 
-        // Return general results
         return this.getSessionResults(sessionId);
     }
 
@@ -708,7 +698,6 @@ export class SessionsService {
             throw new BadRequestException(`Session has not finished yet`);
         }
 
-        // Build ranking
         const playerStats = session.players.map((player) => {
             const correctAnswers = player.responses.filter((r) => r.isCorrect).length;
             const totalAnswers = player.responses.length;
@@ -728,7 +717,6 @@ export class SessionsService {
             ...p,
         }));
 
-        // Build per-question stats
         const questions = session.quiz.questions.map((q, index) => {
             const totalAnswers = q.responses.length;
             const correctAnswers = q.responses.filter((r) => r.isCorrect).length;
@@ -803,7 +791,6 @@ export class SessionsService {
             throw new NotFoundException(`Player not found in this session`);
         }
 
-        // Calculate all players' scores for ranking
         const allScores = session.players.map((p) => ({
             playerId: p.id,
             correctAnswers: p.responses.filter((r) => r.isCorrect).length,
@@ -811,7 +798,6 @@ export class SessionsService {
         allScores.sort((a, b) => b.correctAnswers - a.correctAnswers);
         const position = allScores.findIndex((s) => s.playerId === playerId) + 1;
 
-        // Build per-question answers for this player
         const correctAnswers = player.responses.filter((r) => r.isCorrect).length;
         const totalAnswers = player.responses.length;
 
@@ -845,7 +831,6 @@ export class SessionsService {
     }
 
     private scheduleQuestionTimeout(sessionId: string, questionId: string, questionIndex: number, timeLimitSeconds: number) {
-        // Cancel any existing timer
         this.cancelQuestionTimeout(sessionId);
 
         const timer = setTimeout(async () => {
@@ -858,7 +843,6 @@ export class SessionsService {
         }, timeLimitSeconds * 1000);
 
         this.questionTimers.set(sessionId, timer);
-
         this.logger.log(`Timer scheduled for question ${questionIndex} in session ${sessionId}: ${timeLimitSeconds}s`);
     }
 

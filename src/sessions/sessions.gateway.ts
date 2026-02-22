@@ -8,8 +8,24 @@ import {
     OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server, Namespace, Socket } from 'socket.io';
-import { Logger, forwardRef, Inject } from '@nestjs/common';
+import { Logger, Inject, forwardRef } from '@nestjs/common';
+import { OnEvent } from '@nestjs/event-emitter';
 import { SessionsService } from './sessions.service';
+import { SESSION_EVENTS } from './session.events';
+import type {
+    QuizStartedPayload,
+    AnswerResultPayload,
+    PlayerAnsweredPayload,
+    QuestionClosedPayload,
+    NextQuestionPayload,
+    SessionCanceledPayload,
+    SessionFinishedPayload,
+    PlayerLeftPayload,
+    PlayerKickedPayload,
+    PlayerDisconnectPayload,
+    SessionCleanupPayload,
+} from './session.events';
+
 
 interface PlayerSocketInfo {
     playerId: string;
@@ -31,11 +47,8 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
 
     private readonly logger = new Logger(SessionsGateway.name);
 
-    // Maps for socket ↔ player association
     private socketToPlayer = new Map<string, PlayerSocketInfo>();
     private playerToSocket = new Map<string, string>();
-
-    // Host socket tracking: sessionId -> socketId
     private hostSockets = new Map<string, string>();
 
     constructor(
@@ -45,7 +58,6 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
 
     private getSessionsNamespace(): Namespace {
         const s: any = this.server;
-        // Se for Server, usamos .of('/sessions'); se já for Namespace, retornamos direto
         return typeof s.of === 'function' ? (s.of('/sessions') as Namespace) : (s as Namespace);
     }
 
@@ -53,6 +65,8 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
         const nsp: any = this.getSessionsNamespace();
         return nsp.sockets?.get?.(socketId);
     }
+
+    // ─── WebSocket Lifecycle ─────────────────────────────────────────────
 
     handleConnection(client: Socket) {
         this.logger.log(`Client connected: ${client.id}`);
@@ -70,17 +84,16 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
         this.socketToPlayer.delete(client.id);
         this.playerToSocket.delete(playerId);
 
-        this.emitToSession(sessionId, 'player_disconnected', {
+        this.server.to(sessionId).emit('player_disconnected', {
             sessionId,
-            player: {
-                playerId: playerId,
-                nickname: nickname,
-            },
+            player: { playerId, nickname },
             timestamp: new Date().toISOString(),
         });
 
-        this.logger.log(`Player ${playerInfo.nickname} disconnected from session ${playerInfo.sessionId}`);
+        this.logger.log(`Player ${nickname} disconnected from session ${sessionId}`);
     }
+
+    // ─── WebSocket Subscribe Handlers ────────────────────────────────────
 
     @SubscribeMessage('join_session')
     handleJoinSession(
@@ -97,7 +110,6 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
         }
 
         client.join(sessionId);
-
         this.socketToPlayer.set(client.id, { playerId, sessionId, nickname });
         this.playerToSocket.set(playerId, client.id);
 
@@ -122,7 +134,7 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
     @SubscribeMessage('submit_answer')
     async handleSubmitAnswer(
         @MessageBody() data: { sessionId: string; playerId: string; questionId: string; optionId: string },
-        @ConnectedSocket() client: Socket,
+        @ConnectedSocket() _client: Socket,
     ) {
         const { sessionId, playerId, questionId, optionId } = data;
 
@@ -130,116 +142,112 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
             await this.sessionsService.submitAnswer(sessionId, questionId, { playerId, optionId });
             return { success: true };
         } catch (error) {
-            this.logger.error(`Error submitting answer: ${error.message}`);
+            this.logger.error(`Error submitting answer via WS: ${error.message}`);
             return { success: false, error: error.message };
         }
     }
 
-    emitToSession(sessionId: string, event: string, data: any): void {
-        this.server.to(sessionId).emit(event, data);
+    // ─── Internal Event Handlers (@OnEvent) ──────────────────────────────
+
+    @OnEvent(SESSION_EVENTS.QUIZ_STARTED)
+    onQuizStarted(payload: any) {
+        const p = payload as QuizStartedPayload;
+        this.server.to(p.sessionId).emit('quiz_started', p);
     }
 
-    emitToAll(event: string, data: any): void {
-        this.server.emit(event, data);
-    }
-
-    emitToPlayer(playerId: string, event: string, data: any): void {
+    @OnEvent(SESSION_EVENTS.ANSWER_RESULT)
+    onAnswerResult(payload: any) {
+        const { playerId, ...data } = payload as AnswerResultPayload;
         const socketId = this.playerToSocket.get(playerId);
         if (!socketId) return;
-
         const socket = this.getSocketById(socketId);
-        socket?.emit(event, data);
+        socket?.emit('answer_result', data);
     }
 
-    emitPlayerAnswered(sessionId: string, data: {
-        questionId: string;
-        playerId: string;
-        playerNickname: string;
-        answeredAt: string;
-        totalAnswers: number;
-        totalPlayers: number;
-    }): void {
-        const hostSocketId = this.hostSockets.get(sessionId);
+    @OnEvent(SESSION_EVENTS.PLAYER_ANSWERED)
+    onPlayerAnswered(payload: any) {
+        const p = payload as PlayerAnsweredPayload;
+        const hostSocketId = this.hostSockets.get(p.sessionId);
         if (!hostSocketId) return;
-
         const hostSocket = this.getSocketById(hostSocketId);
         hostSocket?.emit('player_answered', {
-            sessionId,
-            ...data,
+            ...p,
             timestamp: new Date().toISOString(),
         });
     }
 
-    disconnectPlayer(playerId: string): void {
+    @OnEvent(SESSION_EVENTS.QUESTION_CLOSED)
+    onQuestionClosed(payload: any) {
+        const p = payload as QuestionClosedPayload;
+        this.server.to(p.sessionId).emit('question_closed', p);
+    }
+
+    @OnEvent(SESSION_EVENTS.NEXT_QUESTION)
+    onNextQuestion(payload: any) {
+        const p = payload as NextQuestionPayload;
+        this.server.to(p.sessionId).emit('next_question', p);
+    }
+
+    @OnEvent(SESSION_EVENTS.SESSION_CANCELED)
+    onSessionCanceled(payload: any) {
+        const p = payload as SessionCanceledPayload;
+        this.logger.log(`Session canceled: ${p.sessionId}`);
+        this.server.to(p.sessionId).emit('session_canceled', p);
+    }
+
+    @OnEvent(SESSION_EVENTS.SESSION_FINISHED)
+    onSessionFinished(payload: any) {
+        const p = payload as SessionFinishedPayload;
+        this.logger.log(`Session finished: ${p.sessionId}`);
+        this.server.to(p.sessionId).emit('session_finished', p);
+    }
+
+    @OnEvent(SESSION_EVENTS.PLAYER_LEFT)
+    onPlayerLeft(payload: any) {
+        const p = payload as PlayerLeftPayload;
+        this.logger.log(`Player left session ${p.sessionId}: ${p.player.nickname}`);
+        this.server.to(p.sessionId).emit('player_left', p);
+    }
+
+    @OnEvent(SESSION_EVENTS.PLAYER_KICKED)
+    onPlayerKicked(payload: any) {
+        const p = payload as PlayerKickedPayload;
+        this.logger.log(`Player kicked from session ${p.sessionId}: ${p.player.nickname}`);
+        this.server.to(p.sessionId).emit('player_kicked', p);
+    }
+
+    @OnEvent(SESSION_EVENTS.PLAYER_DISCONNECT)
+    onPlayerDisconnect(payload: any) {
+        const { playerId } = payload as PlayerDisconnectPayload;
         const socketId = this.playerToSocket.get(playerId);
         if (!socketId) return;
 
         const nsp = this.getSessionsNamespace();
-
-        // No namespace, sockets é um Map no Socket.IO v4
         const socket = (nsp as any).sockets?.get?.(socketId) as Socket | undefined;
 
         if (socket) {
             const playerInfo = this.socketToPlayer.get(socketId);
-
-            if (playerInfo) {
-                socket.leave(playerInfo.sessionId);
-            }
-
+            if (playerInfo) socket.leave(playerInfo.sessionId);
             socket.disconnect(true);
         }
 
         this.playerToSocket.delete(playerId);
         this.socketToPlayer.delete(socketId);
-
         this.logger.log(`Player ${playerId} forcefully disconnected`);
     }
 
-    emitSessionCanceled(sessionId: string): void {
-        this.logger.log(`Session canceled: ${sessionId}`);
-        this.emitToSession(sessionId, 'session_canceled', {
-            sessionId,
-            timestamp: new Date().toISOString(),
-        });
-    }
-
-    emitPlayerLeft(sessionId: string, playerData: { playerId: string; nickname: string }): void {
-        this.logger.log(`Player left session ${sessionId}: ${playerData.nickname}`);
-        this.emitToSession(sessionId, 'player_left', {
-            sessionId,
-            player: playerData,
-            timestamp: new Date().toISOString(),
-        });
-    }
-
-    emitPlayerKicked(sessionId: string, playerData: { playerId: string; nickname: string }): void {
-        this.logger.log(`Player kicked from session ${sessionId}: ${playerData.nickname}`);
-        this.emitToSession(sessionId, 'player_kicked', {
-            sessionId,
-            player: playerData,
-            timestamp: new Date().toISOString(),
-        });
-    }
-
-    emitSessionFinished(sessionId: string): void {
-        this.logger.log(`Session finished: ${sessionId}`);
-        this.emitToSession(sessionId, 'session_finished', {
-            sessionId,
-            timestamp: new Date().toISOString(),
-        });
-    }
-
-    cleanupSession(sessionId: string): void {
+    @OnEvent(SESSION_EVENTS.SESSION_CLEANUP)
+    onSessionCleanup(payload: any) {
+        const { sessionId } = payload as SessionCleanupPayload;
         this.hostSockets.delete(sessionId);
         this.logger.log(`Session ${sessionId} cleaned up from gateway`);
     }
 
+    // ─── Utility ─────────────────────────────────────────────────────────
+
     getPlayerInfo(playerId: string): PlayerSocketInfo | undefined {
         const socketId = this.playerToSocket.get(playerId);
-        if (socketId) {
-            return this.socketToPlayer.get(socketId);
-        }
-        return undefined;
+        return socketId ? this.socketToPlayer.get(socketId) : undefined;
     }
 
     isPlayerConnected(playerId: string): boolean {

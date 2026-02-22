@@ -6,6 +6,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { QuizzesModule } from './quizzes/quizzes.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { HealthModule } from './health/health.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { HealthModule } from './health/health.module';
     QuizzesModule,
     SessionsModule,
     HealthModule,
+    EventEmitterModule.forRoot()
   ],
   providers: [
     {
