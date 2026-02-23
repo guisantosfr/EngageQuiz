@@ -1,5 +1,7 @@
 import { Controller, Get, Post, Body, Param, Put, Delete } from '@nestjs/common';
 import { QuizzesService } from './quizzes.service';
+import { CreateQuizDto, UpdateQuizDto } from './dto';
+import { CreateQuizAIDto } from './dto/create-quiz-ai.dto';
 
 @Controller('quizzes')
 export class QuizzesController {
@@ -16,12 +18,12 @@ export class QuizzesController {
     }
 
     @Post()
-    async create(@Body() data: any) {
+    async create(@Body() data: CreateQuizDto) {
         return this.quizzesService.createQuiz(data);
     }
 
     @Put(':id')
-    async update(@Param('id') id: string, @Body() data: any) {
+    async update(@Param('id') id: string, @Body() data: UpdateQuizDto) {
         return this.quizzesService.updateQuiz(id, data);
     }
 
@@ -31,7 +33,7 @@ export class QuizzesController {
     }
 
     @Post('ai/generate')
-    async generateAIQuiz(@Body() data: any) {
+    async generateAIQuiz(@Body() data: CreateQuizAIDto) {
         return this.quizzesService.generateQuizByAI(data);
     }
 

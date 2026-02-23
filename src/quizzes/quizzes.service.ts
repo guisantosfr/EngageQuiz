@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, InternalServerErrorException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOptionDto, CreateQuizDto, UpdateQuizDto } from './dto';
 import { QuestionType } from '../generated/prisma/enums';
@@ -10,6 +10,8 @@ import { GoogleGenAI, Type } from '@google/genai'
 
 @Injectable()
 export class QuizzesService {
+    private readonly logger = new Logger(QuizzesService.name);
+
     constructor(private readonly prisma: PrismaService) { }
 
     private validateQuestionRules(question: {
@@ -366,62 +368,74 @@ export class QuizzesService {
 
         const finalPrompt = prompt + formattingInstruction;
 
-        const response = await gemini.models.generateContent({
-            model,
-            contents: finalPrompt,
-            config: {
-                responseMimeType: 'application/json',
-                responseSchema: {
-                    type: Type.OBJECT,
-                    properties: {
-                        id: { type: Type.STRING },
-                        title: { type: Type.STRING, },
-                        description: { type: Type.STRING },
-                        questions: {
-                            type: Type.ARRAY,
-                            items: {
-                                type: Type.OBJECT,
-                                properties: {
-                                    id: { type: Type.STRING },
-                                    text: { type: Type.STRING },
-                                    type: {
-                                        type: Type.STRING,
-                                        enum: ['MULTIPLE_CHOICE', 'TRUE_FALSE']
-                                    },
-                                    timeLimit: {
-                                        type: Type.NUMBER
-                                    },
-                                    options: {
-                                        type: Type.ARRAY,
-                                        nullable: true,
-                                        items: {
-                                            type: Type.OBJECT,
-                                            properties: {
-                                                id: { type: Type.STRING },
-                                                text: { type: Type.STRING },
-                                                isCorrect: { type: Type.BOOLEAN }
-                                            },
-                                            required: ['text', 'isCorrect']
+        try {
+            const response = await gemini.models.generateContent({
+                model,
+                contents: finalPrompt,
+                config: {
+                    responseMimeType: 'application/json',
+                    responseSchema: {
+                        type: Type.OBJECT,
+                        properties: {
+                            id: { type: Type.STRING },
+                            title: { type: Type.STRING, },
+                            description: { type: Type.STRING },
+                            questions: {
+                                type: Type.ARRAY,
+                                items: {
+                                    type: Type.OBJECT,
+                                    properties: {
+                                        id: { type: Type.STRING },
+                                        text: { type: Type.STRING },
+                                        type: {
+                                            type: Type.STRING,
+                                            enum: ['MULTIPLE_CHOICE', 'TRUE_FALSE']
+                                        },
+                                        timeLimit: {
+                                            type: Type.NUMBER
+                                        },
+                                        options: {
+                                            type: Type.ARRAY,
+                                            nullable: true,
+                                            items: {
+                                                type: Type.OBJECT,
+                                                properties: {
+                                                    id: { type: Type.STRING },
+                                                    text: { type: Type.STRING },
+                                                    isCorrect: { type: Type.BOOLEAN }
+                                                },
+                                                required: ['text', 'isCorrect']
+                                            }
+                                        },
+                                        correctAnswer: {
+                                            type: Type.BOOLEAN,
+                                            nullable: true
                                         }
                                     },
-                                    correctAnswer: {
-                                        type: Type.BOOLEAN,
-                                        nullable: true
-                                    }
-                                },
-                                required: ['text', 'type', 'timeLimit']
+                                    required: ['text', 'type', 'timeLimit']
+                                }
                             }
-                        }
-                    },
-                    required: ['title', 'description', 'questions']
+                        },
+                        required: ['title', 'description', 'questions']
+                    }
                 }
+            });
+
+            if (!response || !response.text) {
+                throw new BadRequestException('Falha ao gerar quiz via IA');
             }
-        });
 
-        if (!response || !response.text) {
-            throw new BadRequestException('Falha ao gerar quiz via IA');
+            return JSON.parse(response.text);
+        } catch (error) {
+            this.logger.error(`Error generating quiz by AI: ${error.message}`, error.stack);
+
+            if (error instanceof BadRequestException) {
+                throw error;
+            }
+
+            throw new InternalServerErrorException(
+                'Ocorreu um erro ao gerar o questionário com IA. Por favor, tente novamente mais tarde.'
+            );
         }
-
-        return JSON.parse(response.text);
     }
 }

@@ -75,6 +75,14 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
     handleDisconnect(client: Socket) {
         this.logger.log(`Client disconnected: ${client.id}`);
 
+        for (const [sessionId, socketId] of this.hostSockets.entries()) {
+            if (socketId === client.id) {
+                this.hostSockets.delete(sessionId);
+                this.logger.log(`Host disconnected from session ${sessionId}`);
+                break;
+            }
+        }
+
         const playerInfo = this.socketToPlayer.get(client.id);
         if (!playerInfo) return;
 
