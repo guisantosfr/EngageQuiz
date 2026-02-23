@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -8,6 +8,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Check, CheckCircle2, ChevronRight, Eye, Home, Timer, Users, X, Diamond, Circle, Square, Star } from "lucide-react";
 import { QuestionData } from "./play-content";
 import { nextQuestion } from "../_actions/session-actions";
+import { toast } from "sonner";
 
 // diamond, circle, square, star
 const OPTION_SYMBOLS = [Diamond, Circle, Square, Star];
@@ -57,6 +58,7 @@ export function QuestionDisplay({
 }: QuestionDisplayProps) {
 
     const [cancelSessionOpen, setCancelSessionOpen] = useState(false);
+    const [isPending, startTransition] = useTransition();
 
     if (!currentQuestion) {
         return (
@@ -77,6 +79,16 @@ export function QuestionDisplay({
             : optionCount === 3
                 ? "grid grid-cols-1 sm:grid-cols-3 gap-4"
                 : "grid grid-cols-1 md:grid-cols-2 gap-4";
+
+    const handleNextQuestion = () => {
+        startTransition(async () => {
+            const result = await nextQuestion(sessionId);
+
+            if (result?.error) {
+                toast.error(result.error);
+            }
+        })
+    }
 
     return (
         <div className="flex min-h-screen flex-col items-center justify-center bg-background text-foreground p-4">
@@ -230,8 +242,9 @@ export function QuestionDisplay({
                                 Revelar Resposta
                             </Button>
                             <Button
+                                disabled={isPending}
                                 className="bg-green-600 hover:bg-green-700 text-white gap-2"
-                                onClick={() => questionIndex === totalQuestions - 1 ? onFinishQuiz() : nextQuestion(sessionId)}
+                                onClick={() => questionIndex === totalQuestions - 1 ? onFinishQuiz() : handleNextQuestion()}
                             >
                                 {questionIndex === totalQuestions - 1 ? "Ver Resultados" : "Próxima Questão"}
                                 <ChevronRight className="h-4 w-4" />
@@ -241,7 +254,8 @@ export function QuestionDisplay({
 
                     {showAnswer && (
                         <Button
-                            onClick={() => questionIndex === totalQuestions - 1 ? onFinishQuiz() : nextQuestion(sessionId)}
+                            disabled={isPending}
+                            onClick={() => questionIndex === totalQuestions - 1 ? onFinishQuiz() : handleNextQuestion()}
                             className="bg-green-600 hover:bg-green-700 text-white gap-2 px-8"
                         >
                             {questionIndex === totalQuestions - 1 ? "Ver Resultados" : "Próxima Questão"}
