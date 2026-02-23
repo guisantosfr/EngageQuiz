@@ -11,8 +11,13 @@ import { GoogleGenAI, Type } from '@google/genai'
 @Injectable()
 export class QuizzesService {
     private readonly logger = new Logger(QuizzesService.name);
+    private readonly gemini: GoogleGenAI;
 
-    constructor(private readonly prisma: PrismaService) { }
+    constructor(private readonly prisma: PrismaService) {
+        this.gemini = new GoogleGenAI({
+            apiKey: process.env.GEMINI_API_KEY,
+        });
+    }
 
     private validateQuestionRules(question: {
         type: QuestionType;
@@ -352,10 +357,6 @@ export class QuizzesService {
     }
 
     async generateQuizByAI(data: CreateQuizAIDto) {
-        const gemini = new GoogleGenAI({
-            apiKey: process.env.GEMINI_API_KEY,
-        })
-
         const prompt = this.buildAIPrompt(data);
 
         const model = 'gemini-2.5-flash'
@@ -369,7 +370,7 @@ export class QuizzesService {
         const finalPrompt = prompt + formattingInstruction;
 
         try {
-            const response = await gemini.models.generateContent({
+            const response = await this.gemini.models.generateContent({
                 model,
                 contents: finalPrompt,
                 config: {
