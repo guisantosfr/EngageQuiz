@@ -52,8 +52,6 @@ export function LobbyClient({ initialSession, players, sessionId, quizId, socket
                 setPlayersList(prev => prev.filter(p => p.id !== playerToKick.id));
                 toast.success(`${playerToKick.nickname} removido.`);
                 setPlayerToKick(null);
-
-                socket?.emit('kick_player', { sessionId, playerId: playerToKick.id });
             } else {
                 toast.error(result.error);
             }
