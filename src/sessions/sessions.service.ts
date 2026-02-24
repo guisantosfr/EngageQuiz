@@ -156,6 +156,7 @@ export class SessionsService {
         }
 
         this.cancelQuestionTimeout(sessionId);
+        this.closedQuestions.delete(sessionId);
 
         const updatedSession = await this.prisma.session.update({
             where: { id: sessionId },
@@ -169,6 +170,7 @@ export class SessionsService {
             sessionId,
             timestamp: new Date().toISOString(),
         });
+
 
         return updatedSession;
     }
