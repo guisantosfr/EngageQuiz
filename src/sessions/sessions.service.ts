@@ -394,11 +394,14 @@ export class SessionsService {
 
         const session = await this.prisma.session.findUnique({
             where: { id: sessionId },
-            include: {
+            select: {
+                status: true,
+                currentQuestionIndex: true,
                 quiz: {
-                    include: {
+                    select: {
                         questions: {
                             orderBy: { createdAt: 'asc' },
+                            select: { id: true },
                         },
                     },
                 },
@@ -427,6 +430,7 @@ export class SessionsService {
 
         const player = await this.prisma.player.findUnique({
             where: { id: playerId },
+            select: { sessionId: true, leftAt: true, nickname: true },
         });
 
         if (!player) {
@@ -447,6 +451,7 @@ export class SessionsService {
 
         const option = await this.prisma.option.findUnique({
             where: { id: optionId },
+            select: { questionId: true, isCorrect: true },
         });
 
         if (!option || option.questionId !== questionId) {
