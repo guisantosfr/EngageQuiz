@@ -173,12 +173,12 @@ export function QuizForm({ mode, initialData }: QuizFormProps) {
 
     const validateQuestions = (questions: FormQuestion[]): string | null => {
         for (let i = 0; i < questions.length; i++) {
-            const q = questions[i]
+            const q = questions[i];
+            if (!q.text.trim()) return `Questão ${i + 1}: O enunciado não pode estar vazio.`;
+
             if (q.type === "MULTIPLE_CHOICE" && q.options) {
-                const correctOption = q.options.find(opt => opt.isCorrect)
-                if (correctOption && !correctOption.text.trim()) {
-                    return `Questão ${i + 1}: A alternativa marcada como correta não pode estar vazia.`
-                }
+                const hasEmptyOption = q.options.some(opt => !opt.text.trim());
+                if (hasEmptyOption) return `Questão ${i + 1}: Todas as alternativas devem ser preenchidas.`;
             }
         }
         return null
