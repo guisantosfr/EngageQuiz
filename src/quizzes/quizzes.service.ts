@@ -346,14 +346,7 @@ export class QuizzesService {
     }
 
     async deleteQuiz(id: string) {
-        // Garante exclusão em cascata manual
-        await this.prisma.question.deleteMany({
-            where: { quizId: id },
-        });
-
-        return this.prisma.quiz.delete({
-            where: { id },
-        });
+        return this.prisma.quiz.delete({ where: { id } });
     }
 
     async generateQuizByAI(data: CreateQuizAIDto) {
