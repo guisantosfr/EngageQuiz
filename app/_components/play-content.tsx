@@ -7,7 +7,7 @@ import { LobbyClient } from "./lobby-client";
 import { QuestionDisplay } from "./question-display";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import Player from "@/types/Player";
-import { cancelSession, finishQuiz, getPlayers } from "../_actions/session-actions";
+import { cancelSession, finishQuiz } from "../_actions/session-actions";
 import { toast } from "sonner";
 import FinalResults from "./final-results";
 
@@ -48,12 +48,6 @@ export function PlayContent({ initialSession, initialPlayers, sessionId, quizId 
 
     const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Função auxiliar para atualizar jogadores
-    const refreshPlayers = useCallback(async () => {
-        const updatedPlayers = await getPlayers(sessionId);
-        setPlayers(updatedPlayers);
-    }, [sessionId]);
-
     const clearCountdown = useCallback(() => {
         if (timerRef.current) {
             clearInterval(timerRef.current);
@@ -91,20 +85,22 @@ export function PlayContent({ initialSession, initialPlayers, sessionId, quizId 
 
         setWebsocket(socket);
 
-        const handlePlayerUpdate = (payload: any) => {
-            if (!payload?.sessionId || payload.sessionId === sessionId) {
-                refreshPlayers();
-            }
-        };
-
         socket.on("connect", () => {
             console.log("[PlayContent] Connected to socket");
             socket.emit("join_host", { sessionId });
         });
 
-        socket.on("player_joined", handlePlayerUpdate);
-        socket.on("player_left", handlePlayerUpdate);
-        socket.on("player_kicked", handlePlayerUpdate);
+        socket.on("player_joined", (data) => {
+            setPlayers(prev => [...prev, data.player])
+        })
+
+        socket.on("player_left", (data) => {
+            setPlayers(prev => prev.filter(player => player.id !== data.player.id))
+        })
+
+        socket.on("player_kicked", (data) => {
+            setPlayers(prev => prev.filter(player => player.id !== data.player.id))
+        })
 
         socket.on("quiz_started", (data) => {
             console.log("[quiz_started]", data);
@@ -140,7 +136,7 @@ export function PlayContent({ initialSession, initialPlayers, sessionId, quizId 
             clearCountdown();
             socket.disconnect();
         };
-    }, [sessionId, showQuestion, startCountdown, clearCountdown, refreshPlayers]);
+    }, [sessionId, showQuestion, startCountdown, clearCountdown]);
 
     // Intercepta o botão voltar do navegador
     useEffect(() => {
