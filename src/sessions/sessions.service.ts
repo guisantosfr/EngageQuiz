@@ -199,7 +199,7 @@ export class SessionsService {
                 data: { leftAt: new Date() },
             });
 
-            const playerData = { playerId: updatedPlayer.id, nickname: updatedPlayer.nickname };
+            const playerData = { id: updatedPlayer.id, nickname: updatedPlayer.nickname };
 
             if (kicked) {
                 this.eventEmitter.emit(SESSION_EVENTS.PLAYER_KICKED, {

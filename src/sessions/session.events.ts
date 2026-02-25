@@ -95,18 +95,18 @@ export interface SessionFinishedPayload {
 
 export interface PlayerLeftPayload {
     sessionId: string;
-    player: { playerId: string; nickname: string };
+    player: { id: string; nickname: string };
     timestamp: string;
 }
 
 export interface PlayerKickedPayload {
     sessionId: string;
-    player: { playerId: string; nickname: string };
+    player: { id: string; nickname: string };
     timestamp: string;
 }
 
 export interface PlayerDisconnectPayload {
-    playerId: string;
+    id: string;
 }
 
 export interface SessionCleanupPayload {

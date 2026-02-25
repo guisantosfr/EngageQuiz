@@ -125,7 +125,7 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
 
         client.to(sessionId).emit('player_joined', {
             sessionId,
-            player: { playerId, nickname, joinedAt: new Date().toISOString() },
+            player: { id: playerId, nickname, joinedAt: new Date().toISOString() },
             timestamp: new Date().toISOString(),
         });
 
@@ -226,8 +226,8 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
 
     @OnEvent(SESSION_EVENTS.PLAYER_DISCONNECT)
     onPlayerDisconnect(payload: any) {
-        const { playerId } = payload as PlayerDisconnectPayload;
-        const socketId = this.playerToSocket.get(playerId);
+        const { id } = payload as PlayerDisconnectPayload;
+        const socketId = this.playerToSocket.get(id);
         if (!socketId) return;
 
         const nsp = this.getSessionsNamespace();
@@ -239,9 +239,9 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
             socket.disconnect(true);
         }
 
-        this.playerToSocket.delete(playerId);
+        this.playerToSocket.delete(id);
         this.socketToPlayer.delete(socketId);
-        this.logger.log(`Player ${playerId} forcefully disconnected`);
+        this.logger.log(`Player ${id} forcefully disconnected`);
     }
 
     @OnEvent(SESSION_EVENTS.SESSION_CLEANUP)
