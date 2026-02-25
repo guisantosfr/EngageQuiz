@@ -118,9 +118,15 @@ export function QuestionDisplay({
                     </div>
                 </div>
 
-                {!endReason && (
-                    <Progress value={(timeLeft / currentQuestion.timeLimit) * 100} className="h-2 mb-6" />
-                )}
+                {!endReason && (() => {
+                    const percentage = (timeLeft / currentQuestion.timeLimit) * 100;
+                    const isLowTime = timeLeft <= 5;
+                    const isMediumTime = timeLeft <= 10 && timeLeft > 5;
+                    const indicatorColor = isLowTime ? "bg-red-500" : isMediumTime ? "bg-yellow-500" : "bg-primary";
+                    return (
+                        <Progress value={percentage} indicatorColor={indicatorColor} className="h-2 mb-6" />
+                    );
+                })()}
                 {endReason && <div className="h-2 mb-6" />}
 
                 <Card className="mb-6">
@@ -213,16 +219,22 @@ export function QuestionDisplay({
                                         : `${getOptionColor(index)} hover:scale-105`;
 
                                     const Icon = OPTION_SYMBOLS[index];
+                                    const isLongText = (option.text?.length || 0) > 40;
+
+                                    const layoutClass = isLongText
+                                        ? "p-6 text-left flex-row items-start gap-4"
+                                        : "p-4 text-center flex-col items-center gap-2";
+                                    const iconWrapperClass = isLongText ? "mt-0.5" : "";
 
                                     return (
                                         <div
                                             key={option.id}
-                                            className={`p-4 rounded-lg text-center font-bold text-lg cursor-default transition-all text-white flex flex-col items-center gap-2 ${optionClass}`}
+                                            className={`rounded-lg font-bold text-lg cursor-default transition-all text-white flex ${layoutClass} ${optionClass}`}
                                         >
-                                            <span className="leading-none" aria-hidden="true">
+                                            <span className={`leading-none shrink-0 ${iconWrapperClass}`} aria-hidden="true">
                                                 <Icon className="w-7 h-7" />
                                             </span>
-                                            <span>
+                                            <span className="flex-1">
                                                 {option.text}
                                                 {showAnswer && isCorrect && <Check className="inline ml-2 h-5 w-5" />}
                                             </span>
