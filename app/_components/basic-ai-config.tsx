@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Slider } from "@/components/ui/slider"
 import { AIQuizFormValues } from "./advanced-ai-config"
+import { Button } from "@/components/ui/button"
+import { Minus, Plus } from "lucide-react"
 
 interface BasicAIConfigProps {
     control: Control<AIQuizFormValues>
@@ -116,16 +118,38 @@ export default function BasicAIConfig({ control, disabled }: BasicAIConfigProps)
                             name="questionCount"
                             render={({ field }) => (
                                 <div className="pt-2 space-y-3">
-                                    <Slider
-                                        id="questionsCount"
-                                        min={2}
-                                        max={20}
-                                        step={1}
-                                        value={[field.value]}
-                                        onValueChange={(v) => field.onChange(v[0])}
-                                        disabled={disabled}
-                                        className="w-full cursor-pointer"
-                                    />
+                                    <div className="flex items-center gap-4">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="icon"
+                                            className="h-8 w-8 shrink-0"
+                                            onClick={() => field.onChange(Math.max(2, field.value - 1))}
+                                            disabled={disabled || field.value <= 2}
+                                        >
+                                            <Minus className="h-4 w-4" />
+                                        </Button>
+                                        <Slider
+                                            id="questionsCount"
+                                            min={2}
+                                            max={20}
+                                            step={1}
+                                            value={[field.value]}
+                                            onValueChange={(v) => field.onChange(v[0])}
+                                            disabled={disabled}
+                                            className="flex-1 cursor-pointer"
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="icon"
+                                            className="h-8 w-8 shrink-0"
+                                            onClick={() => field.onChange(Math.min(20, field.value + 1))}
+                                            disabled={disabled || field.value >= 20}
+                                        >
+                                            <Plus className="h-4 w-4" />
+                                        </Button>
+                                    </div>
                                     <div className="text-center text-2xl text-primary">{field.value}</div>
                                 </div>
                             )}
