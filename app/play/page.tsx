@@ -1,5 +1,6 @@
 import { ErrorBoundary } from "@/components/error-boundary";
-import { getSession, getPlayers } from "../_actions/session-actions";
+import { getSession } from "../_actions/session-queries";
+import { getPlayers } from "../_actions/session-queries";
 import { redirect } from "next/navigation";
 import { PlayContent } from "../_components/play-content";
 

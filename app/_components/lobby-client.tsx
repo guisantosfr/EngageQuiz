@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CircleX, Clock, Loader2, Play, User, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { cancelSession, getPlayers, kickPlayer, startQuiz } from "@/app/_actions/session-actions";
+import { cancelSession, kickPlayer, startQuiz } from "@/app/_actions/session-actions";
 import Player from "@/types/Player";
 import PlayerCard from "./player-card";
 
