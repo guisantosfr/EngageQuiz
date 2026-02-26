@@ -385,6 +385,7 @@ export function QuizForm({ mode, initialData }: QuizFormProps) {
                                     onUpdate={handleUpdate}
                                     onUpdateOption={handleUpdateOption}
                                     onSetCorrectOption={handleSetCorrectOption}
+                                    defaultExpanded={mode === 'create' || field.isNew}
                                 />
                             </ErrorBoundary>
                         ))}
