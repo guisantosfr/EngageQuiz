@@ -85,13 +85,13 @@ function QuestionCardComponent({
                                     Questão {index + 1}
                                 </CardTitle>
                                 {!isOpen && question?.text && (
-                                    <span className="text-muted-foreground truncate max-w-[200px] sm:max-w-xs md:max-w-md ml-3 border-l pl-3 text-sm">
+                                    <span className="text-muted-foreground truncate max-w-[200px] sm:max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl ml-3 border-l pl-3 text-sm">
                                         {question.text}
                                     </span>
                                 )}
                             </div>
                         </div>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-3">
                             <CollapsibleTrigger asChild>
                                 <Button variant="ghost" size="sm" className="hidden sm:flex">
                                     {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
