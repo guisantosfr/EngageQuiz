@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "engage-quiz-student",
+    "slug": "engage-quiz-student",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "scheme": "engagequizstudent",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1e3a8a"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1e3a8a"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "softwareKeyboardLayoutMode": "pan",
+      "package": "com.engagequiz.engagequizstudent"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "f4d9bdfb-9d72-45c1-8ce0-b93bb726f35e"
+      }
+    },
+    "owner": "engagequiz"
+  }
+}

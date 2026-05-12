@@ -1,0 +1,238 @@
+import { useCallback, useEffect, useState } from 'react';
+import {
+    View,
+    Text,
+    Pressable,
+    Alert,
+    ActivityIndicator,
+    ScrollView,
+    StyleSheet,
+    BackHandler,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
+import GradientBackground from '@/components/GradientBackground';
+import { Player } from '@/types/Player';
+import Toast from 'react-native-toast-message';
+import { useSessionStore } from '@/stores/useSessionStore';
+
+const MAX_VISIBLE_PLAYERS = 10;
+
+export default function StudentLobbyScreen() {
+    const router = useRouter();
+
+    const { session, player, socket, connectSocket, setNextQuestion, disconnectSocket, resetGame } = useSessionStore();
+
+    const [players, setPlayers] = useState<Player[]>([]);
+
+    const displayedNickname = player?.nickname ?? '';
+
+    const fetchPlayers = useCallback(async () => {
+        if (!session) return;
+        try {
+            const response = await fetch(
+                `${process.env.EXPO_PUBLIC_API_URL}/sessions/${session.id}/players`
+            );
+            const data = await response.json();
+            setPlayers(data);
+        } catch (error) {
+            console.error(error);
+        }
+    }, [session?.id]);
+
+    const leaveSession = useCallback(async () => {
+        if (!session || !player) return;
+        try {
+            const response = await fetch(
+                `${process.env.EXPO_PUBLIC_API_URL}/sessions/${session.id}/players/${player.id}/leave`,
+                { method: 'DELETE' }
+            );
+
+            if (response.ok) {
+                Toast.show({ type: 'success', text1: 'Você saiu da sessão' });
+                resetGame();
+                disconnectSocket();
+                router.dismissAll();
+            } else {
+                Toast.show({ type: 'error', text1: 'Não foi possível sair da sessão' });
+            }
+        } catch (error) {
+            console.error(error);
+            Toast.show({ type: 'error', text1: 'Não foi possível sair da sessão' });
+        }
+    }, [session?.id, player?.id, router]);
+
+    const handleExit = useCallback(() => {
+        Alert.alert(
+            'Sair do Lobby',
+            'Tem certeza que deseja sair do questionário?',
+            [
+                { text: 'Cancelar', style: 'cancel' },
+                { text: 'Sair', style: 'destructive', onPress: leaveSession },
+            ]
+        );
+    }, [leaveSession]);
+
+    useEffect(() => {
+        if (!session || !player) return;
+        fetchPlayers();
+        connectSocket();
+    }, []);
+
+    useEffect(() => {
+        const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+            handleExit();
+            return true;
+        });
+        return () => backHandler.remove();
+    }, [handleExit]);
+
+    useEffect(() => {
+        if (!socket || !session || !player) return;
+
+        const shouldHandle = (payload: any) =>
+            !payload?.sessionId || payload.sessionId === session.id;
+
+        const refreshPlayers = async (payload: any) => {
+            if (!shouldHandle(payload)) return;
+            await fetchPlayers();
+        };
+
+        const onPlayerKicked = (payload: any) => {
+            if (!shouldHandle(payload)) return;
+            const kickedId = payload?.player?.id ?? payload?.id;
+            if (kickedId === player.id) {
+                Toast.show({ type: 'error', text1: 'Você foi expulso da sessão' });
+                resetGame();
+                router.dismissAll();
+            }
+        };
+
+        const onSessionCanceled = (payload: any) => {
+            if (!shouldHandle(payload)) return;
+            Toast.show({ type: 'error', text1: 'Sessão cancelada' });
+            resetGame();
+            router.dismissAll();
+        };
+
+        const onQuizStarted = (data: any) => {
+            setNextQuestion(data.firstQuestion, 1);
+            router.replace('/question');
+        };
+
+        socket.on('player_joined', refreshPlayers);
+        socket.on('player_left', refreshPlayers);
+        socket.on('player_disconnected', refreshPlayers);
+        socket.on('player_kicked', onPlayerKicked);
+        socket.on('session_canceled', onSessionCanceled);
+        socket.on('quiz_started', onQuizStarted);
+
+        return () => {
+            socket.off('player_joined', refreshPlayers);
+            socket.off('player_left', refreshPlayers);
+            socket.off('player_disconnected', refreshPlayers);
+            socket.off('player_kicked', onPlayerKicked);
+            socket.off('session_canceled', onSessionCanceled);
+            socket.off('quiz_started', onQuizStarted);
+        };
+    }, [socket]);
+
+    const sortedPlayers = [...players].sort((a, b) => {
+        if (a.nickname === displayedNickname) return -1;
+        if (b.nickname === displayedNickname) return 1;
+        return 0;
+    });
+    const visiblePlayers = sortedPlayers.slice(0, MAX_VISIBLE_PLAYERS);
+    const hiddenPlayersCount = Math.max(0, players.length - MAX_VISIBLE_PLAYERS);
+
+    return (
+        <GradientBackground>
+            <SafeAreaView className="flex-1">
+                <View className="flex-row items-center justify-end px-5 py-4">
+                    <Pressable
+                        onPress={handleExit}
+                        className="w-10 h-10 items-center justify-center rounded-full bg-white/10"
+                    >
+                        <FontAwesome6 name="xmark" iconStyle="solid" size={18} color="white" />
+                    </Pressable>
+                </View>
+
+                <ScrollView
+                    className="flex-1 px-5"
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                >
+                    <Text className="text-xl font-bold text-justify text-white flex-1 w-9/10 mx-auto">
+                        {session?.quiz.title}
+                    </Text>
+                    <View className="items-center py-8">
+                        <ActivityIndicator size="large" color="#60a5fa" />
+                        <Text className="text-white/70 text-base mt-4 text-center">
+                            Aguarde o professor iniciar o questionário
+                        </Text>
+                    </View>
+
+                    <View className="bg-white/10 rounded-2xl p-4 flex-col items-center gap-4 border border-white/20 w-3/4 mx-auto h-40">
+                        <View className="w-16 h-16 rounded-full bg-blue-500 items-center justify-center">
+                            <FontAwesome6 name="user" iconStyle="solid" size={32} color="white" />
+                        </View>
+                        <View className="flex-1">
+                            <Text className="text-white/60 text-sm text-center">Conectado como</Text>
+                            <Text className="text-white text-lg font-semibold text-center">{displayedNickname}</Text>
+                        </View>
+                    </View>
+
+                    <View className="flex-row items-center justify-between mt-8 mb-4">
+                        <Text className="text-white text-lg font-semibold">
+                            Jogadores conectados
+                        </Text>
+                        <View className="bg-blue-500 px-3 py-1 rounded-full">
+                            <Text className="text-white font-bold">{players.length}</Text>
+                        </View>
+                    </View>
+
+                    <View className="flex-row flex-wrap gap-3 justify-center">
+                        {visiblePlayers.map((p) => (
+                            <View
+                                key={p?.id}
+                                className={`rounded-xl px-4 py-3 flex-row items-center gap-2 border ${p?.nickname === displayedNickname
+                                    ? 'bg-blue-500/20 border-blue-500/50'
+                                    : 'bg-white/10 border-white/10'
+                                    }`}
+                            >
+                                <View className={`w-8 h-8 rounded-full items-center justify-center ${p?.nickname === displayedNickname
+                                    ? 'bg-blue-500'
+                                    : 'bg-white/20'
+                                    }`}>
+                                    <FontAwesome6
+                                        name="user"
+                                        iconStyle="solid"
+                                        size={12}
+                                        color="rgba(255,255,255,0.8)"
+                                    />
+                                </View>
+                                <Text className="text-white text-sm">{p?.nickname}</Text>
+                            </View>
+                        ))}
+
+                        {hiddenPlayersCount > 0 && (
+                            <View className="bg-white/5 rounded-xl px-4 py-3 flex-row items-center gap-2 border border-dashed border-white/20">
+                                <View className="w-8 h-8 rounded-full bg-white/10 items-center justify-center">
+                                    <FontAwesome6 name="users" iconStyle="solid" size={12} color="rgba(255,255,255,0.5)" />
+                                </View>
+                                <Text className="text-white/60 text-sm">+{hiddenPlayersCount} outro(s)</Text>
+                            </View>
+                        )}
+                    </View>
+                </ScrollView>
+            </SafeAreaView>
+        </GradientBackground>
+    );
+}
+
+const styles = StyleSheet.create({
+    scrollContent: {
+        paddingBottom: 24,
+    },
+});
