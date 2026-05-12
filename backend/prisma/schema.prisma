@@ -1,0 +1,129 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+  moduleFormat  = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Quiz {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  questions   Question[]
+  
+  sessions    Session[]
+}
+
+model Question {
+  id        String   @id @default(uuid())
+  quizId    String
+  quiz      Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  text      String
+  type      QuestionType
+  timeLimit Int
+
+  options   Option[]
+  responses Response[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([quizId])
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+}
+
+model Option {
+  id          String    @id @default(uuid())
+  questionId  String
+  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  text        String
+  isCorrect   Boolean   @default(false)
+
+  responses   Response[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Session {
+  id         String        @id @default(uuid())
+  quizId     String
+  quiz       Quiz          @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  code       String
+  status     StatusType
+  currentQuestionIndex Int?
+  startedAt  DateTime?
+  endedAt    DateTime?
+
+  players    Player[]
+
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@index([quizId])
+}
+
+enum StatusType {
+  CREATED
+  IN_PROGRESS
+  FINISHED
+  CANCELED
+}
+
+model Player {
+  id         String      @id @default(uuid())
+  sessionId  String
+  session    Session     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  nickname   String
+  joinedAt   DateTime    @default(now())
+  leftAt     DateTime?
+
+  responses  Response[]
+
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@index([sessionId])
+}
+
+model Response {
+  id          String       @id @default(uuid())
+  playerId    String
+  player      Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  questionId  String
+  question    Question     @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  optionId    String?
+  option      Option?      @relation(fields: [optionId], references: [id], onDelete: SetNull)
+
+  answeredAt  DateTime     @default(now())
+  isCorrect   Boolean?
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([playerId])
+  @@index([questionId])
+  @@index([optionId])
+}
