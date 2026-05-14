@@ -1,36 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# EngageQuiz - Web (Painel do Professor)
 
-## Getting Started
+Esta pasta contém o **Frontend Web** do EngageQuiz. Trata-se do painel administrativo utilizado pelos professores para a criação de quizzes, visualização de resultados e gerenciamento das sessões de jogo em tempo real.
 
-First, run the development server:
+![Interface Web]([Insira imagens aqui])
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## 🛠️ Tecnologias Específicas
+
+* **[Next.js (App Router)](https://nextjs.org/):** Framework React utilizado para a construção da interface, garantindo renderização rápida e boa arquitetura de pastas.
+* **[React](https://react.dev/):** Biblioteca para a construção das interfaces de usuário.
+* **[Tailwind CSS](https://tailwindcss.com/):** Framework utilitário de CSS para estilização rápida e responsiva.
+* **[Shadcn/UI](https://ui.shadcn.com/):** Coleção de componentes reutilizáveis construídos sobre o Radix UI, garantindo acessibilidade e um visual moderno.
+* **[Socket.io-client](https://socket.io/):** Utilizado para a comunicação em tempo real com o servidor (ex: ver os alunos entrando na sala, ver resultados ao vivo).
+
+---
+
+## ⚙️ Pré-requisitos e Configuração
+
+Certifique-se de que o [Backend](../backend/README.md) esteja rodando, pois o painel web precisa se comunicar com a API e o servidor WebSocket.
+
+### Variáveis de Ambiente
+
+Crie um arquivo `.env.local` na raiz da pasta `web/`:
+
+```env
+# URL da API REST e WebSocket do Backend
+NEXT_PUBLIC_API_URL="http://localhost:3000"
 ```
+*(Altere a porta caso o seu backend esteja rodando em uma porta diferente).*
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🚀 Executando o Projeto
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **Instale as dependências:**
+   ```bash
+   npm install
+   # ou yarn install / pnpm install
+   ```
 
-## Learn More
+2. **Inicie o servidor de desenvolvimento:**
+   ```bash
+   npm run dev
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+3. Abra o navegador em [http://localhost:3000](http://localhost:3000) (ou a porta indicada no terminal, ex: `3001` caso a `3000` esteja em uso pelo backend).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📜 Scripts Disponíveis
 
-## Deploy on Vercel
+* `npm run dev`: Inicia a aplicação em modo de desenvolvimento.
+* `npm run build`: Cria a versão otimizada para produção.
+* `npm run start`: Inicia a aplicação construída (requer que o `build` tenha sido rodado antes).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🏗️ Peculiaridades
+
+* **Server Actions:** O projeto utiliza Server Actions do Next.js (arquivos na pasta `_actions`) para as mutações e buscas de dados diretamente no servidor Next, antes de chamar a API NestJS, garantindo segurança e melhor integração.
+* **Painel da Sessão:** A tela de execução de uma sessão ativa abre uma conexão via WebSocket com o backend para coordenar qual pergunta está ativa e atualizar a interface conforme os alunos respondem.
