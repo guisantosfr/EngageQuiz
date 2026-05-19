@@ -2,9 +2,10 @@
 
 Esta pasta contém o **Aplicativo Mobile** do EngageQuiz. O app é projetado para os alunos participarem dos quizzes criados pelos professores. Através de códigos de sala, eles ingressam na sessão, respondem as perguntas em tempo real de seus smartphones e acompanham a sua pontuação.
 
-<img src="./assets/question-mobile.jpeg" alt="Question screen on mobile" width="240">
-
-<img src="./assets/results.jpg" alt="Results screen on mobile" width="240">
+<p align="center">
+  <img src="./assets/question-mobile.jpeg" alt="Question screen on mobile" width="240">
+  <img src="./assets/results.jpg" alt="Results screen on mobile" width="240">
+</p>
 
 ---
 ## 🛠️ Tecnologias Específicas
