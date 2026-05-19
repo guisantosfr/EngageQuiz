@@ -2,7 +2,11 @@
 
 Esta pasta contém o **Frontend Web** do EngageQuiz. Trata-se do painel administrativo utilizado pelos professores para a criação de quizzes, visualização de resultados e gerenciamento das sessões de jogo em tempo real.
 
-![Interface Web]([Insira imagens aqui])
+<img src="./assets/lobby.png" alt="Lobby screen" width="446">
+
+<img src="./assets/question-web.jpg" alt="Question screen on web" width="446">
+
+<img src="./assets/podium.png" alt="Podium screen" width="446">
 
 ---
 

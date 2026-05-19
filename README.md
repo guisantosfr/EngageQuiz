@@ -1,6 +1,8 @@
 # EngageQuiz
 
-![EngageQuiz Banner]([Insira imagens aqui])
+<img src="./web/assets/question-web.jpg" alt="Question screen on web" width="446">
+
+<img src="./mobile/assets/question-mobile.jpeg" alt="Question screen on mobile" width="240">
 
 Aplicação multiplataforma para criação e participação em quizzes em tempo real, projetado para engajar alunos em sala de aula de forma interativa e dinâmica.
 
