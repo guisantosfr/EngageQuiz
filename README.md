@@ -29,7 +29,7 @@ O projeto é dividido em dois grandes fluxos de experiência:
 
 O EngageQuiz é construído com tecnologias modernas, garantindo escalabilidade e performance.
 
-![Diagrama de Arquitetura]([Insira imagens aqui])
+![Diagrama de Arquitetura](./web/assets/diagram.png)
 
 ### Por que um Monorepo?
 Adotei a estrutura de **Monorepo** para manter todos os componentes da aplicação (backend, frontend web e app mobile) em um único lugar. Isso facilita o desenvolvimento, compartilhamento de conhecimentos e garante que as modificações fiquem sincronizadas entre os serviços.
