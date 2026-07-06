@@ -6,6 +6,8 @@ import QuizCard from "./_components/quiz-card"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { getQuizzes } from "./_actions/quiz-queries"
 
+export const dynamic = 'force-dynamic';
+
 export default async function Home() {
   const quizzes: Quiz[] = await getQuizzes();
 
