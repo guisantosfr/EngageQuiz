@@ -26,9 +26,15 @@ export async function getQuizzes(): Promise<Quiz[]> {
 
 export async function getQuiz(id: string) {
     try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/${id}`, {
-            cache: 'no-store'
-        });
+        const res = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/quizzes`,
+            {
+                method: 'GET',
+                // Remove o cache: 'no-store' e usa revalidate
+                next: { revalidate: 60 } // Atualiza o cache a cada 60 segundos
+            }
+        );
+
         if (!res.ok) return null;
         return await res.json();
     } catch (error) {
