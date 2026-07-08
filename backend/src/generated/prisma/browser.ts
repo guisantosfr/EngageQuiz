@@ -47,3 +47,8 @@ export type Player = Prisma.PlayerModel
  * 
  */
 export type Response = Prisma.ResponseModel
+/**
+ * Model User
+ * 
+ */
+export type User = Prisma.UserModel

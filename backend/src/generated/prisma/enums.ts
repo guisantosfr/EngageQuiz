@@ -25,3 +25,12 @@ export const StatusType = {
 } as const
 
 export type StatusType = (typeof StatusType)[keyof typeof StatusType]
+
+
+export const Role = {
+  ADMIN: 'ADMIN',
+  STUDENT: 'STUDENT',
+  TEACHER: 'TEACHER'
+} as const
+
+export type Role = (typeof Role)[keyof typeof Role]

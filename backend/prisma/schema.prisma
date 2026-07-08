@@ -127,3 +127,20 @@ model Response {
   @@index([questionId])
   @@index([optionId])
 }
+
+enum Role {
+  ADMIN
+  STUDENT
+  TEACHER
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(STUDENT)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

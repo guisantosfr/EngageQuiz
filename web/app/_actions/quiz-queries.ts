@@ -11,7 +11,7 @@ export async function getQuizzes(): Promise<Quiz[]> {
         );
 
         if (!res.ok) {
-            console.error('Failed to fetch quizzes:', res.status);
+            console.error('Failed to fetch quizzes:', res);
             return [];
         }
 
