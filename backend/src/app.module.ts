@@ -7,6 +7,7 @@ import { QuizzesModule } from './quizzes/quizzes.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { HealthModule } from './health/health.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     QuizzesModule,
     SessionsModule,
     HealthModule,
+    AuthModule,
     EventEmitterModule.forRoot()
   ],
   providers: [
