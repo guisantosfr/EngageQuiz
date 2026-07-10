@@ -2,6 +2,7 @@ import { ConflictException, Injectable, InternalServerErrorException, Unauthoriz
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { RefreshDto } from './dto/refresh.dto';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 
@@ -93,5 +94,43 @@ export class AuthService {
       accessToken,
       refreshToken,
     };
+  }
+
+  async refresh(refreshDto: RefreshDto) {
+    const { refreshToken } = refreshDto;
+
+    try {
+      // Validar o Refresh Token usando o JwtService
+      const decoded = await this.jwtService.verifyAsync(refreshToken);
+
+      // Buscar o usuário no banco para garantir que ele ainda existe e pegar os dados mais recentes (ex: nova role)
+      const user = await this.prisma.user.findUnique({
+        where: { id: decoded.sub },
+      });
+
+      if (!user) {
+        throw new UnauthorizedException('Usuário não encontrado.');
+      }
+
+      // Payload atualizado
+      const payload = { sub: user.id, email: user.email, role: user.role };
+
+      // Emitir novo Access Token
+      const newAccessToken = await this.jwtService.signAsync(payload, {
+        expiresIn: '15m',
+      });
+
+      // Rotacionar Refresh Token (Emitir um novo Refresh Token)
+      const newRefreshToken = await this.jwtService.signAsync(payload, {
+        expiresIn: '7d',
+      });
+
+      return {
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+      };
+    } catch (error) {
+      throw new UnauthorizedException('Refresh token inválido ou expirado.');
+    }
   }
 }
