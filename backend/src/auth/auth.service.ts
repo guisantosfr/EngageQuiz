@@ -1,11 +1,16 @@
-import { ConflictException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { ConflictException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
+  ) {}
 
   async register(registerDto: RegisterDto) {
     const { name, email, password } = registerDto;
@@ -47,5 +52,46 @@ export class AuthService {
     }
   }
 
-  // TODO: Implement user validation and login logic
+  async login(loginDto: LoginDto) {
+    const { email, password } = loginDto;
+
+    // Buscar usuário pelo e-mail
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Credenciais inválidas.');
+    }
+
+    // Comparar senha
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Credenciais inválidas.');
+    }
+
+    // Payload
+    const payload = { sub: user.id, email: user.email, role: user.role };
+
+    // Gerar Access Token e Refresh Token
+    const accessToken = await this.jwtService.signAsync(payload, {
+      expiresIn: '15m',
+    });
+
+    const refreshToken = await this.jwtService.signAsync(payload, {
+      expiresIn: '7d',
+    });
+
+    return {
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+      accessToken,
+      refreshToken,
+    };
+  }
 }
