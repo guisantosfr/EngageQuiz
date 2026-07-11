@@ -971,6 +971,7 @@ export const QuizScalarFieldEnum = {
   id: 'id',
   title: 'title',
   description: 'description',
+  userId: 'userId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1024,6 +1025,7 @@ export const PlayerScalarFieldEnum = {
   nickname: 'nickname',
   joinedAt: 'joinedAt',
   leftAt: 'leftAt',
+  userId: 'userId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

@@ -30,6 +30,7 @@ export type PlayerMinAggregateOutputType = {
   nickname: string | null
   joinedAt: Date | null
   leftAt: Date | null
+  userId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -40,6 +41,7 @@ export type PlayerMaxAggregateOutputType = {
   nickname: string | null
   joinedAt: Date | null
   leftAt: Date | null
+  userId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -50,6 +52,7 @@ export type PlayerCountAggregateOutputType = {
   nickname: number
   joinedAt: number
   leftAt: number
+  userId: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -62,6 +65,7 @@ export type PlayerMinAggregateInputType = {
   nickname?: true
   joinedAt?: true
   leftAt?: true
+  userId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -72,6 +76,7 @@ export type PlayerMaxAggregateInputType = {
   nickname?: true
   joinedAt?: true
   leftAt?: true
+  userId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -82,6 +87,7 @@ export type PlayerCountAggregateInputType = {
   nickname?: true
   joinedAt?: true
   leftAt?: true
+  userId?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -165,6 +171,7 @@ export type PlayerGroupByOutputType = {
   nickname: string
   joinedAt: Date
   leftAt: Date | null
+  userId: string
   createdAt: Date
   updatedAt: Date
   _count: PlayerCountAggregateOutputType | null
@@ -196,10 +203,12 @@ export type PlayerWhereInput = {
   nickname?: Prisma.StringFilter<"Player"> | string
   joinedAt?: Prisma.DateTimeFilter<"Player"> | Date | string
   leftAt?: Prisma.DateTimeNullableFilter<"Player"> | Date | string | null
+  userId?: Prisma.StringFilter<"Player"> | string
   createdAt?: Prisma.DateTimeFilter<"Player"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Player"> | Date | string
   session?: Prisma.XOR<Prisma.SessionScalarRelationFilter, Prisma.SessionWhereInput>
   responses?: Prisma.ResponseListRelationFilter
+  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }
 
 export type PlayerOrderByWithRelationInput = {
@@ -208,10 +217,12 @@ export type PlayerOrderByWithRelationInput = {
   nickname?: Prisma.SortOrder
   joinedAt?: Prisma.SortOrder
   leftAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   session?: Prisma.SessionOrderByWithRelationInput
   responses?: Prisma.ResponseOrderByRelationAggregateInput
+  user?: Prisma.UserOrderByWithRelationInput
 }
 
 export type PlayerWhereUniqueInput = Prisma.AtLeast<{
@@ -223,10 +234,12 @@ export type PlayerWhereUniqueInput = Prisma.AtLeast<{
   nickname?: Prisma.StringFilter<"Player"> | string
   joinedAt?: Prisma.DateTimeFilter<"Player"> | Date | string
   leftAt?: Prisma.DateTimeNullableFilter<"Player"> | Date | string | null
+  userId?: Prisma.StringFilter<"Player"> | string
   createdAt?: Prisma.DateTimeFilter<"Player"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Player"> | Date | string
   session?: Prisma.XOR<Prisma.SessionScalarRelationFilter, Prisma.SessionWhereInput>
   responses?: Prisma.ResponseListRelationFilter
+  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }, "id">
 
 export type PlayerOrderByWithAggregationInput = {
@@ -235,6 +248,7 @@ export type PlayerOrderByWithAggregationInput = {
   nickname?: Prisma.SortOrder
   joinedAt?: Prisma.SortOrder
   leftAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.PlayerCountOrderByAggregateInput
@@ -251,6 +265,7 @@ export type PlayerScalarWhereWithAggregatesInput = {
   nickname?: Prisma.StringWithAggregatesFilter<"Player"> | string
   joinedAt?: Prisma.DateTimeWithAggregatesFilter<"Player"> | Date | string
   leftAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Player"> | Date | string | null
+  userId?: Prisma.StringWithAggregatesFilter<"Player"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Player"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Player"> | Date | string
 }
@@ -264,6 +279,7 @@ export type PlayerCreateInput = {
   updatedAt?: Date | string
   session: Prisma.SessionCreateNestedOneWithoutPlayersInput
   responses?: Prisma.ResponseCreateNestedManyWithoutPlayerInput
+  user: Prisma.UserCreateNestedOneWithoutPlayersInput
 }
 
 export type PlayerUncheckedCreateInput = {
@@ -272,6 +288,7 @@ export type PlayerUncheckedCreateInput = {
   nickname: string
   joinedAt?: Date | string
   leftAt?: Date | string | null
+  userId: string
   createdAt?: Date | string
   updatedAt?: Date | string
   responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutPlayerInput
@@ -286,6 +303,7 @@ export type PlayerUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   session?: Prisma.SessionUpdateOneRequiredWithoutPlayersNestedInput
   responses?: Prisma.ResponseUpdateManyWithoutPlayerNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutPlayersNestedInput
 }
 
 export type PlayerUncheckedUpdateInput = {
@@ -294,6 +312,7 @@ export type PlayerUncheckedUpdateInput = {
   nickname?: Prisma.StringFieldUpdateOperationsInput | string
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   leftAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   responses?: Prisma.ResponseUncheckedUpdateManyWithoutPlayerNestedInput
@@ -305,6 +324,7 @@ export type PlayerCreateManyInput = {
   nickname: string
   joinedAt?: Date | string
   leftAt?: Date | string | null
+  userId: string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -324,6 +344,7 @@ export type PlayerUncheckedUpdateManyInput = {
   nickname?: Prisma.StringFieldUpdateOperationsInput | string
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   leftAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -344,6 +365,7 @@ export type PlayerCountOrderByAggregateInput = {
   nickname?: Prisma.SortOrder
   joinedAt?: Prisma.SortOrder
   leftAt?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -354,6 +376,7 @@ export type PlayerMaxOrderByAggregateInput = {
   nickname?: Prisma.SortOrder
   joinedAt?: Prisma.SortOrder
   leftAt?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -364,6 +387,7 @@ export type PlayerMinOrderByAggregateInput = {
   nickname?: Prisma.SortOrder
   joinedAt?: Prisma.SortOrder
   leftAt?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -429,6 +453,48 @@ export type PlayerUpdateOneRequiredWithoutResponsesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.PlayerUpdateToOneWithWhereWithoutResponsesInput, Prisma.PlayerUpdateWithoutResponsesInput>, Prisma.PlayerUncheckedUpdateWithoutResponsesInput>
 }
 
+export type PlayerCreateNestedManyWithoutUserInput = {
+  create?: Prisma.XOR<Prisma.PlayerCreateWithoutUserInput, Prisma.PlayerUncheckedCreateWithoutUserInput> | Prisma.PlayerCreateWithoutUserInput[] | Prisma.PlayerUncheckedCreateWithoutUserInput[]
+  connectOrCreate?: Prisma.PlayerCreateOrConnectWithoutUserInput | Prisma.PlayerCreateOrConnectWithoutUserInput[]
+  createMany?: Prisma.PlayerCreateManyUserInputEnvelope
+  connect?: Prisma.PlayerWhereUniqueInput | Prisma.PlayerWhereUniqueInput[]
+}
+
+export type PlayerUncheckedCreateNestedManyWithoutUserInput = {
+  create?: Prisma.XOR<Prisma.PlayerCreateWithoutUserInput, Prisma.PlayerUncheckedCreateWithoutUserInput> | Prisma.PlayerCreateWithoutUserInput[] | Prisma.PlayerUncheckedCreateWithoutUserInput[]
+  connectOrCreate?: Prisma.PlayerCreateOrConnectWithoutUserInput | Prisma.PlayerCreateOrConnectWithoutUserInput[]
+  createMany?: Prisma.PlayerCreateManyUserInputEnvelope
+  connect?: Prisma.PlayerWhereUniqueInput | Prisma.PlayerWhereUniqueInput[]
+}
+
+export type PlayerUpdateManyWithoutUserNestedInput = {
+  create?: Prisma.XOR<Prisma.PlayerCreateWithoutUserInput, Prisma.PlayerUncheckedCreateWithoutUserInput> | Prisma.PlayerCreateWithoutUserInput[] | Prisma.PlayerUncheckedCreateWithoutUserInput[]
+  connectOrCreate?: Prisma.PlayerCreateOrConnectWithoutUserInput | Prisma.PlayerCreateOrConnectWithoutUserInput[]
+  upsert?: Prisma.PlayerUpsertWithWhereUniqueWithoutUserInput | Prisma.PlayerUpsertWithWhereUniqueWithoutUserInput[]
+  createMany?: Prisma.PlayerCreateManyUserInputEnvelope
+  set?: Prisma.PlayerWhereUniqueInput | Prisma.PlayerWhereUniqueInput[]
+  disconnect?: Prisma.PlayerWhereUniqueInput | Prisma.PlayerWhereUniqueInput[]
+  delete?: Prisma.PlayerWhereUniqueInput | Prisma.PlayerWhereUniqueInput[]
+  connect?: Prisma.PlayerWhereUniqueInput | Prisma.PlayerWhereUniqueInput[]
+  update?: Prisma.PlayerUpdateWithWhereUniqueWithoutUserInput | Prisma.PlayerUpdateWithWhereUniqueWithoutUserInput[]
+  updateMany?: Prisma.PlayerUpdateManyWithWhereWithoutUserInput | Prisma.PlayerUpdateManyWithWhereWithoutUserInput[]
+  deleteMany?: Prisma.PlayerScalarWhereInput | Prisma.PlayerScalarWhereInput[]
+}
+
+export type PlayerUncheckedUpdateManyWithoutUserNestedInput = {
+  create?: Prisma.XOR<Prisma.PlayerCreateWithoutUserInput, Prisma.PlayerUncheckedCreateWithoutUserInput> | Prisma.PlayerCreateWithoutUserInput[] | Prisma.PlayerUncheckedCreateWithoutUserInput[]
+  connectOrCreate?: Prisma.PlayerCreateOrConnectWithoutUserInput | Prisma.PlayerCreateOrConnectWithoutUserInput[]
+  upsert?: Prisma.PlayerUpsertWithWhereUniqueWithoutUserInput | Prisma.PlayerUpsertWithWhereUniqueWithoutUserInput[]
+  createMany?: Prisma.PlayerCreateManyUserInputEnvelope
+  set?: Prisma.PlayerWhereUniqueInput | Prisma.PlayerWhereUniqueInput[]
+  disconnect?: Prisma.PlayerWhereUniqueInput | Prisma.PlayerWhereUniqueInput[]
+  delete?: Prisma.PlayerWhereUniqueInput | Prisma.PlayerWhereUniqueInput[]
+  connect?: Prisma.PlayerWhereUniqueInput | Prisma.PlayerWhereUniqueInput[]
+  update?: Prisma.PlayerUpdateWithWhereUniqueWithoutUserInput | Prisma.PlayerUpdateWithWhereUniqueWithoutUserInput[]
+  updateMany?: Prisma.PlayerUpdateManyWithWhereWithoutUserInput | Prisma.PlayerUpdateManyWithWhereWithoutUserInput[]
+  deleteMany?: Prisma.PlayerScalarWhereInput | Prisma.PlayerScalarWhereInput[]
+}
+
 export type PlayerCreateWithoutSessionInput = {
   id?: string
   nickname: string
@@ -437,6 +503,7 @@ export type PlayerCreateWithoutSessionInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   responses?: Prisma.ResponseCreateNestedManyWithoutPlayerInput
+  user: Prisma.UserCreateNestedOneWithoutPlayersInput
 }
 
 export type PlayerUncheckedCreateWithoutSessionInput = {
@@ -444,6 +511,7 @@ export type PlayerUncheckedCreateWithoutSessionInput = {
   nickname: string
   joinedAt?: Date | string
   leftAt?: Date | string | null
+  userId: string
   createdAt?: Date | string
   updatedAt?: Date | string
   responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutPlayerInput
@@ -484,6 +552,7 @@ export type PlayerScalarWhereInput = {
   nickname?: Prisma.StringFilter<"Player"> | string
   joinedAt?: Prisma.DateTimeFilter<"Player"> | Date | string
   leftAt?: Prisma.DateTimeNullableFilter<"Player"> | Date | string | null
+  userId?: Prisma.StringFilter<"Player"> | string
   createdAt?: Prisma.DateTimeFilter<"Player"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Player"> | Date | string
 }
@@ -496,6 +565,7 @@ export type PlayerCreateWithoutResponsesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   session: Prisma.SessionCreateNestedOneWithoutPlayersInput
+  user: Prisma.UserCreateNestedOneWithoutPlayersInput
 }
 
 export type PlayerUncheckedCreateWithoutResponsesInput = {
@@ -504,6 +574,7 @@ export type PlayerUncheckedCreateWithoutResponsesInput = {
   nickname: string
   joinedAt?: Date | string
   leftAt?: Date | string | null
+  userId: string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -532,6 +603,7 @@ export type PlayerUpdateWithoutResponsesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   session?: Prisma.SessionUpdateOneRequiredWithoutPlayersNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutPlayersNestedInput
 }
 
 export type PlayerUncheckedUpdateWithoutResponsesInput = {
@@ -540,8 +612,57 @@ export type PlayerUncheckedUpdateWithoutResponsesInput = {
   nickname?: Prisma.StringFieldUpdateOperationsInput | string
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   leftAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type PlayerCreateWithoutUserInput = {
+  id?: string
+  nickname: string
+  joinedAt?: Date | string
+  leftAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  session: Prisma.SessionCreateNestedOneWithoutPlayersInput
+  responses?: Prisma.ResponseCreateNestedManyWithoutPlayerInput
+}
+
+export type PlayerUncheckedCreateWithoutUserInput = {
+  id?: string
+  sessionId: string
+  nickname: string
+  joinedAt?: Date | string
+  leftAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  responses?: Prisma.ResponseUncheckedCreateNestedManyWithoutPlayerInput
+}
+
+export type PlayerCreateOrConnectWithoutUserInput = {
+  where: Prisma.PlayerWhereUniqueInput
+  create: Prisma.XOR<Prisma.PlayerCreateWithoutUserInput, Prisma.PlayerUncheckedCreateWithoutUserInput>
+}
+
+export type PlayerCreateManyUserInputEnvelope = {
+  data: Prisma.PlayerCreateManyUserInput | Prisma.PlayerCreateManyUserInput[]
+  skipDuplicates?: boolean
+}
+
+export type PlayerUpsertWithWhereUniqueWithoutUserInput = {
+  where: Prisma.PlayerWhereUniqueInput
+  update: Prisma.XOR<Prisma.PlayerUpdateWithoutUserInput, Prisma.PlayerUncheckedUpdateWithoutUserInput>
+  create: Prisma.XOR<Prisma.PlayerCreateWithoutUserInput, Prisma.PlayerUncheckedCreateWithoutUserInput>
+}
+
+export type PlayerUpdateWithWhereUniqueWithoutUserInput = {
+  where: Prisma.PlayerWhereUniqueInput
+  data: Prisma.XOR<Prisma.PlayerUpdateWithoutUserInput, Prisma.PlayerUncheckedUpdateWithoutUserInput>
+}
+
+export type PlayerUpdateManyWithWhereWithoutUserInput = {
+  where: Prisma.PlayerScalarWhereInput
+  data: Prisma.XOR<Prisma.PlayerUpdateManyMutationInput, Prisma.PlayerUncheckedUpdateManyWithoutUserInput>
 }
 
 export type PlayerCreateManySessionInput = {
@@ -549,6 +670,7 @@ export type PlayerCreateManySessionInput = {
   nickname: string
   joinedAt?: Date | string
   leftAt?: Date | string | null
+  userId: string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -561,10 +683,54 @@ export type PlayerUpdateWithoutSessionInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   responses?: Prisma.ResponseUpdateManyWithoutPlayerNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutPlayersNestedInput
 }
 
 export type PlayerUncheckedUpdateWithoutSessionInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  nickname?: Prisma.StringFieldUpdateOperationsInput | string
+  joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  leftAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  responses?: Prisma.ResponseUncheckedUpdateManyWithoutPlayerNestedInput
+}
+
+export type PlayerUncheckedUpdateManyWithoutSessionInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  nickname?: Prisma.StringFieldUpdateOperationsInput | string
+  joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  leftAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type PlayerCreateManyUserInput = {
+  id?: string
+  sessionId: string
+  nickname: string
+  joinedAt?: Date | string
+  leftAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type PlayerUpdateWithoutUserInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  nickname?: Prisma.StringFieldUpdateOperationsInput | string
+  joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  leftAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  session?: Prisma.SessionUpdateOneRequiredWithoutPlayersNestedInput
+  responses?: Prisma.ResponseUpdateManyWithoutPlayerNestedInput
+}
+
+export type PlayerUncheckedUpdateWithoutUserInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  sessionId?: Prisma.StringFieldUpdateOperationsInput | string
   nickname?: Prisma.StringFieldUpdateOperationsInput | string
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   leftAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -573,8 +739,9 @@ export type PlayerUncheckedUpdateWithoutSessionInput = {
   responses?: Prisma.ResponseUncheckedUpdateManyWithoutPlayerNestedInput
 }
 
-export type PlayerUncheckedUpdateManyWithoutSessionInput = {
+export type PlayerUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  sessionId?: Prisma.StringFieldUpdateOperationsInput | string
   nickname?: Prisma.StringFieldUpdateOperationsInput | string
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   leftAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -619,10 +786,12 @@ export type PlayerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   nickname?: boolean
   joinedAt?: boolean
   leftAt?: boolean
+  userId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   session?: boolean | Prisma.SessionDefaultArgs<ExtArgs>
   responses?: boolean | Prisma.Player$responsesArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   _count?: boolean | Prisma.PlayerCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["player"]>
 
@@ -632,9 +801,11 @@ export type PlayerSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   nickname?: boolean
   joinedAt?: boolean
   leftAt?: boolean
+  userId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   session?: boolean | Prisma.SessionDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["player"]>
 
 export type PlayerSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -643,9 +814,11 @@ export type PlayerSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   nickname?: boolean
   joinedAt?: boolean
   leftAt?: boolean
+  userId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   session?: boolean | Prisma.SessionDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["player"]>
 
 export type PlayerSelectScalar = {
@@ -654,21 +827,25 @@ export type PlayerSelectScalar = {
   nickname?: boolean
   joinedAt?: boolean
   leftAt?: boolean
+  userId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type PlayerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "sessionId" | "nickname" | "joinedAt" | "leftAt" | "createdAt" | "updatedAt", ExtArgs["result"]["player"]>
+export type PlayerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "sessionId" | "nickname" | "joinedAt" | "leftAt" | "userId" | "createdAt" | "updatedAt", ExtArgs["result"]["player"]>
 export type PlayerInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   session?: boolean | Prisma.SessionDefaultArgs<ExtArgs>
   responses?: boolean | Prisma.Player$responsesArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   _count?: boolean | Prisma.PlayerCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type PlayerIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   session?: boolean | Prisma.SessionDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 export type PlayerIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   session?: boolean | Prisma.SessionDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 
 export type $PlayerPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -676,6 +853,7 @@ export type $PlayerPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
   objects: {
     session: Prisma.$SessionPayload<ExtArgs>
     responses: Prisma.$ResponsePayload<ExtArgs>[]
+    user: Prisma.$UserPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -683,6 +861,7 @@ export type $PlayerPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     nickname: string
     joinedAt: Date
     leftAt: Date | null
+    userId: string
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["player"]>
@@ -1081,6 +1260,7 @@ export interface Prisma__PlayerClient<T, Null = never, ExtArgs extends runtime.T
   readonly [Symbol.toStringTag]: "PrismaPromise"
   session<T extends Prisma.SessionDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.SessionDefaultArgs<ExtArgs>>): Prisma.Prisma__SessionClient<runtime.Types.Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   responses<T extends Prisma.Player$responsesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Player$responsesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ResponsePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1115,6 +1295,7 @@ export interface PlayerFieldRefs {
   readonly nickname: Prisma.FieldRef<"Player", 'String'>
   readonly joinedAt: Prisma.FieldRef<"Player", 'DateTime'>
   readonly leftAt: Prisma.FieldRef<"Player", 'DateTime'>
+  readonly userId: Prisma.FieldRef<"Player", 'String'>
   readonly createdAt: Prisma.FieldRef<"Player", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Player", 'DateTime'>
 }

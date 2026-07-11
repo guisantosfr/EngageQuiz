@@ -2,6 +2,7 @@ import { Controller, Post, Body, Get, Param, Delete } from "@nestjs/common";
 import { Throttle, SkipThrottle } from "@nestjs/throttler";
 import { SessionsService } from "./sessions.service";
 import { CreateSessionDto, JoinSessionDto, SubmitAnswerDto } from "./dto";
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 @Controller('sessions')
 export class SessionsController {
@@ -10,64 +11,67 @@ export class SessionsController {
     ) { }
 
     @Post()
-    async create(@Body() createSessionDto: CreateSessionDto) {
-        return this.sessionsService.create(createSessionDto);
+    async create(@Body() createSessionDto: CreateSessionDto, @CurrentUser() user: any) {
+        return this.sessionsService.create(createSessionDto, user.id);
     }
 
     @Post(':code/join')
-    //@Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute for join
+    @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute for join
     async join(
         @Param('code') code: string,
         @Body() joinSessionDto: JoinSessionDto,
+        @CurrentUser() user: any,
     ) {
-        return this.sessionsService.join(code, joinSessionDto);
+        return this.sessionsService.join(code, joinSessionDto, user.id);
     }
 
     @Get(':id/players')
     @SkipThrottle()
-    async getSessionPlayers(@Param('id') sessionId: string) {
-        return this.sessionsService.getSessionPlayers(sessionId);
+    async getSessionPlayers(@Param('id') sessionId: string, @CurrentUser() user: any) {
+        return this.sessionsService.getSessionPlayers(sessionId, user.id);
     }
 
     @Delete(':id')
-    async cancel(@Param('id') sessionId: string) {
-        return this.sessionsService.cancel(sessionId);
+    async cancel(@Param('id') sessionId: string, @CurrentUser() user: any) {
+        return this.sessionsService.cancel(sessionId, user.id);
     }
 
     @Delete(':sessionId/players/:playerId/leave')
     async leaveSession(
         @Param('sessionId') sessionId: string,
         @Param('playerId') playerId: string,
+        @CurrentUser() user: any,
     ) {
-        return this.sessionsService.removePlayer(sessionId, playerId, false);
+        return this.sessionsService.removePlayer(sessionId, playerId, false, user.id);
     }
 
     @Delete(':sessionId/players/:playerId/kick')
     async kickPlayer(
         @Param('sessionId') sessionId: string,
         @Param('playerId') playerId: string,
+        @CurrentUser() user: any,
     ) {
-        return this.sessionsService.removePlayer(sessionId, playerId, true);
+        return this.sessionsService.removePlayer(sessionId, playerId, true, user.id);
     }
 
     @Get(':sessionId/player/:playerId')
-    async getSessionPlayerInfo(@Param('sessionId') sessionId: string, @Param('playerId') playerId: string) {
-        return this.sessionsService.getSessionPlayerData(sessionId, playerId);
+    async getSessionPlayerInfo(@Param('sessionId') sessionId: string, @Param('playerId') playerId: string, @CurrentUser() user: any) {
+        return this.sessionsService.getSessionPlayerData(sessionId, playerId, user.id);
     }
 
     @Get(':sessionId/quiz/:quizId')
-    async getSessionFullInfo(@Param('sessionId') sessionId: string, @Param('quizId') quizId: string) {
-        return this.sessionsService.getSessionFullData(sessionId, quizId);
+    async getSessionFullInfo(@Param('sessionId') sessionId: string, @Param('quizId') quizId: string, @CurrentUser() user: any) {
+        return this.sessionsService.getSessionFullData(sessionId, quizId, user.id);
     }
 
     @Post(':id/start')
-    async start(@Param('id') sessionId: string) {
-        return this.sessionsService.start(sessionId);
+    async start(@Param('id') sessionId: string, @CurrentUser() user: any) {
+        return this.sessionsService.start(sessionId, user.id);
     }
 
     @Post(':id/next-question')
-    async nextQuestion(@Param('id') sessionId: string) {
-        return this.sessionsService.nextQuestion(sessionId);
+    async nextQuestion(@Param('id') sessionId: string, @CurrentUser() user: any) {
+        return this.sessionsService.nextQuestion(sessionId, user.id);
     }
 
     @Post(':id/questions/:questionId/answer')
@@ -75,25 +79,27 @@ export class SessionsController {
         @Param('id') sessionId: string,
         @Param('questionId') questionId: string,
         @Body() submitAnswerDto: SubmitAnswerDto,
+        @CurrentUser() user: any,
     ) {
-        return this.sessionsService.submitAnswer(sessionId, questionId, submitAnswerDto);
+        return this.sessionsService.submitAnswer(sessionId, questionId, submitAnswerDto, user.id);
     }
 
     @Post(':id/finish')
-    async finish(@Param('id') sessionId: string) {
-        return this.sessionsService.finish(sessionId);
+    async finish(@Param('id') sessionId: string, @CurrentUser() user: any) {
+        return this.sessionsService.finish(sessionId, user.id);
     }
 
     @Get(':id/results')
-    async getSessionResults(@Param('id') sessionId: string) {
-        return this.sessionsService.getSessionResults(sessionId);
+    async getSessionResults(@Param('id') sessionId: string, @CurrentUser() user: any) {
+        return this.sessionsService.getSessionResults(sessionId, user.id);
     }
 
     @Get(':id/results/:playerId')
     async getPlayerResults(
         @Param('id') sessionId: string,
         @Param('playerId') playerId: string,
+        @CurrentUser() user: any,
     ) {
-        return this.sessionsService.getPlayerResults(sessionId, playerId);
+        return this.sessionsService.getPlayerResults(sessionId, playerId, user.id);
     }
 }

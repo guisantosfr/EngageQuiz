@@ -18,12 +18,15 @@ model Quiz {
   id          String   @id @default(uuid())
   title       String
   description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+
+  userId  String
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   questions   Question[]
-  
   sessions    Session[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Question {
@@ -100,6 +103,9 @@ model Player {
 
   responses  Response[]
 
+  userId  String
+  user    User    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
 
@@ -140,6 +146,9 @@ model User {
   email     String   @unique
   password  String
   role      Role     @default(STUDENT)
+
+  quizzes   Quiz[]
+  players   Player[]
 
   passwordResetToken String?
   passwordResetExpires DateTime?

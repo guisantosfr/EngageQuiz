@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from "@nestjs/common";
+import { Injectable, NotFoundException, BadRequestException, Logger , ForbiddenException } from "@nestjs/common";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateSessionDto, JoinSessionDto, SubmitAnswerDto } from "./dto";
@@ -12,6 +12,42 @@ export class SessionsService {
     private questionTimers = new Map<string, NodeJS.Timeout>();
     private closedQuestions = new Map<string, Set<number>>();
 
+    private async checkHostAccess(sessionId: string, userId: string) {
+        const session = await this.prisma.session.findUnique({
+            where: { id: sessionId },
+            include: { quiz: { select: { userId: true } } }
+        });
+        if (!session || session.quiz.userId !== userId) {
+            throw new ForbiddenException('Access denied or Session not found');
+        }
+        return session;
+    }
+
+    private async checkPlayerAccess(sessionId: string, playerId: string, userId: string) {
+        const player = await this.prisma.player.findUnique({
+            where: { id: playerId, sessionId }
+        });
+        if (!player || player.userId !== userId) {
+            throw new ForbiddenException('Access denied or Player not found');
+        }
+        return player;
+    }
+
+    private async checkHostOrPlayerAccess(sessionId: string, userId: string) {
+        const session = await this.prisma.session.findUnique({
+            where: { id: sessionId },
+            include: { 
+                quiz: { select: { userId: true } },
+                players: { where: { userId } }
+            }
+        });
+        if (!session) throw new NotFoundException('Session not found');
+        if (session.quiz.userId !== userId && session.players.length === 0) {
+            throw new ForbiddenException('Access denied');
+        }
+        return session;
+    }
+
     constructor(
         private readonly prisma: PrismaService,
         private readonly eventEmitter: EventEmitter2,
@@ -21,11 +57,11 @@ export class SessionsService {
         return Math.floor(100000 + Math.random() * 900000).toString();
     }
 
-    async create(createSessionDto: CreateSessionDto) {
+    async create(createSessionDto: CreateSessionDto, userId: string) {
         const { quizId } = createSessionDto;
 
         const quiz = await this.prisma.quiz.findUnique({
-            where: { id: quizId },
+            where: { id: quizId, userId },
         });
 
         if (!quiz) {
@@ -65,7 +101,7 @@ export class SessionsService {
         return session;
     }
 
-    async join(code: string, joinSessionDto: JoinSessionDto) {
+    async join(code: string, joinSessionDto: JoinSessionDto, userId: string) {
         const { nickname } = joinSessionDto;
 
         return this.prisma.$transaction(async (tx) => {
@@ -107,6 +143,7 @@ export class SessionsService {
                 data: {
                     sessionId: session.id,
                     nickname,
+                    userId,
                 },
             });
 
@@ -126,7 +163,8 @@ export class SessionsService {
         });
     }
 
-    async getSessionPlayers(sessionId: string) {
+    async getSessionPlayers(sessionId: string, userId: string) {
+        await this.checkHostAccess(sessionId, userId);
         return this.prisma.player.findMany({
             where: {
                 sessionId,
@@ -142,7 +180,8 @@ export class SessionsService {
         });
     }
 
-    async cancel(sessionId: string) {
+    async cancel(sessionId: string, userId: string) {
+        await this.checkHostAccess(sessionId, userId);
         const session = await this.prisma.session.findUnique({
             where: { id: sessionId },
         });
@@ -175,7 +214,12 @@ export class SessionsService {
         return updatedSession;
     }
 
-    async removePlayer(sessionId: string, playerId: string, kicked: boolean = false) {
+    async removePlayer(sessionId: string, playerId: string, kicked: boolean = false, userId: string) {
+        if (kicked) {
+            await this.checkHostAccess(sessionId, userId);
+        } else {
+            await this.checkPlayerAccess(sessionId, playerId, userId);
+        }
         return this.prisma.$transaction(async (tx) => {
             const player = await tx.player.findUnique({
                 where: { id: playerId },
@@ -221,7 +265,8 @@ export class SessionsService {
         });
     }
 
-    async getSessionPlayerData(sessionId: string, playerId: string) {
+    async getSessionPlayerData(sessionId: string, playerId: string, userId: string) {
+        await this.checkPlayerAccess(sessionId, playerId, userId);
         const session = await this.prisma.session.findUnique({
             where: { id: sessionId },
             select: {
@@ -278,7 +323,8 @@ export class SessionsService {
         };
     }
 
-    async getSessionFullData(sessionId: string, quizId: string) {
+    async getSessionFullData(sessionId: string, quizId: string, userId: string) {
+        await this.checkHostAccess(sessionId, userId);
         const session = await this.prisma.session.findUnique({
             where: { id: sessionId },
             include: {
@@ -317,7 +363,8 @@ export class SessionsService {
         };
     }
 
-    async start(sessionId: string) {
+    async start(sessionId: string, userId: string) {
+        await this.checkHostAccess(sessionId, userId);
         const session = await this.prisma.session.findUnique({
             where: { id: sessionId },
             include: {
@@ -389,7 +436,10 @@ export class SessionsService {
         return updatedSession;
     }
 
-    async submitAnswer(sessionId: string, questionId: string, submitAnswerDto: SubmitAnswerDto) {
+    async submitAnswer(sessionId: string, questionId: string, submitAnswerDto: SubmitAnswerDto, userId?: string) {
+        if (userId) {
+            await this.checkPlayerAccess(sessionId, submitAnswerDto.playerId, userId);
+        }
         const { playerId, optionId } = submitAnswerDto;
 
         const session = await this.prisma.session.findUnique({
@@ -560,7 +610,8 @@ export class SessionsService {
         this.logger.log(`Question ${questionIndex} closed for session ${sessionId} (${reason})`);
     }
 
-    async nextQuestion(sessionId: string) {
+    async nextQuestion(sessionId: string, userId: string) {
+        await this.checkHostAccess(sessionId, userId);
         const session = await this.prisma.session.findUnique({
             where: { id: sessionId },
             include: {
@@ -597,7 +648,7 @@ export class SessionsService {
         const nextIndex = currentIndex + 1;
 
         if (nextIndex >= session.quiz.questions.length) {
-            return this.finish(sessionId);
+            return this.finish(sessionId, userId);
         }
 
         await this.prisma.session.update({
@@ -625,7 +676,8 @@ export class SessionsService {
         return { questionIndex: nextIndex, questionId: nextQuestionData.id };
     }
 
-    async finish(sessionId: string) {
+    async finish(sessionId: string, userId: string) {
+        await this.checkHostAccess(sessionId, userId);
         const session = await this.prisma.session.findUnique({
             where: { id: sessionId },
         });
@@ -664,10 +716,11 @@ export class SessionsService {
 
         this.eventEmitter.emit(SESSION_EVENTS.SESSION_CLEANUP, { sessionId });
 
-        return this.getSessionResults(sessionId);
+        return this.getSessionResults(sessionId, userId);
     }
 
-    async getSessionResults(sessionId: string) {
+    async getSessionResults(sessionId: string, userId: string) {
+        await this.checkHostOrPlayerAccess(sessionId, userId);
         const session = await this.prisma.session.findUnique({
             where: { id: sessionId },
             include: {
@@ -765,7 +818,8 @@ export class SessionsService {
         };
     }
 
-    async getPlayerResults(sessionId: string, playerId: string) {
+    async getPlayerResults(sessionId: string, playerId: string, userId: string) {
+        await this.checkHostOrPlayerAccess(sessionId, userId);
         const session = await this.prisma.session.findUnique({
             where: { id: sessionId },
             include: {

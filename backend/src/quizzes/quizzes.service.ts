@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException, InternalServerErrorException, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, InternalServerErrorException, Logger, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOptionDto, CreateQuizDto, UpdateQuizDto } from './dto';
 import { QuestionType } from '../generated/prisma/enums';
@@ -128,8 +128,9 @@ export class QuizzesService {
     }
 
 
-    async getAllQuizzes() {
+    async getAllQuizzes(userId: string) {
         const quizzes = await this.prisma.quiz.findMany({
+            where: { userId },
             include: {
                 _count: {
                     select: {
@@ -148,7 +149,7 @@ export class QuizzesService {
         });
     }
 
-    async createQuiz(data: CreateQuizDto) {
+    async createQuiz(data: CreateQuizDto, userId: string) {
         if (!data.questions || data.questions.length === 0) {
             throw new BadRequestException(
                 'Não é permitido criar um quiz sem questões',
@@ -161,6 +162,7 @@ export class QuizzesService {
             data: {
                 title: data.title,
                 description: data.description,
+                userId,
                 questions: {
                     create: data.questions.map(q => {
                         const options =
@@ -193,9 +195,9 @@ export class QuizzesService {
         });
     }
 
-    async getQuizById(id: string): Promise<GetQuizDto> {
+    async getQuizById(id: string, userId: string): Promise<GetQuizDto> {
         const quiz = await this.prisma.quiz.findUnique({
-            where: { id },
+            where: { id, userId },
             include: {
                 questions: {
                     include: {
@@ -241,9 +243,9 @@ export class QuizzesService {
         return options;
     }
 
-    async updateQuiz(id: string, data: UpdateQuizDto) {
+    async updateQuiz(id: string, data: UpdateQuizDto, userId: string) {
         const quizExists = await this.prisma.quiz.findUnique({
-            where: { id },
+            where: { id, userId },
             include: { questions: { include: { options: true } } },
         });
 
@@ -345,11 +347,15 @@ export class QuizzesService {
         });
     }
 
-    async deleteQuiz(id: string) {
+    async deleteQuiz(id: string, userId: string) {
+        const quiz = await this.prisma.quiz.findUnique({ where: { id } });
+        if (!quiz) throw new NotFoundException('Quiz não encontrado');
+        if (quiz.userId !== userId) throw new ForbiddenException('Você não tem permissão para deletar este quiz');
+
         return this.prisma.quiz.delete({ where: { id } });
     }
 
-    async generateQuizByAI(data: CreateQuizAIDto) {
+    async generateQuizByAI(data: CreateQuizAIDto, userId: string) {
         const prompt = this.buildAIPrompt(data);
 
         const model = 'gemini-2.5-flash'
