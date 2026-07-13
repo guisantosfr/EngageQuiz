@@ -17,8 +17,31 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
+  private async generateTokens(user: { id: string, email: string, role: string, name: string }) {
+    const payload = { sub: user.id, email: user.email, role: user.role };
+
+    const accessToken = await this.jwtService.signAsync(payload, {
+      expiresIn: '15m',
+    });
+
+    const refreshToken = await this.jwtService.signAsync(payload, {
+      expiresIn: '7d',
+    });
+
+    return {
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+      accessToken,
+      refreshToken,
+    };
+  }
+
   async register(registerDto: RegisterDto) {
-    const { name, email, password } = registerDto;
+    const { name, email, password, role } = registerDto;
 
     // Verificar e-mail duplicado
     const existingUser = await this.prisma.user.findUnique({
@@ -34,12 +57,12 @@ export class AuthService {
       const hashedPassword = await bcrypt.hash(password, 10);
 
       // Criar usuário
-      // Definir role padrão = STUDENT (já garantido pelo schema do Prisma)
       const user = await this.prisma.user.create({
         data: {
           name,
           email,
           password: hashedPassword,
+          ...(role && { role }), // Se a role foi enviada, usamos ela
         },
         select: {
           id: true,
@@ -51,7 +74,8 @@ export class AuthService {
         },
       });
 
-      return user;
+      // Retorna as credenciais de login automaticamente (Tokens)
+      return this.generateTokens(user);
     } catch (error) {
       throw new InternalServerErrorException('Erro ao criar usuário.');
     }
@@ -76,28 +100,7 @@ export class AuthService {
       throw new UnauthorizedException('Credenciais inválidas.');
     }
 
-    // Payload
-    const payload = { sub: user.id, email: user.email, role: user.role };
-
-    // Gerar Access Token e Refresh Token
-    const accessToken = await this.jwtService.signAsync(payload, {
-      expiresIn: '15m',
-    });
-
-    const refreshToken = await this.jwtService.signAsync(payload, {
-      expiresIn: '7d',
-    });
-
-    return {
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
-      accessToken,
-      refreshToken,
-    };
+    return this.generateTokens(user);
   }
 
   async refresh(refreshDto: RefreshDto) {
