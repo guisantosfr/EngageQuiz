@@ -150,6 +150,7 @@ export class QuizzesService {
     }
 
     async createQuiz(data: CreateQuizDto, userId: string) {
+        console.log(data)
         if (!data.questions || data.questions.length === 0) {
             throw new BadRequestException(
                 'Não é permitido criar um quiz sem questões',
