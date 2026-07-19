@@ -568,3 +568,115 @@ describe('LoginDto Validation', () => {
     expect(passwordError).toBeDefined();
   })
 })
+
+describe('Refresh tests', () => {
+  let service: AuthService;
+  let prisma: PrismaService;
+  let jwtService: JwtService;
+
+  const mockPrismaService = {
+    user: {
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      findFirst: jest.fn(),
+    },
+
+    $transaction: jest.fn((callback: (prisma: any) => any) => callback(mockPrismaService)),
+  };
+
+  const mockJwtService = {
+    signAsync: jest.fn(),
+    verifyAsync: jest.fn(),
+  };
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        AuthService,
+        { provide: PrismaService, useValue: mockPrismaService },
+        { provide: JwtService, useValue: mockJwtService },
+      ],
+    }).compile();
+
+    service = module.get<AuthService>(AuthService);
+    prisma = module.get<PrismaService>(PrismaService);
+    jwtService = module.get<JwtService>(JwtService);
+  });
+
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+
+  it('should emit new tokens if refresh token is valid', async () => {
+    const dto = {
+      refreshToken: 'validRefreshToken',
+    };
+    const user = {
+      id: '1',
+      email: 'test@example.com',
+      name: 'Test User',
+      role: Role.STUDENT,
+    };
+    // 1. O token decodificado precisa retornar o campo 'sub'
+    mockJwtService.verifyAsync.mockResolvedValue({
+      sub: user.id,
+    });
+    // 2. Mockamos a busca do usuário no banco
+    mockPrismaService.user.findUnique.mockResolvedValue(user);
+    // 3. Usamos mockResolvedValueOnce para definir retornos diferentes na 1ª e 2ª chamada
+    mockJwtService.signAsync
+      .mockResolvedValueOnce('newAccessToken')
+      .mockResolvedValueOnce('newRefreshToken');
+    const result = await service.refresh(dto);
+    expect(mockJwtService.verifyAsync).toHaveBeenCalledWith(dto.refreshToken);
+
+    // 4. Corrigimos o payload esperado na assinatura
+    expect(mockJwtService.signAsync).toHaveBeenCalledWith(
+      { sub: user.id, email: user.email, role: user.role },
+      expect.any(Object)
+    );
+    // 5. Corrigimos o objeto de retorno esperado (apenas tokens, sem o user)
+    expect(result).toEqual({
+      accessToken: 'newAccessToken',
+      refreshToken: 'newRefreshToken',
+    });
+  });
+
+  it('should throw error if refresh token is expired or invalid', async () => {
+    const dto = {
+      refreshToken: 'invalidRefreshToken',
+    };
+
+    mockJwtService.verifyAsync.mockRejectedValue(new Error('Invalid refresh token'));
+
+    await expect(service.refresh(dto)).rejects.toThrow(UnauthorizedException);
+
+    expect(mockJwtService.verifyAsync).toHaveBeenCalledWith(dto.refreshToken);
+  })
+
+  it('should not refresh if user associated to token is deleted', async () => {
+    const dto = {
+      refreshToken: 'validRefreshToken',
+    };
+    const user = {
+      id: '1',
+      email: 'test@example.com',
+      name: 'Test User',
+      role: Role.STUDENT,
+    };
+    mockJwtService.verifyAsync.mockResolvedValue({
+      sub: user.id,
+    });
+    // Simulamos que o usuário foi deletado e não existe mais no banco
+    mockPrismaService.user.findUnique.mockResolvedValue(null);
+    // O serviço deve rejeitar com UnauthorizedException
+    await expect(service.refresh(dto)).rejects.toThrow(UnauthorizedException);
+    expect(mockJwtService.verifyAsync).toHaveBeenCalledWith(dto.refreshToken);
+    expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
+      where: { id: user.id }
+    });
+  });
+})
