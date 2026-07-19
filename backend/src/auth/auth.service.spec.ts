@@ -4,6 +4,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { Role } from '../generated/prisma/enums';
 import * as bcrypt from 'bcrypt';
+import { RegisterDto } from './dto/register.dto'
+import { validate } from 'class-validator';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -264,4 +266,93 @@ describe('AuthService', () => {
       refreshToken: 'token',
     });
   })
+});
+
+describe('RegisterDto Validation', () => {
+  it('should fail validation if name is empty', async () => {
+    const dto = new RegisterDto();
+    dto.name = '';
+    dto.email = 'student@gmail.com';
+    dto.password = 'password123';
+    dto.role = Role.STUDENT;
+    // Executa a validação manual do DTO
+    const errors = await validate(dto);
+    expect(errors.length).toBeGreaterThan(0);
+
+    // Procura pelo erro na propriedade 'name'
+    const nameError = errors.find(e => e.property === 'name');
+    expect(nameError).toBeDefined();
+  });
+
+  it('should fail validation if email is empty', async () => {
+    const dto = new RegisterDto();
+    dto.name = 'Student';
+    dto.email = '';
+    dto.password = 'password123';
+    dto.role = Role.STUDENT;
+    const errors = await validate(dto);
+
+    const emailError = errors.find(e => e.property === 'email');
+    expect(emailError).toBeDefined();
+  });
+
+  it('should fail validation if email is invalid', async () => {
+    const dto = new RegisterDto();
+    dto.name = 'Student';
+    dto.email = 'invalid-email';
+    dto.password = 'password123';
+    dto.role = Role.STUDENT;
+    const errors = await validate(dto);
+
+    const emailError = errors.find(e => e.property === 'email');
+    expect(emailError).toBeDefined();
+  });
+
+  it('should fail validation if password is empty', async () => {
+    const dto = new RegisterDto();
+    dto.name = 'Student';
+    dto.email = 'student@gmail.com';
+    dto.password = '';
+    dto.role = Role.STUDENT;
+    const errors = await validate(dto);
+
+    const passwordError = errors.find(e => e.property === 'password');
+    expect(passwordError).toBeDefined();
+  });
+
+  it('should fail validation if password is too short', async () => {
+    const dto = new RegisterDto();
+    dto.name = 'Student';
+    dto.email = 'student@gmail.com';
+    dto.password = '123';
+    dto.role = Role.STUDENT;
+    const errors = await validate(dto);
+
+    const passwordError = errors.find(e => e.property === 'password');
+    expect(passwordError).toBeDefined();
+  });
+
+  it('should fail validation if role is empty', async () => {
+    const dto = new RegisterDto();
+    dto.name = 'Student';
+    dto.email = 'student@gmail.com';
+    dto.password = 'password123';
+    dto.role = '' as Role;
+    const errors = await validate(dto);
+
+    const roleError = errors.find(e => e.property === 'role');
+    expect(roleError).toBeDefined();
+  });
+
+  it('should fail validation if role is invalid', async () => {
+    const dto = new RegisterDto();
+    dto.name = 'Student';
+    dto.email = 'student@gmail.com';
+    dto.password = 'password123';
+    dto.role = 'user' as Role;
+    const errors = await validate(dto);
+
+    const roleError = errors.find(e => e.property === 'role');
+    expect(roleError).toBeDefined();
+  });
 });
