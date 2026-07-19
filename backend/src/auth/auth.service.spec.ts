@@ -4,9 +4,10 @@ import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { Role } from '../generated/prisma/enums';
 import * as bcrypt from 'bcrypt';
-import { RegisterDto } from './dto/register.dto'
+import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
 import { validate } from 'class-validator';
-import { UnauthorizedException } from '@nestjs/common';
+import { UnauthorizedException, ConflictException, InternalServerErrorException } from '@nestjs/common';
 
 describe('Register Tests', () => {
   let service: AuthService;
@@ -267,6 +268,52 @@ describe('Register Tests', () => {
       refreshToken: 'token',
     });
   })
+
+  it('should not register a user if the email already exists', async () => {
+    const dto = {
+      name: 'Test User',
+      email: 'test@example.com',
+      password: 'password123',
+      role: Role.STUDENT,
+    };
+
+    const existingUser = {
+      id: '1',
+      email: dto.email,
+      password: 'password123',
+      name: 'Test User',
+      role: Role.STUDENT,
+    };
+
+    mockPrismaService.user.findUnique.mockResolvedValue(existingUser);
+
+    await expect(service.register(dto)).rejects.toThrow(ConflictException);
+
+    expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
+      where: { email: dto.email },
+    });
+  })
+
+  it('should throw InternalServerError if an unexpected error occurs', async () => {
+    const dto = {
+      name: 'Test User',
+      email: 'test@example.com',
+      password: 'password123',
+      role: Role.STUDENT,
+    };
+
+    // 1. A busca por e-mail único funciona (indica que não há conflito)
+    mockPrismaService.user.findUnique.mockResolvedValue(null);
+
+    // 2. O erro acontece na hora de salvar o usuário no banco
+    mockPrismaService.user.create.mockRejectedValue(new Error('Database error'));
+
+    await expect(service.register(dto)).rejects.toThrow(InternalServerErrorException);
+
+    expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
+      where: { email: dto.email },
+    });
+  })
 });
 
 describe('RegisterDto Validation', () => {
@@ -488,4 +535,36 @@ describe('Login Tests', () => {
   })
 
 
+})
+
+describe('LoginDto Validation', () => {
+  it('should fail validation if email is empty', async () => {
+    const dto = new LoginDto();
+    dto.email = '';
+    dto.password = 'password123';
+    const errors = await validate(dto);
+
+    const emailError = errors.find(e => e.property === 'email');
+    expect(emailError).toBeDefined();
+  })
+
+  it('should fail validation if email is invalid', async () => {
+    const dto = new LoginDto();
+    dto.email = 'invalid-email';
+    dto.password = 'password123';
+    const errors = await validate(dto);
+
+    const emailError = errors.find(e => e.property === 'email');
+    expect(emailError).toBeDefined();
+  })
+
+  it('should fail validation if password is empty', async () => {
+    const dto = new LoginDto();
+    dto.email = 'test@example.com';
+    dto.password = '';
+    const errors = await validate(dto);
+
+    const passwordError = errors.find(e => e.property === 'password');
+    expect(passwordError).toBeDefined();
+  })
 })
