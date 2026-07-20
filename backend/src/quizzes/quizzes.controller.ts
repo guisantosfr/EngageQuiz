@@ -11,34 +11,34 @@ export class QuizzesController {
 
     @Get()
     async findAll(@CurrentUser() user: any) {
-        return this.quizzesService.getAllQuizzes(user.id);
+        return this.quizzesService.getAllQuizzes(user.userId);
     }
 
     @Get(':id')
     async findOne(@Param('id') id: string, @CurrentUser() user: any) {
-        return this.quizzesService.getQuizById(id, user.id);
+        return this.quizzesService.getQuizById(id, user.userId);
     }
 
     @Post()
     async create(@Body() data: CreateQuizDto, @CurrentUser() user: any) {
-        return this.quizzesService.createQuiz(data, user.id);
+        return this.quizzesService.createQuiz(data, user.userId);
     }
 
     @Put(':id')
     async update(@Param('id') id: string, @Body() data: UpdateQuizDto, @CurrentUser() user: any) {
-        return this.quizzesService.updateQuiz(id, data, user.id);
+        return this.quizzesService.updateQuiz(id, data, user.userId);
     }
 
     @Delete(':id')
     async remove(@Param('id') id: string, @CurrentUser() user: any) {
-        return this.quizzesService.deleteQuiz(id, user.id);
+        return this.quizzesService.deleteQuiz(id, user.userId);
     }
 
     @Post('ai/generate')
     @Throttle({ default: { limit: 5, ttl: 60000 } })
     async generateAIQuiz(@Body() data: CreateQuizAIDto, @CurrentUser() user: any) {
         // Apenas para manter o padrão, mas a IA retorna um JSON, não salva no banco ainda.
-        return this.quizzesService.generateQuizByAI(data, user.id);
+        return this.quizzesService.generateQuizByAI(data, user.userId);
     }
 
 }
