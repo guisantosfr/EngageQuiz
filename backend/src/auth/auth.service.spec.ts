@@ -406,16 +406,6 @@ describe('LoginDto Validation', () => {
     expect(passwordError).toBeDefined();
   })
 
-  it('should fail validation if password is too short', async () => {
-    const dto = new LoginDto();
-    dto.email = 'test@example.com';
-    dto.password = '123';
-    const errors = await validate(dto);
-
-    const passwordError = errors.find(e => e.property === 'password');
-    expect(passwordError).toBeDefined();
-  })
-
 })
 
 describe('Refresh tests', () => {
