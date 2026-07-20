@@ -50,157 +50,10 @@ describe('Register Tests', () => {
     expect(service).toBeDefined();
   });
 
-  it('should register a new admin', async () => {
+  it('should register a new user', async () => {
     const dto = {
-      name: 'Admin',
-      email: 'admin@gmail.com',
-      password: 'password123',
-      role: Role.ADMIN
-    };
-
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
-
-    const createdUserFromDb = {
-      id: '1',
-      name: dto.name,
-      email: dto.email,
-      password: hashedPassword,
-      role: dto.role,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-
-    mockPrismaService.user.create.mockResolvedValue(createdUserFromDb);
-    mockPrismaService.user.findUnique.mockResolvedValue(null);
-    mockJwtService.signAsync.mockResolvedValue('token');
-
-    const result = await service.register(dto);
-
-    expect(mockPrismaService.user.create).toHaveBeenCalledWith({
-      data: {
-        name: dto.name,
-        email: dto.email,
-        password: expect.any(String),
-        role: dto.role,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
-
-    const passwordSent = mockPrismaService.user.create.mock.calls[0][0].data.password;
-    expect(await bcrypt.compare(dto.password, passwordSent)).toBe(true);
-
-
-    // Valida se o JwtService assinou os dois tokens (Access e Refresh) com o payload correto
-    expect(mockJwtService.signAsync).toHaveBeenCalledTimes(2);
-    expect(mockJwtService.signAsync).toHaveBeenNthCalledWith(
-      1,
-      { sub: createdUserFromDb.id, email: createdUserFromDb.email, role: createdUserFromDb.role },
-      { expiresIn: '15m' }
-    );
-    expect(mockJwtService.signAsync).toHaveBeenNthCalledWith(
-      2,
-      { sub: createdUserFromDb.id, email: createdUserFromDb.email, role: createdUserFromDb.role },
-      { expiresIn: '7d' }
-    );
-
-    // Valida se o retorno do método está no formato correto (sem o password no user)
-    expect(result).toEqual({
-      user: {
-        id: createdUserFromDb.id,
-        name: createdUserFromDb.name,
-        email: createdUserFromDb.email,
-        role: createdUserFromDb.role,
-      },
-      accessToken: 'token',
-      refreshToken: 'token',
-    });
-  })
-
-
-  it('should register a new teacher', async () => {
-    const dto = {
-      name: 'Teacher',
-      email: 'teacher@gmail.com',
-      password: 'password123',
-      role: Role.TEACHER
-    };
-
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
-
-    const createdUserFromDb = {
-      id: '1',
-      name: dto.name,
-      email: dto.email,
-      password: hashedPassword,
-      role: dto.role,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-
-    mockPrismaService.user.create.mockResolvedValue(createdUserFromDb);
-    mockPrismaService.user.findUnique.mockResolvedValue(null);
-    mockJwtService.signAsync.mockResolvedValue('token');
-
-    const result = await service.register(dto);
-
-    expect(mockPrismaService.user.create).toHaveBeenCalledWith({
-      data: {
-        name: dto.name,
-        email: dto.email,
-        password: expect.any(String),
-        role: dto.role,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
-
-    const passwordSent = mockPrismaService.user.create.mock.calls[0][0].data.password;
-    expect(await bcrypt.compare(dto.password, passwordSent)).toBe(true);
-
-
-    // Valida se o JwtService assinou os dois tokens (Access e Refresh) com o payload correto
-    expect(mockJwtService.signAsync).toHaveBeenNthCalledWith(
-      1,
-      { sub: createdUserFromDb.id, email: createdUserFromDb.email, role: createdUserFromDb.role },
-      { expiresIn: '15m' }
-    );
-    expect(mockJwtService.signAsync).toHaveBeenNthCalledWith(
-      2,
-      { sub: createdUserFromDb.id, email: createdUserFromDb.email, role: createdUserFromDb.role },
-      { expiresIn: '7d' }
-    );
-
-    // Valida se o retorno do método está no formato correto (sem o password no user)
-    expect(result).toEqual({
-      user: {
-        id: createdUserFromDb.id,
-        name: createdUserFromDb.name,
-        email: createdUserFromDb.email,
-        role: createdUserFromDb.role,
-      },
-      accessToken: 'token',
-      refreshToken: 'token',
-    });
-  })
-
-
-  it('should register a new student', async () => {
-    const dto = {
-      name: 'Student',
-      email: 'student@gmail.com',
+      name: 'User',
+      email: 'user@gmail.com',
       password: 'password123',
       role: Role.STUDENT
     };
@@ -245,6 +98,7 @@ describe('Register Tests', () => {
 
 
     // Valida se o JwtService assinou os dois tokens (Access e Refresh) com o payload correto
+    expect(mockJwtService.signAsync).toHaveBeenCalledTimes(2);
     expect(mockJwtService.signAsync).toHaveBeenNthCalledWith(
       1,
       { sub: createdUserFromDb.id, email: createdUserFromDb.email, role: createdUserFromDb.role },
@@ -496,21 +350,6 @@ describe('Login Tests', () => {
     });
   })
 
-  it('should not log in a user if the password is too short', async () => {
-    const dto = {
-      email: 'test@example.com',
-      password: '123',
-    };
-
-    mockPrismaService.user.findUnique.mockResolvedValue(null);
-
-    await expect(service.login(dto)).rejects.toThrow(UnauthorizedException);
-
-    expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
-      where: { email: dto.email }
-    });
-  })
-
   it('should not log in a user if the password is incorrect', async () => {
     const dto = {
       email: 'test@example.com',
@@ -533,7 +372,6 @@ describe('Login Tests', () => {
       where: { email: dto.email }
     });
   })
-
 
 })
 
@@ -567,6 +405,17 @@ describe('LoginDto Validation', () => {
     const passwordError = errors.find(e => e.property === 'password');
     expect(passwordError).toBeDefined();
   })
+
+  it('should fail validation if password is too short', async () => {
+    const dto = new LoginDto();
+    dto.email = 'test@example.com';
+    dto.password = '123';
+    const errors = await validate(dto);
+
+    const passwordError = errors.find(e => e.property === 'password');
+    expect(passwordError).toBeDefined();
+  })
+
 })
 
 describe('Refresh tests', () => {

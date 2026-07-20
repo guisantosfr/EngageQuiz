@@ -3,11 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshDto } from './dto/refresh.dto';
-import { ForgotPasswordDto } from './dto/forgot-password.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
 import * as bcrypt from 'bcrypt';
-import * as crypto from 'crypto';
-import * as nodemailer from 'nodemailer';
 import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
@@ -15,7 +11,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
-  ) {}
+  ) { }
 
   private async generateTokens(user: { id: string, email: string, role: string, name: string }) {
     const payload = { sub: user.id, email: user.email, role: user.role };
@@ -141,94 +137,94 @@ export class AuthService {
     }
   }
 
-  async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
-    const { email } = forgotPasswordDto;
-    const user = await this.prisma.user.findUnique({ where: { email } });
+  // async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
+  //   const { email } = forgotPasswordDto;
+  //   const user = await this.prisma.user.findUnique({ where: { email } });
 
-    if (!user) {
-      // Retornar sucesso genérico por segurança
-      return { message: 'Se o e-mail existir, um link de recuperação será enviado.' };
-    }
+  //   if (!user) {
+  //     // Retornar sucesso genérico por segurança
+  //     return { message: 'Se o e-mail existir, um link de recuperação será enviado.' };
+  //   }
 
-    // Gerar token
-    const resetToken = crypto.randomBytes(32).toString('hex');
-    const passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-    const passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hora no futuro
+  //   // Gerar token
+  //   const resetToken = crypto.randomBytes(32).toString('hex');
+  //   const passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+  //   const passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hora no futuro
 
-    // Atualizar usuário
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
-        passwordResetToken,
-        passwordResetExpires,
-      },
-    });
+  //   // Atualizar usuário
+  //   await this.prisma.user.update({
+  //     where: { id: user.id },
+  //     data: {
+  //       passwordResetToken,
+  //       passwordResetExpires,
+  //     },
+  //   });
 
-    // Configurar nodemailer (usando fallback para não quebrar localmente)
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.ethereal.email',
-      port: Number(process.env.SMTP_PORT) || 587,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
+  //   // Configurar nodemailer (usando fallback para não quebrar localmente)
+  //   const transporter = nodemailer.createTransport({
+  //     host: process.env.SMTP_HOST || 'smtp.ethereal.email',
+  //     port: Number(process.env.SMTP_PORT) || 587,
+  //     auth: {
+  //       user: process.env.SMTP_USER,
+  //       pass: process.env.SMTP_PASS,
+  //     },
+  //   });
 
-    const resetURL = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
+  //   const resetURL = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
 
-    try {
-      await transporter.sendMail({
-        from: '"EngageQuiz" <noreply@engagequiz.com>',
-        to: user.email,
-        subject: 'Recuperação de Senha',
-        html: `
-          <h1>Você solicitou a redefinição de senha</h1>
-          <p>Clique no link abaixo para criar uma nova senha. Este link é válido por 1 hora.</p>
-          <a href="${resetURL}">${resetURL}</a>
-        `,
-      });
-      // Apenas para facilitar durante o desenvolvimento
-      console.log('Token de reset:', resetToken); 
-    } catch (error) {
-      console.error('Erro ao enviar e-mail. Token:', resetToken);
-      console.error(error);
-    }
+  //   try {
+  //     await transporter.sendMail({
+  //       from: '"EngageQuiz" <noreply@engagequiz.com>',
+  //       to: user.email,
+  //       subject: 'Recuperação de Senha',
+  //       html: `
+  //         <h1>Você solicitou a redefinição de senha</h1>
+  //         <p>Clique no link abaixo para criar uma nova senha. Este link é válido por 1 hora.</p>
+  //         <a href="${resetURL}">${resetURL}</a>
+  //       `,
+  //     });
+  //     // Apenas para facilitar durante o desenvolvimento
+  //     console.log('Token de reset:', resetToken); 
+  //   } catch (error) {
+  //     console.error('Erro ao enviar e-mail. Token:', resetToken);
+  //     console.error(error);
+  //   }
 
-    return { message: 'Se o e-mail existir, um link de recuperação será enviado.' };
-  }
+  //   return { message: 'Se o e-mail existir, um link de recuperação será enviado.' };
+  // }
 
-  async resetPassword(resetPasswordDto: ResetPasswordDto) {
-    const { token, newPassword } = resetPasswordDto;
+  // async resetPassword(resetPasswordDto: ResetPasswordDto) {
+  //   const { token, newPassword } = resetPasswordDto;
 
-    // Fazer o hash do token recebido para comparar com o do banco
-    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+  //   // Fazer o hash do token recebido para comparar com o do banco
+  //   const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
-    const user = await this.prisma.user.findFirst({
-      where: {
-        passwordResetToken: hashedToken,
-        passwordResetExpires: {
-          gt: new Date(),
-        },
-      },
-    });
+  //   const user = await this.prisma.user.findFirst({
+  //     where: {
+  //       passwordResetToken: hashedToken,
+  //       passwordResetExpires: {
+  //         gt: new Date(),
+  //       },
+  //     },
+  //   });
 
-    if (!user) {
-      throw new UnauthorizedException('Token inválido ou expirado.');
-    }
+  //   if (!user) {
+  //     throw new UnauthorizedException('Token inválido ou expirado.');
+  //   }
 
-    // Gerar hash da nova senha
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+  //   // Gerar hash da nova senha
+  //   const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Atualizar senha e limpar campos de reset
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
-        password: hashedPassword,
-        passwordResetToken: null,
-        passwordResetExpires: null,
-      },
-    });
+  //   // Atualizar senha e limpar campos de reset
+  //   await this.prisma.user.update({
+  //     where: { id: user.id },
+  //     data: {
+  //       password: hashedPassword,
+  //       passwordResetToken: null,
+  //       passwordResetExpires: null,
+  //     },
+  //   });
 
-    return { message: 'Senha redefinida com sucesso.' };
-  }
+  //   return { message: 'Senha redefinida com sucesso.' };
+  // }
 }
