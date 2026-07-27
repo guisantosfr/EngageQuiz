@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { FileText } from "lucide-react";
@@ -11,7 +12,9 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ open, onClose }: SidebarProps) {
-    const [activeView, setActiveView] = useState<"quizzes" | "classes">("quizzes")
+    const pathname = usePathname();
+
+    const isQuizzesActive = pathname === "/quizzes" || pathname.startsWith("/quizzes/");
 
     return (
         <aside
@@ -26,12 +29,15 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                 <h2 className="text-sm font-semibold text-muted-foreground mb-2">Navegação</h2>
 
                 <Button
-                    variant={activeView === "quizzes" ? "secondary" : "ghost"}
+                    variant={isQuizzesActive ? "secondary" : "ghost"}
                     className="justify-start"
-                    onClick={() => setActiveView("quizzes")}
+                    asChild
+                    onClick={onClose}
                 >
-                    <FileText className="mr-2 h-4 w-4" />
-                    Questionários
+                    <Link href="/quizzes">
+                        <FileText className="mr-2 h-4 w-4" />
+                        Questionários
+                    </Link>
                 </Button>
             </nav>
         </aside>

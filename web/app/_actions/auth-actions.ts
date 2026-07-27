@@ -63,8 +63,10 @@ export async function loginAction(data: { email: string; password: string }) {
   }
 }
 
-export async function registerAction(data: { name: string; email: string; password: string }) {
+export async function registerAction(data: { name: string; email: string; password: string, role: string }) {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  data.role = 'TEACHER';
 
   try {
     const response = await fetch(`${apiUrl}/auth/register`, {

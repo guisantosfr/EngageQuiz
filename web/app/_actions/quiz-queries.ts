@@ -1,17 +1,35 @@
 import { Quiz } from "@/types/Quiz";
+import { cookies } from "next/headers";
+
+async function getAuthHeaders() {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('accessToken')?.value;
+
+    const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+    };
+
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    return headers;
+}
 
 export async function getQuizzes(): Promise<Quiz[]> {
     try {
+        const headers = await getAuthHeaders();
         const res = await fetch(
             `${process.env.NEXT_PUBLIC_API_URL}/quizzes`,
             {
                 method: 'GET',
+                headers,
                 cache: 'no-store',
             }
         );
 
         if (!res.ok) {
-            console.error('Failed to fetch quizzes:', res);
+            console.error('Failed to fetch quizzes:', res.status, res.statusText);
             return [];
         }
 
@@ -24,14 +42,15 @@ export async function getQuizzes(): Promise<Quiz[]> {
     }
 }
 
-export async function getQuiz(id: string) {
+export async function getQuiz(id: string): Promise<Quiz | null> {
     try {
+        const headers = await getAuthHeaders();
         const res = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/quizzes`,
+            `${process.env.NEXT_PUBLIC_API_URL}/quizzes/${id}`,
             {
                 method: 'GET',
-                // Remove o cache: 'no-store' e usa revalidate
-                next: { revalidate: 60 } // Atualiza o cache a cada 60 segundos
+                headers,
+                cache: 'no-store',
             }
         );
 

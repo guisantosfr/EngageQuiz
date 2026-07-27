@@ -13,7 +13,7 @@ interface JwtPayload {
 const PUBLIC_ROUTES = ['/login', '/register'];
 
 // Rotas exclusivas para Professores/Admins (RBAC)
-const TEACHER_ROUTES = ['/quizzes/new', '/quizzes/new-ai', '/play'];
+const TEACHER_ROUTES = ['/quizzes', '/quizzes/new', '/quizzes/new-ai', '/play'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
