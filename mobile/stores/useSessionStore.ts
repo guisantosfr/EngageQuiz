@@ -3,6 +3,7 @@ import { io, Socket } from 'socket.io-client';
 import { Session } from '@/types/Session';
 import { Player } from '@/types/Player';
 import { Question } from '@/types/Question';
+import { useAuthStore } from './useAuthStore';
 
 interface GameState {
     // Dados estáticos da partida
@@ -40,9 +41,21 @@ export const useSessionStore = create<GameState>((set, get) => ({
         if (socket?.connected) return;
 
         if (session && player) {
+            const accessToken = useAuthStore.getState().accessToken;
+
             const newSocket = io(`${process.env.EXPO_PUBLIC_API_URL}/sessions`, {
                 transports: ['websocket'],
                 autoConnect: true,
+                ...(accessToken
+                    ? {
+                        extraHeaders: {
+                            Authorization: `Bearer ${accessToken}`,
+                        },
+                        auth: {
+                            token: accessToken,
+                        },
+                    }
+                    : {}),
             });
 
             newSocket.on('connect', () => {

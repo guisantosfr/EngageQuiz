@@ -16,6 +16,7 @@ import GradientBackground from '@/components/GradientBackground';
 import QuestionTimer from '@/components/QuestionTimer';
 import Toast from 'react-native-toast-message';
 import { useSessionStore } from '@/stores/useSessionStore';
+import { apiFetch } from '@/utils/api';
 
 const OPTION_ICONS = ['diamond', 'circle', 'square', 'star'] as const;
 
@@ -94,11 +95,10 @@ export default function DisplayQuestionScreen() {
 
         setSubmitting(true);
         try {
-            const response = await fetch(
-                `${process.env.EXPO_PUBLIC_API_URL}/sessions/${session?.id}/questions/${currentQuestion?.id}/answer`,
+            const response = await apiFetch(
+                `/sessions/${session?.id}/questions/${currentQuestion?.id}/answer`,
                 {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ playerId: player?.id, optionId: selectedOptionId }),
                 }
             );

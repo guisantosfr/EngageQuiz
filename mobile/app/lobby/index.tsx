@@ -16,6 +16,7 @@ import GradientBackground from '@/components/GradientBackground';
 import { Player } from '@/types/Player';
 import Toast from 'react-native-toast-message';
 import { useSessionStore } from '@/stores/useSessionStore';
+import { apiFetch } from '@/utils/api';
 
 const MAX_VISIBLE_PLAYERS = 10;
 
@@ -31,9 +32,7 @@ export default function StudentLobbyScreen() {
     const fetchPlayers = useCallback(async () => {
         if (!session) return;
         try {
-            const response = await fetch(
-                `${process.env.EXPO_PUBLIC_API_URL}/sessions/${session.id}/players`
-            );
+            const response = await apiFetch(`/sessions/${session.id}/players`);
             const data = await response.json();
             setPlayers(data);
         } catch (error) {
@@ -44,8 +43,8 @@ export default function StudentLobbyScreen() {
     const leaveSession = useCallback(async () => {
         if (!session || !player) return;
         try {
-            const response = await fetch(
-                `${process.env.EXPO_PUBLIC_API_URL}/sessions/${session.id}/players/${player.id}/leave`,
+            const response = await apiFetch(
+                `/sessions/${session.id}/players/${player.id}/leave`,
                 { method: 'DELETE' }
             );
 

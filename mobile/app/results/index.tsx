@@ -7,6 +7,7 @@ import GradientBackground from '@/components/GradientBackground';
 import Toast from 'react-native-toast-message';
 import { useSessionStore } from '@/stores/useSessionStore';
 import AnswerItem from '@/components/AnswerItem';
+import { apiFetch } from '@/utils/api';
 
 export interface AnswerDetail {
     questionIndex: number;
@@ -40,9 +41,7 @@ export default function FinalResultsScreen() {
         const { session: s, player: p } = useSessionStore.getState();
         if (!s || !p) return;
         try {
-            const response = await fetch(
-                `${process.env.EXPO_PUBLIC_API_URL}/sessions/${s.id}/results/${p.id}`
-            );
+            const response = await apiFetch(`/sessions/${s.id}/results/${p.id}`);
             if (!response.ok) throw new Error('Erro ao carregar resultados');
             const data: ResultsData = await response.json();
             setResults(data);

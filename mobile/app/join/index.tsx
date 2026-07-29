@@ -6,6 +6,7 @@ import GradientBackground from "@/components/GradientBackground";
 import FontAwesome6 from "@react-native-vector-icons/fontawesome6";
 import Toast from "react-native-toast-message";
 import { useSessionStore } from "@/stores/useSessionStore";
+import { apiFetch } from "@/utils/api";
 
 export default function JoinScreen() {
     const router = useRouter();
@@ -42,11 +43,8 @@ export default function JoinScreen() {
 
         setLoading(true);
         try {
-            const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/sessions/${sessionCode}/join`, {
+            const response = await apiFetch(`/sessions/${sessionCode}/join`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
                 body: JSON.stringify({
                     nickname: nickname.trim(),
                 }),
