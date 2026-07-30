@@ -18,6 +18,12 @@ async function getAuthHeaders() {
 
 export async function getQuizzes(): Promise<Quiz[]> {
     try {
+        const cookieStore = await cookies();
+        const token = cookieStore.get('accessToken')?.value;
+        if (!token) {
+            return [];
+        }
+
         const headers = await getAuthHeaders();
         const res = await fetch(
             `${process.env.NEXT_PUBLIC_API_URL}/quizzes`,
@@ -29,7 +35,9 @@ export async function getQuizzes(): Promise<Quiz[]> {
         );
 
         if (!res.ok) {
-            console.error('Failed to fetch quizzes:', res.status, res.statusText);
+            if (res.status !== 401) {
+                console.error('Failed to fetch quizzes:', res.status, res.statusText);
+            }
             return [];
         }
 
@@ -44,6 +52,12 @@ export async function getQuizzes(): Promise<Quiz[]> {
 
 export async function getQuiz(id: string): Promise<Quiz | null> {
     try {
+        const cookieStore = await cookies();
+        const token = cookieStore.get('accessToken')?.value;
+        if (!token) {
+            return null;
+        }
+
         const headers = await getAuthHeaders();
         const res = await fetch(
             `${process.env.NEXT_PUBLIC_API_URL}/quizzes/${id}`,

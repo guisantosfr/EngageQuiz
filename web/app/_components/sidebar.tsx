@@ -74,9 +74,8 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
     return (
         <aside
             className={cn(
-                "border-r bg-background transition-all duration-300 flex flex-col justify-between",
-                // Mobile: sidebar fixa como overlay
-                "fixed md:relative top-16 md:top-0 left-0 h-[calc(100vh-4rem)] md:h-auto z-20",
+                "border-r bg-background transition-all duration-300 flex flex-col justify-between shrink-0",
+                "fixed md:sticky top-16 left-0 h-[calc(100vh-4rem)] z-20",
                 open ? "w-64" : "w-0 overflow-hidden",
             )}
         >
@@ -97,7 +96,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                 </Button>
             </nav>
             {/* Seção Inferior com Informações do Usuário e Logout */}
-            <div className="p-3 border-t border-border">
+            <div className="p-3 border-t border-border mt-auto">
                 <AlertDialog open={isLogoutDialogOpen} onOpenChange={setIsLogoutDialogOpen}>
                     <AlertDialogTrigger asChild>
                         <button

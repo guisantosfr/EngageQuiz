@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { Eye, EyeOff, Loader2, Lock, Mail, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,8 +11,10 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { loginAction } from '@/app/_actions/auth-actions';
 
-export default function LoginPage() {
+function LoginFormContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const from = searchParams.get('from') || '/';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -45,7 +47,7 @@ export default function LoginPage() {
         }
 
         toast.success('Login realizado com sucesso!');
-        router.push('/');
+        router.push(from);
       }
     } catch (error) {
       toast.error('Ocorreu um erro ao tentar entrar. Tente novamente.');
@@ -148,5 +150,17 @@ export default function LoginPage() {
         </Card>
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen flex items-center justify-center p-4 bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </main>
+    }>
+      <LoginFormContent />
+    </Suspense>
   );
 }

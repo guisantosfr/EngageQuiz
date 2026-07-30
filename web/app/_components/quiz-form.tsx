@@ -176,8 +176,14 @@ export function QuizForm({ mode, initialData }: QuizFormProps) {
             if (!q.text.trim()) return `Questão ${i + 1}: O enunciado não pode estar vazio.`;
 
             if (q.type === "MULTIPLE_CHOICE" && q.options) {
-                const hasEmptyOption = q.options.some(opt => !opt.text.trim());
-                if (hasEmptyOption) return `Questão ${i + 1}: Todas as alternativas devem ser preenchidas.`;
+                const filledOptions = q.options.filter(opt => opt.text.trim() !== '');
+                if (filledOptions.length < 2) {
+                    return `Questão ${i + 1}: Deve ter pelo menos 2 alternativas preenchidas.`;
+                }
+                const hasCorrectOption = filledOptions.some(opt => opt.isCorrect);
+                if (!hasCorrectOption) {
+                    return `Questão ${i + 1}: A alternativa selecionada como correta não pode estar em branco.`;
+                }
             }
         }
         return null
