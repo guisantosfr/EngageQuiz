@@ -12,7 +12,7 @@ export class SessionsController {
 
     @Post()
     async create(@Body() createSessionDto: CreateSessionDto, @CurrentUser() user: any) {
-        return this.sessionsService.create(createSessionDto, user.id);
+        return this.sessionsService.create(createSessionDto, user.userId);
     }
 
     @Post(':code/join')
@@ -22,18 +22,18 @@ export class SessionsController {
         @Body() joinSessionDto: JoinSessionDto,
         @CurrentUser() user: any,
     ) {
-        return this.sessionsService.join(code, joinSessionDto, user.id);
+        return this.sessionsService.join(code, joinSessionDto, user.userId);
     }
 
     @Get(':id/players')
     @SkipThrottle()
     async getSessionPlayers(@Param('id') sessionId: string, @CurrentUser() user: any) {
-        return this.sessionsService.getSessionPlayers(sessionId, user.id);
+        return this.sessionsService.getSessionPlayers(sessionId, user.userId);
     }
 
     @Delete(':id')
     async cancel(@Param('id') sessionId: string, @CurrentUser() user: any) {
-        return this.sessionsService.cancel(sessionId, user.id);
+        return this.sessionsService.cancel(sessionId, user.userId);
     }
 
     @Delete(':sessionId/players/:playerId/leave')
@@ -42,7 +42,7 @@ export class SessionsController {
         @Param('playerId') playerId: string,
         @CurrentUser() user: any,
     ) {
-        return this.sessionsService.removePlayer(sessionId, playerId, false, user.id);
+        return this.sessionsService.removePlayer(sessionId, playerId, false, user.userId);
     }
 
     @Delete(':sessionId/players/:playerId/kick')
@@ -51,27 +51,27 @@ export class SessionsController {
         @Param('playerId') playerId: string,
         @CurrentUser() user: any,
     ) {
-        return this.sessionsService.removePlayer(sessionId, playerId, true, user.id);
+        return this.sessionsService.removePlayer(sessionId, playerId, true, user.userId);
     }
 
     @Get(':sessionId/player/:playerId')
     async getSessionPlayerInfo(@Param('sessionId') sessionId: string, @Param('playerId') playerId: string, @CurrentUser() user: any) {
-        return this.sessionsService.getSessionPlayerData(sessionId, playerId, user.id);
+        return this.sessionsService.getSessionPlayerData(sessionId, playerId, user.userId);
     }
 
     @Get(':sessionId/quiz/:quizId')
     async getSessionFullInfo(@Param('sessionId') sessionId: string, @Param('quizId') quizId: string, @CurrentUser() user: any) {
-        return this.sessionsService.getSessionFullData(sessionId, quizId, user.id);
+        return this.sessionsService.getSessionFullData(sessionId, quizId, user.userId);
     }
 
     @Post(':id/start')
     async start(@Param('id') sessionId: string, @CurrentUser() user: any) {
-        return this.sessionsService.start(sessionId, user.id);
+        return this.sessionsService.start(sessionId, user.userId);
     }
 
     @Post(':id/next-question')
     async nextQuestion(@Param('id') sessionId: string, @CurrentUser() user: any) {
-        return this.sessionsService.nextQuestion(sessionId, user.id);
+        return this.sessionsService.nextQuestion(sessionId, user.userId);
     }
 
     @Post(':id/questions/:questionId/answer')
@@ -81,17 +81,17 @@ export class SessionsController {
         @Body() submitAnswerDto: SubmitAnswerDto,
         @CurrentUser() user: any,
     ) {
-        return this.sessionsService.submitAnswer(sessionId, questionId, submitAnswerDto, user.id);
+        return this.sessionsService.submitAnswer(sessionId, questionId, submitAnswerDto, user.userId);
     }
 
     @Post(':id/finish')
     async finish(@Param('id') sessionId: string, @CurrentUser() user: any) {
-        return this.sessionsService.finish(sessionId, user.id);
+        return this.sessionsService.finish(sessionId, user.userId);
     }
 
     @Get(':id/results')
     async getSessionResults(@Param('id') sessionId: string, @CurrentUser() user: any) {
-        return this.sessionsService.getSessionResults(sessionId, user.id);
+        return this.sessionsService.getSessionResults(sessionId, user.userId);
     }
 
     @Get(':id/results/:playerId')
@@ -100,6 +100,6 @@ export class SessionsController {
         @Param('playerId') playerId: string,
         @CurrentUser() user: any,
     ) {
-        return this.sessionsService.getPlayerResults(sessionId, playerId, user.id);
+        return this.sessionsService.getPlayerResults(sessionId, playerId, user.userId);
     }
 }

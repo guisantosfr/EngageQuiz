@@ -101,7 +101,6 @@ export function QuizForm({ mode, initialData }: QuizFormProps) {
     // ── Callbacks para QuestionCard ──────────────────────────────────────────
 
     const handleUpdate = (index: number, field: keyof FormQuestion, value: any) => {
-        console.log('update')
         if (field === "type") {
             const ts = Date.now()
             if (value === "TRUE_FALSE") {

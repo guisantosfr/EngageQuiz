@@ -86,7 +86,6 @@ export function PlayContent({ initialSession, initialPlayers, sessionId, quizId 
         setWebsocket(socket);
 
         socket.on("connect", () => {
-            console.log("[PlayContent] Connected to socket");
             socket.emit("join_host", { sessionId });
         });
 
@@ -103,7 +102,6 @@ export function PlayContent({ initialSession, initialPlayers, sessionId, quizId 
         })
 
         socket.on("quiz_started", (data) => {
-            console.log("[quiz_started]", data);
             setSessionStatus('IN_PROGRESS');
             setTotalQuestions(data.totalQuestions);
             showQuestion(data.firstQuestion);
@@ -113,20 +111,17 @@ export function PlayContent({ initialSession, initialPlayers, sessionId, quizId 
         });
 
         socket.on("player_answered", (data) => {
-            console.log("[player_answered]", data);
             setTotalAnswers(data.totalAnswers);
             setTotalPlayers(data.totalPlayers);
         });
 
         socket.on("question_closed", (data) => {
-            console.log("[question_closed]", data);
             clearCountdown();
             setEndReason(data.reason);
             setCorrectOptionId(data.correctOptionId ?? null);
         });
 
         socket.on("next_question", (data) => {
-            console.log("[next_question]", data);
             showQuestion(data.question);
             startCountdown(data.question.timeLimit);
             setShowAnswer(false);

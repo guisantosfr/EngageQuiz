@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Logger , ForbiddenException } from "@nestjs/common";
+import { Injectable, NotFoundException, BadRequestException, Logger, ForbiddenException } from "@nestjs/common";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateSessionDto, JoinSessionDto, SubmitAnswerDto } from "./dto";
@@ -36,7 +36,7 @@ export class SessionsService {
     private async checkHostOrPlayerAccess(sessionId: string, userId: string) {
         const session = await this.prisma.session.findUnique({
             where: { id: sessionId },
-            include: { 
+            include: {
                 quiz: { select: { userId: true } },
                 players: { where: { userId } }
             }
@@ -164,7 +164,7 @@ export class SessionsService {
     }
 
     async getSessionPlayers(sessionId: string, userId: string) {
-        await this.checkHostAccess(sessionId, userId);
+        await this.checkHostOrPlayerAccess(sessionId, userId);
         return this.prisma.player.findMany({
             where: {
                 sessionId,

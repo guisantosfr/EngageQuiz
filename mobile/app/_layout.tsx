@@ -12,10 +12,6 @@ function RootLayoutNav() {
   const router = useRouter();
 
   useEffect(() => {
-    console.log(segments);
-  }, [segments]);
-
-  useEffect(() => {
     initializeAuth();
   }, []);
 

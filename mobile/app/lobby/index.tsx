@@ -34,7 +34,9 @@ export default function StudentLobbyScreen() {
         try {
             const response = await apiFetch(`/sessions/${session.id}/players`);
             const data = await response.json();
-            setPlayers(data);
+            if (response.ok && Array.isArray(data)) {
+                setPlayers(data);
+            }
         } catch (error) {
             console.error(error);
         }
