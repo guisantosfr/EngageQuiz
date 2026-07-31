@@ -42,7 +42,7 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const res = await registerAction({ name, email, password });
+      const res = await registerAction({ name, email, password, role: 'TEACHER' });
 
       if (res.error) {
         toast.error(res.error);
