@@ -1,6 +1,6 @@
 # EngageQuiz - Web (Painel do Professor)
 
-Esta pasta contém o **Frontend Web** do EngageQuiz. Trata-se do painel administrativo utilizado pelos professores para a criação de quizzes, visualização de resultados e gerenciamento das sessões de jogo em tempo real.
+Esta pasta contém o **Frontend Web** do EngageQuiz. Trata-se do painel administrativo utilizado pelos professores para a criação de quizzes (incluindo geração por IA), visualização de resultados e gerenciamento das sessões de jogo em tempo real.
 
 <p align="center">
   <img src="./assets/lobby.png" alt="Lobby screen" width="32%">
@@ -17,12 +17,29 @@ Esta pasta contém o **Frontend Web** do EngageQuiz. Trata-se do painel administ
 * **[Tailwind CSS](https://tailwindcss.com/):** Framework utilitário de CSS para estilização rápida e responsiva.
 * **[Shadcn/UI](https://ui.shadcn.com/):** Coleção de componentes reutilizáveis construídos sobre o Radix UI, garantindo acessibilidade e um visual moderno.
 * **[Socket.io-client](https://socket.io/):** Utilizado para a comunicação em tempo real com o servidor (ex: ver os alunos entrando na sala, ver resultados ao vivo).
+* **[jwt-decode](https://github.com/auth0/jwt-decode):** Decodificação de tokens JWT para obtenção e validação rápida da sessão do usuário.
+
+---
+
+## 🔐 Autenticação & Segurança no Frontend
+
+A integração com o módulo de autenticação do backend adota práticas modernas de segurança no Next.js:
+
+* **Server Actions (`app/_actions/auth-actions.ts`):**
+  * `loginAction`: Comunica-se com o backend e define cookies HTTP seguros.
+  * `registerAction`: Realiza o cadastro definindo automaticamente o papel `TEACHER`.
+  * `logoutAction`: Remove os cookies de sessão de forma limpa.
+  * `getAuthUser`: Recupera os dados do usuário conectado através da decodificação segura do JWT.
+* **Gestão Segura de Tokens (Cookies HttpOnly):**
+  * Os tokens (`accessToken` e `refreshToken`) são mantidos exclusivamente em cookies HTTP com flags `HttpOnly`, `Secure` e `SameSite=Lax`. Isso impede o acesso por scripts maliciosos injetados no DOM (proteção contra **XSS**).
+* **Proteção de Rotas & Autorização (Middleware):**
+  * O Middleware do Next.js intercepta as requisições antes do render. Usuários não autenticados tentando acessar áreas restritas (`/quizzes/*`, `/play/*`) são redirecionados automaticamente para `/login`.
 
 ---
 
 ## ⚙️ Pré-requisitos e Configuração
 
-Certifique-se de que o [Backend](../backend/README.md) esteja rodando, pois o painel web precisa se comunicar com a API e o servidor WebSocket.
+Certifique-se de que o [Backend](../backend/README.md) esteja rodando, pois o painel web precisa se comunicar com a API REST e o servidor WebSocket.
 
 ### Variáveis de Ambiente
 
@@ -63,5 +80,5 @@ NEXT_PUBLIC_API_URL="http://localhost:3000"
 
 ## 🏗️ Peculiaridades
 
-* **Server Actions:** O projeto utiliza Server Actions do Next.js (arquivos na pasta `_actions`) para as mutações e buscas de dados diretamente no servidor Next, antes de chamar a API NestJS, garantindo segurança e melhor integração.
+* **Server Actions:** Mutações e buscas de dados são feitas no lado do servidor Next antes de chamar a API NestJS, centralizando a manipulação de tokens e garantindo segurança.
 * **Painel da Sessão:** A tela de execução de uma sessão ativa abre uma conexão via WebSocket com o backend para coordenar qual pergunta está ativa e atualizar a interface conforme os alunos respondem.
