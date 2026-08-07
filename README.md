@@ -5,24 +5,24 @@
   <img src="./mobile/assets/question-mobile.jpeg" alt="Question screen on mobile" width="180">
 </p>
 
-Aplicação multiplataforma para criação e participação em quizzes em tempo real, projetado para engajar alunos em sala de aula de forma interativa e dinâmica.
+Aplicação multiplataforma para criação e participação em quizzes em tempo real, projetada para engajar participantes em sala de aula ou eventos de forma interativa e dinâmica.
 
 ---
 
 ## 🎯 Funcionalidades
 
-O projeto é dividido em dois grandes fluxos de experiência:
+O EngageQuiz oferece uma experiência unificada para a criação e participação em questionários:
 
-### Para Professores (Painel Web)
-* **Autenticação & Autorização:** Cadastro, login e logout seguros com controle de acesso baseado em papéis (`TEACHER` / `ADMIN`).
+### Painel Web
+* **Autenticação Segura:** Cadastro, login e logout com suporte a tokens JWT (Access e Refresh tokens).
 * **Gestão de Quizzes:** Criação, edição, exclusão e geração assistida por IA de questionários.
-* **Sessões em Tempo Real:** Iniciar sessões de jogo, controlando o avanço das perguntas.
-* **Acompanhamento:** Visualização dos resultados e do desempenho dos alunos ao final de cada quiz.
+* **Sessões em Tempo Real:** Iniciar sessões de jogo e controlar o avanço das perguntas.
+* **Acompanhamento:** Visualização dos resultados e do desempenho em tempo real.
 
-### Para Alunos (Aplicativo Mobile)
-* **Autenticação & Perfis:** Acesso individualizado (`STUDENT`) com armazenamento seguro de credenciais.
-* **Acesso Simples:** Entrada nas sessões usando códigos.
-* **Interatividade:** Responder às perguntas em tempo real de seus próprios dispositivos.
+### Aplicativo Mobile
+* **Autenticação & Acesso:** Login e cadastro com armazenamento seguro de credenciais.
+* **Entrada nas Salas:** Ingressar em sessões ao vivo via código de acesso.
+* **Interatividade:** Responder às perguntas em tempo real de seu próprio dispositivo.
 * **Gamificação:** Feedback de desempenho e visão da classificação geral.
 
 ---
@@ -48,9 +48,8 @@ Adotei a estrutura de **Monorepo** para manter todos os componentes da aplicaç�
 | Diretório | Descrição | Link para o README interno |
 | :--- | :--- | :--- |
 | `backend/` | API REST e servidor WebSocket que gerencia questionários, sessões, autenticação e banco de dados. | [🔗 Ver README do Backend](./backend/README.md) |
-| `web/` | Painel administrativo voltado para os professores criarem e gerenciarem os questionários. | [🔗 Ver README da Web](./web/README.md) |
-| `mobile/` | Aplicativo utilizado pelos alunos para participar dos questionários em tempo real. | [🔗 Ver README do Mobile](./mobile/README.md) |
-| `docs/` | Guia completo de integração do módulo de Autenticação para os clientes Web e Mobile. | [🔗 Guia de Integração de Auth](./docs/AUTH_INTEGRATION_GUIDE.md) |
+| `web/` | Painel web para criação, gerenciamento e condução de questionários ao vivo. | [🔗 Ver README da Web](./web/README.md) |
+| `mobile/` | Aplicativo mobile para participação em questionários ao vivo em tempo real. | [🔗 Ver README do Mobile](./mobile/README.md) |
 
 ---
 
@@ -68,7 +67,7 @@ Para rodar o projeto localmente, você precisará de:
 
 ## 🗺️ Roadmap
 
-- [x] Implementar autenticação e perfis de usuário (`ADMIN`, `TEACHER`, `STUDENT`) com suporte a JWT Access & Refresh tokens.
+- [x] Implementar autenticação segura com suporte a JWT Access & Refresh tokens.
 - [x] Testes Automatizados no Backend (Auth, Quizzes, Sessions, Gateway WebSocket).
 - [ ] Dashboards e relatórios detalhados de desempenho.
 - [ ] Novos tipos de questão.

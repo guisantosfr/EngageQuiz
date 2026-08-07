@@ -1,6 +1,6 @@
-# EngageQuiz - Mobile (App dos Alunos)
+# EngageQuiz - Mobile
 
-Esta pasta contém o **Aplicativo Mobile** do EngageQuiz. O app é projetado para os alunos participarem dos quizzes criados pelos professores. Através de autenticação ou código de sala, eles ingressam na sessão, respondem as perguntas em tempo real de seus smartphones e acompanham a sua pontuação.
+Esta pasta contém o **Aplicativo Mobile** do EngageQuiz. O app é projetado para participação em quizzes em tempo real. Através de autenticação ou código de sala, os usuários ingressam na sessão, respondem as perguntas em tempo real de seus smartphones e acompanham sua pontuação.
 
 <p align="center">
   <img src="./assets/question-mobile.jpeg" alt="Question screen on mobile" width="240">
@@ -16,7 +16,7 @@ Esta pasta contém o **Aplicativo Mobile** do EngageQuiz. O app é projetado par
 * **[expo-secure-store](https://docs.expo.dev/versions/latest/sdk/securestore/):** Armazenamento criptografado no hardware do dispositivo (iOS Keychain e Android KeyStore/EncryptedSharedPreferences).
 * **[NativeWind](https://www.nativewind.dev/):** Utilizado para estilizar os componentes React Native usando classes do Tailwind CSS.
 * **[Zustand](https://docs.pmnd.rs/zustand/):** Gerenciador de estado global pequeno, rápido e escalável. Usado para manter o estado de autenticação e da sessão de jogo sincronizados.
-* **[Socket.io-client](https://socket.io/):** Biblioteca para a comunicação via WebSockets, recebendo do servidor o avanço das perguntas e atualizando a tela do aluno instantaneamente.
+* **[Socket.io-client](https://socket.io/):** Biblioteca para a comunicação via WebSockets, recebendo do servidor o avanço das perguntas e atualizando a tela do jogador instantaneamente.
 
 ---
 
@@ -28,9 +28,9 @@ A integração com o módulo de autenticação no app móvel foi projetada focan
   * Em vez de `AsyncStorage` (que salva dados em texto não criptografado), os tokens de acesso e de refresh (`accessToken` e `refreshToken`) são persistidos de forma segura e criptografada pelo sistema operacional (Keychain / KeyStore).
 * **Silent Refresh & Interceptador HTTP (`lib/api.ts`):**
   * O cliente Axios anexa automaticamente o cabeçalho `Authorization: Bearer <accessToken>`.
-  * Em caso de resposta `401 Unauthorized` por expiração do Access Token (15 minutos), o interceptador renova silenciosamente os tokens via `/auth/refresh` usando o `refreshToken` do `SecureStore` sem deslogar o aluno.
+  * Em caso de resposta `401 Unauthorized` por expiração do Access Token (15 minutos), o interceptador renova silenciosamente os tokens via `/auth/refresh` usando o `refreshToken` do `SecureStore` sem deslogar o usuário.
 * **Navegação Protegida no Expo Router (`app/_layout.tsx`):**
-  * O layout raiz observa o estado do `useAuthStore`. Usuários não autenticados são redirecionados automaticamente para as telas de login/cadastro (`(auth)`), enquanto alunos autenticados avançam para a entrada de salas (`/join`).
+  * O layout raiz observa o estado do `useAuthStore`. Usuários não autenticados são redirecionados automaticamente para as telas de login/cadastro (`(auth)`), enquanto usuários autenticados avançam para a entrada de salas (`/join`).
 
 ---
 

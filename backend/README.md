@@ -1,6 +1,6 @@
 # EngageQuiz - Backend
 
-Esta pasta contém o código do **Backend** do ecossistema EngageQuiz, responsável por gerenciar as regras de negócio, persistência de dados, autenticação/autorização e a comunicação em tempo real entre o painel do professor e o aplicativo dos alunos.
+Esta pasta contém o código do **Backend** do ecossistema EngageQuiz, responsável por gerenciar as regras de negócio, persistência de dados, autenticação e a comunicação em tempo real entre a plataforma web e o aplicativo mobile.
 
 ---
 
@@ -21,14 +21,13 @@ Esta pasta contém o código do **Backend** do ecossistema EngageQuiz, responsá
 O módulo de autenticação implementa rotas públicas e protegidas por meio de Guards globais do NestJS:
 
 * **Endpoints Principais (`/auth`):**
-  * `POST /auth/register`: Cadastro de novos usuários (pode definir papel `TEACHER` ou `STUDENT`).
+  * `POST /auth/register`: Cadastro de novos usuários.
   * `POST /auth/login`: Autenticação e emissão do par de tokens (`accessToken` e `refreshToken`).
   * `POST /auth/logout`: Encerramento de sessão.
   * `POST /auth/refresh`: Emissão de novo `accessToken` utilizando um `refreshToken` válido.
 * **Segurança & Guards Globais:**
   * **`JwtAuthGuard`**: Aplicado globalmente em todas as rotas da API. Rotas públicas utilizam o decorator `@Public()`.
-  * **`RolesGuard`**: Garante autorização por papel (`ADMIN`, `TEACHER`, `STUDENT`) usando o decorator `@Roles(...)`.
-  * **Estratégia JWT**: `JwtStrategy` extrai o token do cabeçalho `Authorization: Bearer <token>` e injeta o objeto de usuário (`id`, `userId`, `email`, `role`) nas requisições.
+  * **Estratégia JWT**: `JwtStrategy` extrai o token do cabeçalho `Authorization: Bearer <token>` e injeta o objeto de usuário (`id`, `userId`, `email`) nas requisições.
 
 ---
 
@@ -100,5 +99,5 @@ No arquivo `package.json`, você encontrará os seguintes scripts úteis:
 
 ## 🔌 Peculiaridades (WebSockets e Sessões)
 
-Este backend utiliza intensivamente WebSockets para gerenciar as "Sessões" de quiz. O `SessionsGateway` (`src/sessions`) gerencia a entrada de alunos, o avanço das perguntas controlado pelo professor e a emissão de resultados em tempo real.
+Este backend utiliza intensivamente WebSockets para gerenciar as "Sessões" de quiz. O `SessionsGateway` (`src/sessions`) gerencia a entrada de jogadores, o avanço das perguntas e a emissão de resultados em tempo real.
 Certifique-se de que o painel Web e o App Mobile estejam apontando corretamente para o endereço e porta configurados para os WebSockets neste serviço.
