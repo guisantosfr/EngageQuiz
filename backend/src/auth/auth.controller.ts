@@ -26,16 +26,4 @@ export class AuthController {
   async refresh(@Body() refreshDto: RefreshDto) {
     return this.authService.refresh(refreshDto);
   }
-
-  // @Public()
-  // @Post('forgot-password')
-  // async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
-  //   return this.authService.forgotPassword(forgotPasswordDto);
-  // }
-
-  // @Public()
-  // @Post('reset-password')
-  // async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
-  //   return this.authService.resetPassword(resetPasswordDto);
-  // }
 }
