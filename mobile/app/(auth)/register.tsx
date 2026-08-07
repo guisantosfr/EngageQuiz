@@ -76,8 +76,7 @@ export default function RegisterScreen() {
           body: JSON.stringify({
             name: name.trim(),
             email: email.trim().toLowerCase(),
-            password: password,
-            role: "STUDENT",
+            password: password
           }),
         }
       );

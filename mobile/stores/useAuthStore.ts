@@ -68,8 +68,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           const user: User = storedUser || {
             id: decoded.sub,
             email: decoded.email,
-            name: '',
-            role: decoded.role,
+            name: ''
           };
 
           set({

@@ -2,13 +2,11 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'STUDENT' | 'TEACHER' | string;
 }
 
 export interface DecodedToken {
   sub: string;
   email: string;
-  role: string;
   exp?: number;
   iat?: number;
 }
