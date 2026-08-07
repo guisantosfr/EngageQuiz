@@ -5,15 +5,11 @@ import { jwtDecode } from 'jwt-decode';
 interface JwtPayload {
   sub: string;
   email: string;
-  role: 'ADMIN' | 'TEACHER' | 'STUDENT';
   exp: number;
 }
 
 // Rotas públicas que não exigem autenticação
 const PUBLIC_ROUTES = ['/login', '/register'];
-
-// Rotas exclusivas para Professores/Admins (RBAC)
-const TEACHER_ROUTES = ['/quizzes'];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -109,24 +105,15 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
-  // 3. Controle de Acesso Baseado em Função (RBAC)
-  if (isAuthenticated && decodedPayload) {
-    const userRole = decodedPayload.role;
-
-    const isTeacherRoute = TEACHER_ROUTES.some((route) =>
-      pathname === route || pathname.startsWith(`${route}/`)
-    );
-
-    // Se um aluno tentar acessar a raiz ou rotas de criação/gerenciamento de questionários
-    if (userRole === 'STUDENT' && (pathname === '/' || isTeacherRoute)) {
-      const url = request.nextUrl.clone();
-      url.pathname = '/student';
-      const response = NextResponse.redirect(url);
-      if (isRefreshed) {
-        setAuthCookies(response, newAccessToken, newRefreshToken);
-      }
-      return response;
+  // Redirecionar rota antiga /student para /quizzes
+  if (pathname === '/student') {
+    const url = request.nextUrl.clone();
+    url.pathname = '/quizzes';
+    const response = NextResponse.redirect(url);
+    if (isRefreshed) {
+      setAuthCookies(response, newAccessToken, newRefreshToken);
     }
+    return response;
   }
 
   // Resposta padrão caso esteja tudo válido

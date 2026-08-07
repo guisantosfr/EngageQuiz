@@ -7,7 +7,6 @@ export interface UserSession {
   id: string;
   name: string;
   email: string;
-  role: 'ADMIN' | 'TEACHER' | 'STUDENT';
 }
 
 export async function loginAction(data: { email: string; password: string }) {
@@ -63,7 +62,7 @@ export async function loginAction(data: { email: string; password: string }) {
   }
 }
 
-export async function registerAction(data: { name: string; email: string; password: string, role: string }) {
+export async function registerAction(data: { name: string; email: string; password: string }) {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
   try {
@@ -129,14 +128,13 @@ export async function getAuthUser(): Promise<UserSession | null> {
   if (!token) return null;
 
   try {
-    const decoded = jwtDecode<{ sub: string; email: string; role: 'ADMIN' | 'TEACHER' | 'STUDENT'; name?: string; exp: number }>(token);
+    const decoded = jwtDecode<{ sub: string; email: string; name?: string; exp: number }>(token);
     if (decoded.exp && decoded.exp * 1000 < Date.now()) {
       return null;
     }
     return {
       id: decoded.sub,
       email: decoded.email,
-      role: decoded.role,
       name: decoded.name || decoded.email.split('@')[0],
     };
   } catch {
