@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
-import { Role } from '../generated/prisma/enums';
 import * as bcrypt from 'bcrypt';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -54,8 +53,7 @@ describe('Register Tests', () => {
     const dto = {
       name: 'User',
       email: 'user@gmail.com',
-      password: 'password123',
-      role: Role.STUDENT
+      password: 'password123'
     };
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
@@ -65,7 +63,6 @@ describe('Register Tests', () => {
       name: dto.name,
       email: dto.email,
       password: hashedPassword,
-      role: dto.role,
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -80,14 +77,12 @@ describe('Register Tests', () => {
       data: {
         name: dto.name,
         email: dto.email,
-        password: expect.any(String),
-        role: dto.role,
+        password: expect.any(String)
       },
       select: {
         id: true,
         name: true,
         email: true,
-        role: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -101,12 +96,12 @@ describe('Register Tests', () => {
     expect(mockJwtService.signAsync).toHaveBeenCalledTimes(2);
     expect(mockJwtService.signAsync).toHaveBeenNthCalledWith(
       1,
-      { sub: createdUserFromDb.id, email: createdUserFromDb.email, role: createdUserFromDb.role },
+      { sub: createdUserFromDb.id, email: createdUserFromDb.email },
       { expiresIn: '15m' }
     );
     expect(mockJwtService.signAsync).toHaveBeenNthCalledWith(
       2,
-      { sub: createdUserFromDb.id, email: createdUserFromDb.email, role: createdUserFromDb.role },
+      { sub: createdUserFromDb.id, email: createdUserFromDb.email },
       { expiresIn: '7d' }
     );
 
@@ -115,8 +110,7 @@ describe('Register Tests', () => {
       user: {
         id: createdUserFromDb.id,
         name: createdUserFromDb.name,
-        email: createdUserFromDb.email,
-        role: createdUserFromDb.role,
+        email: createdUserFromDb.email
       },
       accessToken: 'token',
       refreshToken: 'token',
@@ -127,16 +121,14 @@ describe('Register Tests', () => {
     const dto = {
       name: 'Test User',
       email: 'test@example.com',
-      password: 'password123',
-      role: Role.STUDENT,
+      password: 'password123'
     };
 
     const existingUser = {
       id: '1',
       email: dto.email,
       password: 'password123',
-      name: 'Test User',
-      role: Role.STUDENT,
+      name: 'Test User'
     };
 
     mockPrismaService.user.findUnique.mockResolvedValue(existingUser);
@@ -152,8 +144,7 @@ describe('Register Tests', () => {
     const dto = {
       name: 'Test User',
       email: 'test@example.com',
-      password: 'password123',
-      role: Role.STUDENT,
+      password: 'password123'
     };
 
     // 1. A busca por e-mail único funciona (indica que não há conflito)
@@ -176,7 +167,6 @@ describe('RegisterDto Validation', () => {
     dto.name = '';
     dto.email = 'student@gmail.com';
     dto.password = 'password123';
-    dto.role = Role.STUDENT;
     // Executa a validação manual do DTO
     const errors = await validate(dto);
     expect(errors.length).toBeGreaterThan(0);
@@ -191,7 +181,6 @@ describe('RegisterDto Validation', () => {
     dto.name = 'Student';
     dto.email = '';
     dto.password = 'password123';
-    dto.role = Role.STUDENT;
     const errors = await validate(dto);
 
     const emailError = errors.find(e => e.property === 'email');
@@ -203,7 +192,6 @@ describe('RegisterDto Validation', () => {
     dto.name = 'Student';
     dto.email = 'invalid-email';
     dto.password = 'password123';
-    dto.role = Role.STUDENT;
     const errors = await validate(dto);
 
     const emailError = errors.find(e => e.property === 'email');
@@ -215,7 +203,6 @@ describe('RegisterDto Validation', () => {
     dto.name = 'Student';
     dto.email = 'student@gmail.com';
     dto.password = '';
-    dto.role = Role.STUDENT;
     const errors = await validate(dto);
 
     const passwordError = errors.find(e => e.property === 'password');
@@ -227,35 +214,10 @@ describe('RegisterDto Validation', () => {
     dto.name = 'Student';
     dto.email = 'student@gmail.com';
     dto.password = '123';
-    dto.role = Role.STUDENT;
     const errors = await validate(dto);
 
     const passwordError = errors.find(e => e.property === 'password');
     expect(passwordError).toBeDefined();
-  });
-
-  it('should fail validation if role is empty', async () => {
-    const dto = new RegisterDto();
-    dto.name = 'Student';
-    dto.email = 'student@gmail.com';
-    dto.password = 'password123';
-    dto.role = '' as Role;
-    const errors = await validate(dto);
-
-    const roleError = errors.find(e => e.property === 'role');
-    expect(roleError).toBeDefined();
-  });
-
-  it('should fail validation if role is invalid', async () => {
-    const dto = new RegisterDto();
-    dto.name = 'Student';
-    dto.email = 'student@gmail.com';
-    dto.password = 'password123';
-    dto.role = 'user' as Role;
-    const errors = await validate(dto);
-
-    const roleError = errors.find(e => e.property === 'role');
-    expect(roleError).toBeDefined();
   });
 });
 
@@ -310,8 +272,7 @@ describe('Login Tests', () => {
       id: '1',
       email: dto.email,
       password: await bcrypt.hash(dto.password, 10),
-      name: 'Test User',
-      role: Role.STUDENT,
+      name: 'Test User'
     };
 
     mockPrismaService.user.findUnique.mockResolvedValue(user);
@@ -330,7 +291,6 @@ describe('Login Tests', () => {
         id: user.id,
         email: user.email,
         name: user.name,
-        role: user.role,
       },
     });
   })
@@ -360,8 +320,7 @@ describe('Login Tests', () => {
       id: '1',
       email: dto.email,
       password: 'wrongPassword',
-      name: 'Test User',
-      role: Role.STUDENT,
+      name: 'Test User'
     };
 
     mockPrismaService.user.findUnique.mockResolvedValue(user);
@@ -456,8 +415,7 @@ describe('Refresh tests', () => {
     const user = {
       id: '1',
       email: 'test@example.com',
-      name: 'Test User',
-      role: Role.STUDENT,
+      name: 'Test User'
     };
     // 1. O token decodificado precisa retornar o campo 'sub'
     mockJwtService.verifyAsync.mockResolvedValue({
@@ -474,7 +432,7 @@ describe('Refresh tests', () => {
 
     // 4. Corrigimos o payload esperado na assinatura
     expect(mockJwtService.signAsync).toHaveBeenCalledWith(
-      { sub: user.id, email: user.email, role: user.role },
+      { sub: user.id, email: user.email },
       expect.any(Object)
     );
     // 5. Corrigimos o objeto de retorno esperado (apenas tokens, sem o user)
@@ -503,8 +461,7 @@ describe('Refresh tests', () => {
     const user = {
       id: '1',
       email: 'test@example.com',
-      name: 'Test User',
-      role: Role.STUDENT,
+      name: 'Test User'
     };
     mockJwtService.verifyAsync.mockResolvedValue({
       sub: user.id,

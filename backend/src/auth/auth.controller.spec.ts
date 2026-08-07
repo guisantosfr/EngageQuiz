@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { Role } from '../generated/prisma/enums';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -39,14 +38,13 @@ describe('AuthController', () => {
       const registerDto = {
         name: 'Test User',
         email: 'test@gmail.com',
-        password: 'password123',
-        role: Role.STUDENT,
+        password: 'password123'
       };
       // 2. Definimos o que o serviço de autenticação deve retornar
       const mockResult = {
         accessToken: 'access-token',
         refreshToken: 'refresh-token',
-        user: { id: '1', name: 'Test User', email: 'test@gmail.com', role: Role.STUDENT },
+        user: { id: '1', name: 'Test User', email: 'test@gmail.com' },
       };
       mockAuthService.register.mockResolvedValue(mockResult);
       // 3. Execução
@@ -67,7 +65,7 @@ describe('AuthController', () => {
       const mockResult = {
         accessToken: 'access-token',
         refreshToken: 'refresh-token',
-        user: { id: '1', name: 'Test User', email: 'test@gmail.com', role: Role.STUDENT },
+        user: { id: '1', name: 'Test User', email: 'test@gmail.com' },
       };
       mockAuthService.login.mockResolvedValue(mockResult);
       const result = await controller.login(loginDto);
@@ -87,7 +85,7 @@ describe('AuthController', () => {
       const mockResult = {
         accessToken: 'access-token',
         refreshToken: 'refresh-token',
-        user: { id: '1', name: 'Test User', email: 'test@gmail.com', role: Role.STUDENT },
+        user: { id: '1', name: 'Test User', email: 'test@gmail.com' },
       };
 
       mockAuthService.refresh.mockResolvedValue(mockResult);
