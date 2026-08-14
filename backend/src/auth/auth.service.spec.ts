@@ -7,6 +7,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { validate } from 'class-validator';
 import { UnauthorizedException, ConflictException, InternalServerErrorException } from '@nestjs/common';
+import { Prisma } from '../generated/prisma/client';
 
 describe('Register Tests', () => {
   let service: AuthService;
@@ -158,7 +159,24 @@ describe('Register Tests', () => {
     expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
       where: { email: dto.email },
     });
-  })
+  });
+
+  it('should throw ConflictException if Prisma throws unique constraint error (P2002)', async () => {
+    const dto = {
+      name: 'Test User',
+      email: 'test@example.com',
+      password: 'password123',
+    };
+
+    mockPrismaService.user.findUnique.mockResolvedValue(null);
+    const prismaError = new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+      code: 'P2002',
+      clientVersion: '7.0.0',
+    });
+    mockPrismaService.user.create.mockRejectedValue(prismaError);
+
+    await expect(service.register(dto)).rejects.toThrow(ConflictException);
+  });
 });
 
 describe('RegisterDto Validation', () => {

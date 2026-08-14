@@ -1,13 +1,16 @@
-import { ConflictException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, Injectable, InternalServerErrorException, Logger, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { Prisma } from '../generated/prisma/client';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
@@ -70,6 +73,21 @@ export class AuthService {
       // Retorna as credenciais de login automaticamente (Tokens)
       return this.generateTokens(user);
     } catch (error) {
+      this.logger.error(
+        `Erro ao registrar usuário (${email}): ${error instanceof Error ? error.message : error}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          throw new ConflictException('O e-mail já está em uso.');
+        }
+      }
+
+      if (error instanceof ConflictException) {
+        throw error;
+      }
+
       throw new InternalServerErrorException('Erro ao criar usuário.');
     }
   }
@@ -130,6 +148,15 @@ export class AuthService {
         refreshToken: newRefreshToken,
       };
     } catch (error) {
+      this.logger.error(
+        `Erro ao renovar token: ${error instanceof Error ? error.message : error}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+
       throw new UnauthorizedException('Refresh token inválido ou expirado.');
     }
   }
