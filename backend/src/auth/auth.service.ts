@@ -26,15 +26,8 @@ export class AuthService {
   ) { }
 
   private async generateTokens(user: AuthenticatedUser): Promise<AuthResponse> {
-    const accessSecret =
-      this.configService.get<string>('ACCESS_TOKEN_SECRET') ||
-      this.configService.get<string>('JWT_SECRET') ||
-      'secretKey';
-
-    const refreshSecret =
-      this.configService.get<string>('REFRESH_TOKEN_SECRET') ||
-      this.configService.get<string>('JWT_SECRET') ||
-      'secretKey';
+    const accessSecret = this.configService.getOrThrow<string>('ACCESS_TOKEN_SECRET');
+    const refreshSecret = this.configService.getOrThrow<string>('REFRESH_TOKEN_SECRET');
 
     const accessPayload: AccessTokenPayload = {
       sub: user.id,
@@ -152,15 +145,8 @@ export class AuthService {
     const { refreshToken } = refreshDto;
 
     try {
-      const refreshSecret =
-        this.configService.get<string>('REFRESH_TOKEN_SECRET') ||
-        this.configService.get<string>('JWT_SECRET') ||
-        'secretKey';
-
-      const accessSecret =
-        this.configService.get<string>('ACCESS_TOKEN_SECRET') ||
-        this.configService.get<string>('JWT_SECRET') ||
-        'secretKey';
+      const refreshSecret = this.configService.getOrThrow<string>('REFRESH_TOKEN_SECRET');
+      const accessSecret = this.configService.getOrThrow<string>('ACCESS_TOKEN_SECRET');
 
       // Validar o Refresh Token usando o JwtService com a chave de refresh
       const decoded = await this.jwtService.verifyAsync<RefreshTokenPayload>(

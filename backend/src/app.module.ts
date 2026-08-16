@@ -10,16 +10,27 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 
+import { validate } from './config/env.validation';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
+      validate,
     }),
-    ThrottlerModule.forRoot([{
-      ttl: 60000, // 1 minute
-      limit: 10,  // 10 requests per minute
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        name: 'default',
+        ttl: 60000, // 1 minute
+        limit: 100, // 100 requests per minute globally
+      },
+      {
+        name: 'strict',
+        ttl: 60000, // 1 minute
+        limit: 5,   // 5 requests per minute for strict/sensitive endpoints
+      },
+    ]),
     PrismaModule,
     QuizzesModule,
     SessionsModule,

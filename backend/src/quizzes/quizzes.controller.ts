@@ -35,7 +35,7 @@ export class QuizzesController {
     }
 
     @Post('ai/generate')
-    @Throttle({ default: { limit: 5, ttl: 60000 } })
+    @Throttle({ strict: { limit: 5, ttl: 60000 } })
     async generateAIQuiz(@Body() data: CreateQuizAIDto, @CurrentUser() user: any) {
         // Apenas para manter o padrão, mas a IA retorna um JSON, não salva no banco ainda.
         return this.quizzesService.generateQuizByAI(data, user.userId);

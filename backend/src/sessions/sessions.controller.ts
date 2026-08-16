@@ -16,7 +16,7 @@ export class SessionsController {
     }
 
     @Post(':code/join')
-    @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute for join
+    @Throttle({ strict: { limit: 5, ttl: 60000 } })
     async join(
         @Param('code') code: string,
         @Body() joinSessionDto: JoinSessionDto,

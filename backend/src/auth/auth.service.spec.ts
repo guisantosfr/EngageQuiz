@@ -16,6 +16,11 @@ const mockConfigService = {
     if (key === 'REFRESH_TOKEN_SECRET') return 'refreshSecret';
     return null;
   }),
+  getOrThrow: jest.fn((key: string) => {
+    if (key === 'ACCESS_TOKEN_SECRET') return 'accessSecret';
+    if (key === 'REFRESH_TOKEN_SECRET') return 'refreshSecret';
+    throw new Error(`Missing env key: ${key}`);
+  }),
 };
 
 describe('Register Tests', () => {

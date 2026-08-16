@@ -1,4 +1,5 @@
 import { IsEmail, IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class RegisterDto {
   @IsString()
@@ -10,6 +11,7 @@ export class RegisterDto {
   @IsNotEmpty({ message: 'E-mail é obrigatório' })
   @MinLength(6, { message: 'O e-mail deve ter no mínimo 6 caracteres' })
   @MaxLength(100, { message: 'O e-mail deve ter no máximo 100 caracteres' })
+  @Transform(({ value }) => value.toLowerCase().trim())
   email: string;
 
   @IsString()
