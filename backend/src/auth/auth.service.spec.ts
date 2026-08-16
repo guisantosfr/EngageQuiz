@@ -2,12 +2,21 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { validate } from 'class-validator';
 import { UnauthorizedException, ConflictException, InternalServerErrorException } from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client';
+
+const mockConfigService = {
+  get: jest.fn((key: string) => {
+    if (key === 'ACCESS_TOKEN_SECRET') return 'accessSecret';
+    if (key === 'REFRESH_TOKEN_SECRET') return 'refreshSecret';
+    return null;
+  }),
+};
 
 describe('Register Tests', () => {
   let service: AuthService;
@@ -38,6 +47,7 @@ describe('Register Tests', () => {
         AuthService,
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: JwtService, useValue: mockJwtService },
+        { provide: ConfigService, useValue: mockConfigService },
       ],
     }).compile();
 
@@ -93,17 +103,17 @@ describe('Register Tests', () => {
     expect(await bcrypt.compare(dto.password, passwordSent)).toBe(true);
 
 
-    // Valida se o JwtService assinou os dois tokens (Access e Refresh) com o payload correto
+    // Valida se o JwtService assinou os dois tokens (Access e Refresh) com os tipos corretos
     expect(mockJwtService.signAsync).toHaveBeenCalledTimes(2);
     expect(mockJwtService.signAsync).toHaveBeenNthCalledWith(
       1,
-      { sub: createdUserFromDb.id, email: createdUserFromDb.email },
-      { expiresIn: '15m' }
+      { sub: createdUserFromDb.id, email: createdUserFromDb.email, type: 'access' },
+      { secret: 'accessSecret', expiresIn: '15m' }
     );
     expect(mockJwtService.signAsync).toHaveBeenNthCalledWith(
       2,
-      { sub: createdUserFromDb.id, email: createdUserFromDb.email },
-      { expiresIn: '7d' }
+      { sub: createdUserFromDb.id, email: createdUserFromDb.email, type: 'refresh' },
+      { secret: 'refreshSecret', expiresIn: '7d' }
     );
 
     // Valida se o retorno do método está no formato correto (sem o password no user)
@@ -268,6 +278,7 @@ describe('Login Tests', () => {
         AuthService,
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: JwtService, useValue: mockJwtService },
+        { provide: ConfigService, useValue: mockConfigService },
       ],
     }).compile();
 
@@ -414,6 +425,7 @@ describe('Refresh tests', () => {
         AuthService,
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: JwtService, useValue: mockJwtService },
+        { provide: ConfigService, useValue: mockConfigService },
       ],
     }).compile();
 
@@ -435,9 +447,11 @@ describe('Refresh tests', () => {
       email: 'test@example.com',
       name: 'Test User'
     };
-    // 1. O token decodificado precisa retornar o campo 'sub'
+    // 1. O token decodificado precisa retornar o campo 'sub' e type 'refresh'
     mockJwtService.verifyAsync.mockResolvedValue({
       sub: user.id,
+      email: user.email,
+      type: 'refresh',
     });
     // 2. Mockamos a busca do usuário no banco
     mockPrismaService.user.findUnique.mockResolvedValue(user);
@@ -446,12 +460,18 @@ describe('Refresh tests', () => {
       .mockResolvedValueOnce('newAccessToken')
       .mockResolvedValueOnce('newRefreshToken');
     const result = await service.refresh(dto);
-    expect(mockJwtService.verifyAsync).toHaveBeenCalledWith(dto.refreshToken);
+    expect(mockJwtService.verifyAsync).toHaveBeenCalledWith(dto.refreshToken, { secret: 'refreshSecret' });
 
     // 4. Corrigimos o payload esperado na assinatura
-    expect(mockJwtService.signAsync).toHaveBeenCalledWith(
-      { sub: user.id, email: user.email },
-      expect.any(Object)
+    expect(mockJwtService.signAsync).toHaveBeenNthCalledWith(
+      1,
+      { sub: user.id, email: user.email, type: 'access' },
+      { secret: 'accessSecret', expiresIn: '15m' }
+    );
+    expect(mockJwtService.signAsync).toHaveBeenNthCalledWith(
+      2,
+      { sub: user.id, email: user.email, type: 'refresh' },
+      { secret: 'refreshSecret', expiresIn: '7d' }
     );
     // 5. Corrigimos o objeto de retorno esperado (apenas tokens, sem o user)
     expect(result).toEqual({
@@ -469,8 +489,22 @@ describe('Refresh tests', () => {
 
     await expect(service.refresh(dto)).rejects.toThrow(UnauthorizedException);
 
-    expect(mockJwtService.verifyAsync).toHaveBeenCalledWith(dto.refreshToken);
-  })
+    expect(mockJwtService.verifyAsync).toHaveBeenCalledWith(dto.refreshToken, { secret: 'refreshSecret' });
+  });
+
+  it('should throw error if access token (type === access) is passed to refresh endpoint', async () => {
+    const dto = {
+      refreshToken: 'accessTokenInsteadOfRefreshToken',
+    };
+
+    mockJwtService.verifyAsync.mockResolvedValue({
+      sub: '1',
+      email: 'test@example.com',
+      type: 'access',
+    });
+
+    await expect(service.refresh(dto)).rejects.toThrow(UnauthorizedException);
+  });
 
   it('should not refresh if user associated to token is deleted', async () => {
     const dto = {
@@ -483,12 +517,14 @@ describe('Refresh tests', () => {
     };
     mockJwtService.verifyAsync.mockResolvedValue({
       sub: user.id,
+      email: user.email,
+      type: 'refresh',
     });
     // Simulamos que o usuário foi deletado e não existe mais no banco
     mockPrismaService.user.findUnique.mockResolvedValue(null);
     // O serviço deve rejeitar com UnauthorizedException
     await expect(service.refresh(dto)).rejects.toThrow(UnauthorizedException);
-    expect(mockJwtService.verifyAsync).toHaveBeenCalledWith(dto.refreshToken);
+    expect(mockJwtService.verifyAsync).toHaveBeenCalledWith(dto.refreshToken, { secret: 'refreshSecret' });
     expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
       where: { id: user.id }
     });

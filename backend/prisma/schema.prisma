@@ -104,7 +104,7 @@ model Player {
   responses  Response[]
 
   userId  String
-  user    User    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt

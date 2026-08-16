@@ -17,14 +17,24 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);
 
-  app.enableCors();
+  const configService = new ConfigService();
+  const nodeEnv = configService.get<string>('NODE_ENV') || 'development';
+  const frontendUrl = configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+
+  if (nodeEnv === 'production') {
+    app.enableCors({
+      origin: [frontendUrl],
+      credentials: true,
+    });
+  } else {
+    app.enableCors();
+  }
 
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
     forbidNonWhitelisted: true,
   }));
 
-  const configService = new ConfigService();
   await app.listen(configService.get<number>('PORT') ?? 3000);
 }
 bootstrap();

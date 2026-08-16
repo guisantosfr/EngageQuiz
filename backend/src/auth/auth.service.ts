@@ -5,7 +5,15 @@ import { LoginDto } from './dto/login.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { Prisma } from '../generated/prisma/client';
+import {
+  AccessTokenPayload,
+  AuthenticatedUser,
+  AuthResponse,
+  AuthTokens,
+  RefreshTokenPayload,
+} from './types/auth.types';
 
 @Injectable()
 export class AuthService {
@@ -14,16 +22,41 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) { }
 
-  private async generateTokens(user: { id: string, email: string, name: string }) {
-    const payload = { sub: user.id, email: user.email };
+  private async generateTokens(user: AuthenticatedUser): Promise<AuthResponse> {
+    const accessSecret =
+      this.configService.get<string>('ACCESS_TOKEN_SECRET') ||
+      this.configService.get<string>('JWT_SECRET') ||
+      'secretKey';
 
-    const accessToken = await this.jwtService.signAsync(payload, {
+    const refreshSecret =
+      this.configService.get<string>('REFRESH_TOKEN_SECRET') ||
+      this.configService.get<string>('JWT_SECRET') ||
+      'secretKey';
+
+    const accessPayload: AccessTokenPayload = {
+      sub: user.id,
+      email: user.email,
+      type: 'access',
+      ...(user.role && { role: user.role }),
+    };
+
+    const refreshPayload: RefreshTokenPayload = {
+      sub: user.id,
+      email: user.email,
+      type: 'refresh',
+      ...(user.role && { role: user.role }),
+    };
+
+    const accessToken = await this.jwtService.signAsync(accessPayload, {
+      secret: accessSecret,
       expiresIn: '15m',
     });
 
-    const refreshToken = await this.jwtService.signAsync(payload, {
+    const refreshToken = await this.jwtService.signAsync(refreshPayload, {
+      secret: refreshSecret,
       expiresIn: '7d',
     });
 
@@ -32,13 +65,14 @@ export class AuthService {
         id: user.id,
         name: user.name,
         email: user.email,
+        ...(user.role && { role: user.role }),
       },
       accessToken,
       refreshToken,
     };
   }
 
-  async register(registerDto: RegisterDto) {
+  async register(registerDto: RegisterDto): Promise<AuthResponse> {
     const { name, email, password } = registerDto;
 
     // Verificar e-mail duplicado
@@ -59,7 +93,7 @@ export class AuthService {
         data: {
           name,
           email,
-          password: hashedPassword
+          password: hashedPassword,
         },
         select: {
           id: true,
@@ -92,7 +126,7 @@ export class AuthService {
     }
   }
 
-  async login(loginDto: LoginDto) {
+  async login(loginDto: LoginDto): Promise<AuthResponse> {
     const { email, password } = loginDto;
 
     // Buscar usuário pelo e-mail
@@ -114,12 +148,29 @@ export class AuthService {
     return this.generateTokens(user);
   }
 
-  async refresh(refreshDto: RefreshDto) {
+  async refresh(refreshDto: RefreshDto): Promise<AuthTokens> {
     const { refreshToken } = refreshDto;
 
     try {
-      // Validar o Refresh Token usando o JwtService
-      const decoded = await this.jwtService.verifyAsync(refreshToken);
+      const refreshSecret =
+        this.configService.get<string>('REFRESH_TOKEN_SECRET') ||
+        this.configService.get<string>('JWT_SECRET') ||
+        'secretKey';
+
+      const accessSecret =
+        this.configService.get<string>('ACCESS_TOKEN_SECRET') ||
+        this.configService.get<string>('JWT_SECRET') ||
+        'secretKey';
+
+      // Validar o Refresh Token usando o JwtService com a chave de refresh
+      const decoded = await this.jwtService.verifyAsync<RefreshTokenPayload>(
+        refreshToken,
+        { secret: refreshSecret },
+      );
+
+      if (decoded.type !== 'refresh') {
+        throw new UnauthorizedException('Token de atualização inválido.');
+      }
 
       // Buscar o usuário no banco para garantir que ele ainda existe e pegar os dados mais recentes
       const user = await this.prisma.user.findUnique({
@@ -130,16 +181,32 @@ export class AuthService {
         throw new UnauthorizedException('Usuário não encontrado.');
       }
 
+      const userRole = (user as any).role;
+
       // Payload atualizado
-      const payload = { sub: user.id, email: user.email };
+      const accessPayload: AccessTokenPayload = {
+        sub: user.id,
+        email: user.email,
+        type: 'access',
+        ...(userRole && { role: userRole }),
+      };
+
+      const refreshPayload: RefreshTokenPayload = {
+        sub: user.id,
+        email: user.email,
+        type: 'refresh',
+        ...(userRole && { role: userRole }),
+      };
 
       // Emitir novo Access Token
-      const newAccessToken = await this.jwtService.signAsync(payload, {
+      const newAccessToken = await this.jwtService.signAsync(accessPayload, {
+        secret: accessSecret,
         expiresIn: '15m',
       });
 
       // Rotacionar Refresh Token (Emitir um novo Refresh Token)
-      const newRefreshToken = await this.jwtService.signAsync(payload, {
+      const newRefreshToken = await this.jwtService.signAsync(refreshPayload, {
+        secret: refreshSecret,
         expiresIn: '7d',
       });
 

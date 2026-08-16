@@ -13,8 +13,11 @@ import { JwtAuthGuard } from './jwt-auth.guard';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET') || 'secretKey',
-        signOptions: { expiresIn: '1d' },
+        secret:
+          configService.get<string>('ACCESS_TOKEN_SECRET') ||
+          configService.get<string>('JWT_SECRET') ||
+          'secretKey',
+        signOptions: { expiresIn: '15m' },
       }),
       inject: [ConfigService],
     }),
