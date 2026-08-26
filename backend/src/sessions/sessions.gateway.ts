@@ -35,9 +35,12 @@ interface PlayerSocketInfo {
     nickname: string;
 }
 
+const configService = new ConfigService();
+const frontendUrl = configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+
 @WebSocketGateway({
     cors: {
-        origin: '*',
+        origin: [frontendUrl],
         methods: ['GET', 'POST'],
         credentials: true,
     },
