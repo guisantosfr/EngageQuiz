@@ -7,15 +7,19 @@ import { GetQuizDto } from './dto/get-quiz.dto';
 import { QuizMapper } from './mappers/quiz.mapper';
 import { CreateQuizAIDto } from './dto/create-quiz-ai.dto';
 import { GoogleGenAI, Type } from '@google/genai'
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class QuizzesService {
     private readonly logger = new Logger(QuizzesService.name);
     private readonly gemini: GoogleGenAI;
+    private readonly configService = new ConfigService();
 
-    constructor(private readonly prisma: PrismaService) {
+    constructor(
+        private readonly prisma: PrismaService
+    ) {
         this.gemini = new GoogleGenAI({
-            apiKey: process.env.GEMINI_API_KEY,
+            apiKey: this.configService.getOrThrow<string>('GEMINI_API_KEY'),
         });
     }
 
@@ -195,7 +199,7 @@ export class QuizzesService {
     }
 
     async getQuizById(id: string, userId: string): Promise<GetQuizDto> {
-        const quiz = await this.prisma.quiz.findUnique({
+        const quiz = await this.prisma.quiz.findFirst({
             where: { id, userId },
             include: {
                 questions: {
@@ -243,7 +247,7 @@ export class QuizzesService {
     }
 
     async updateQuiz(id: string, data: UpdateQuizDto, userId: string) {
-        const quizExists = await this.prisma.quiz.findUnique({
+        const quizExists = await this.prisma.quiz.findFirst({
             where: { id, userId },
             include: { questions: { include: { options: true } } },
         });
@@ -347,9 +351,9 @@ export class QuizzesService {
     }
 
     async deleteQuiz(id: string, userId: string) {
-        const quiz = await this.prisma.quiz.findUnique({ where: { id } });
+        const quiz = await this.prisma.quiz.findUnique({ where: { id, userId } });
+
         if (!quiz) throw new NotFoundException('Quiz não encontrado');
-        if (quiz.userId !== userId) throw new ForbiddenException('Você não tem permissão para deletar este quiz');
 
         return this.prisma.quiz.delete({ where: { id } });
     }
