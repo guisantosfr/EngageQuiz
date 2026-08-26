@@ -106,7 +106,7 @@ export interface PlayerKickedPayload {
 }
 
 export interface PlayerDisconnectPayload {
-    id: string;
+    playerId: string;
 }
 
 export interface SessionCleanupPayload {

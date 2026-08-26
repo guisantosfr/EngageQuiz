@@ -12,7 +12,7 @@ export class SessionsService {
     private questionTimers = new Map<string, NodeJS.Timeout>();
     private closedQuestions = new Map<string, Set<number>>();
 
-    private async checkHostAccess(sessionId: string, userId: string) {
+    async checkHostAccess(sessionId: string, userId: string) {
         const session = await this.prisma.session.findUnique({
             where: { id: sessionId },
             include: { quiz: { select: { userId: true } } }
@@ -29,6 +29,20 @@ export class SessionsService {
         });
         if (!player || player.userId !== userId) {
             throw new ForbiddenException('Access denied or Player not found');
+        }
+        return player;
+    }
+
+    async findPlayerBySessionAndUser(sessionId: string, userId: string) {
+        const player = await this.prisma.player.findFirst({
+            where: {
+                sessionId,
+                userId,
+                leftAt: null,
+            },
+        });
+        if (!player) {
+            throw new NotFoundException(`Player not found in session`);
         }
         return player;
     }
@@ -436,10 +450,8 @@ export class SessionsService {
         return updatedSession;
     }
 
-    async submitAnswer(sessionId: string, questionId: string, submitAnswerDto: SubmitAnswerDto, userId?: string) {
-        if (userId) {
-            await this.checkPlayerAccess(sessionId, submitAnswerDto.playerId, userId);
-        }
+    async submitAnswer(sessionId: string, questionId: string, submitAnswerDto: SubmitAnswerDto, userId: string) {
+        await this.checkPlayerAccess(sessionId, submitAnswerDto.playerId, userId);
         const { playerId, optionId } = submitAnswerDto;
 
         const session = await this.prisma.session.findUnique({

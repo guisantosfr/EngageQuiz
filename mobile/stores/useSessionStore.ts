@@ -61,8 +61,6 @@ export const useSessionStore = create<GameState>((set, get) => ({
             newSocket.on('connect', () => {
                 newSocket.emit('join_session', {
                     sessionId: session.id,
-                    playerId: player.id,
-                    nickname: player.nickname,
                 });
             });
 

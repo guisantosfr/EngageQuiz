@@ -10,8 +10,11 @@ import {
 import { Server, Namespace, Socket } from 'socket.io';
 import { Logger, Inject, forwardRef } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { SessionsService } from './sessions.service';
 import { SESSION_EVENTS } from './session.events';
+import type { AccessTokenPayload } from '../auth/types/auth.types';
 import type {
     QuizStartedPayload,
     AnswerResultPayload,
@@ -25,7 +28,6 @@ import type {
     PlayerDisconnectPayload,
     SessionCleanupPayload,
 } from './session.events';
-
 
 interface PlayerSocketInfo {
     playerId: string;
@@ -54,6 +56,8 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
     constructor(
         @Inject(forwardRef(() => SessionsService))
         private readonly sessionsService: SessionsService,
+        private readonly jwtService: JwtService,
+        private readonly configService: ConfigService,
     ) { }
 
     private getSessionsNamespace(): Namespace {
@@ -66,10 +70,60 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
         return nsp.sockets?.get?.(socketId);
     }
 
+    private extractToken(client: Socket): string | null {
+        const authHeader = client.handshake.headers?.authorization;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            return authHeader.substring(7);
+        }
+        const token = client.handshake.auth?.token;
+        if (typeof token === 'string') {
+            return token.startsWith('Bearer ') ? token.substring(7) : token;
+        }
+        const cookieHeader = client.handshake.headers?.cookie;
+        if (cookieHeader) {
+            const cookies = cookieHeader.split(';').map((c) => c.trim());
+            const accessCookie = cookies.find((c) => c.startsWith('accessToken='));
+            if (accessCookie) {
+                return accessCookie.substring('accessToken='.length);
+            }
+        }
+        return null;
+    }
+
     // ─── WebSocket Lifecycle ─────────────────────────────────────────────
 
-    handleConnection(client: Socket) {
-        this.logger.log(`Client connected: ${client.id}`);
+    async handleConnection(client: Socket) {
+        try {
+            const token = this.extractToken(client);
+            if (!token) {
+                this.logger.warn(`Client connection rejected (missing token): ${client.id}`);
+                client.disconnect(true);
+                return;
+            }
+
+            const accessSecret = this.configService.getOrThrow<string>('ACCESS_TOKEN_SECRET');
+            const payload = await this.jwtService.verifyAsync<AccessTokenPayload>(token, {
+                secret: accessSecret,
+            });
+
+            if (payload.type !== 'access') {
+                this.logger.warn(`Client connection rejected (invalid token type): ${client.id}`);
+                client.disconnect(true);
+                return;
+            }
+
+            client.data = client.data || {};
+            client.data.user = {
+                userId: payload.sub,
+                email: payload.email,
+                role: payload.role,
+            };
+
+            this.logger.log(`Client connected and authenticated: ${client.id} (user: ${payload.sub})`);
+        } catch (error) {
+            this.logger.warn(`Client connection rejected (auth error): ${client.id} - ${error.message}`);
+            client.disconnect(true);
+        }
     }
 
     handleDisconnect(client: Socket) {
@@ -94,7 +148,7 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
 
         this.server.to(sessionId).emit('player_disconnected', {
             sessionId,
-            player: { playerId, nickname },
+            player: { id: playerId, nickname },
             timestamp: new Date().toISOString(),
         });
 
@@ -104,50 +158,95 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
     // ─── WebSocket Subscribe Handlers ────────────────────────────────────
 
     @SubscribeMessage('join_session')
-    handleJoinSession(
-        @MessageBody() data: { playerId: string; sessionId: string; nickname: string },
+    async handleJoinSession(
+        @MessageBody() data: { sessionId: string },
         @ConnectedSocket() client: Socket,
     ) {
-        const { playerId, sessionId, nickname } = data;
-
-        const oldSocketId = this.playerToSocket.get(playerId);
-        if (oldSocketId && oldSocketId !== client.id) {
-            const oldSocket = this.getSocketById(oldSocketId);
-            oldSocket?.disconnect(true);
-            this.socketToPlayer.delete(oldSocketId);
+        const user = client.data?.user;
+        if (!user?.userId) {
+            return { success: false, error: 'Unauthorized' };
         }
 
-        client.join(sessionId);
-        this.socketToPlayer.set(client.id, { playerId, sessionId, nickname });
-        this.playerToSocket.set(playerId, client.id);
+        const { sessionId } = data;
+        if (!sessionId) {
+            return { success: false, error: 'Session ID is required' };
+        }
 
-        this.logger.log(`Player ${nickname} (${playerId}) joined room ${sessionId}`);
+        try {
+            const player = await this.sessionsService.findPlayerBySessionAndUser(sessionId, user.userId);
+            const playerId = player.id;
+            const nickname = player.nickname;
 
-        client.to(sessionId).emit('player_joined', {
-            sessionId,
-            player: { id: playerId, nickname, joinedAt: new Date().toISOString() },
-            timestamp: new Date().toISOString(),
-        });
+            const oldSocketId = this.playerToSocket.get(playerId);
+            if (oldSocketId && oldSocketId !== client.id) {
+                const oldSocket = this.getSocketById(oldSocketId);
+                oldSocket?.disconnect(true);
+                this.socketToPlayer.delete(oldSocketId);
+            }
 
-        return { success: true, message: `Joined session ${sessionId}` };
+            client.join(sessionId);
+            this.socketToPlayer.set(client.id, { playerId, sessionId, nickname });
+            this.playerToSocket.set(playerId, client.id);
+
+            this.logger.log(`Player ${nickname} (${playerId}) joined room ${sessionId}`);
+
+            client.to(sessionId).emit('player_joined', {
+                sessionId,
+                player: { id: playerId, nickname, joinedAt: new Date().toISOString() },
+                timestamp: new Date().toISOString(),
+            });
+
+            return { success: true, message: `Joined session ${sessionId}`, player: { id: playerId, nickname } };
+        } catch (error) {
+            this.logger.error(`Error in join_session for user ${user.userId}: ${error.message}`);
+            return { success: false, error: error.message };
+        }
     }
 
     @SubscribeMessage('join_host')
-    handleJoinHost(@MessageBody() data: { sessionId: string }, @ConnectedSocket() client: Socket) {
-        client.join(data.sessionId);
-        this.hostSockets.set(data.sessionId, client.id);
-        return { success: true };
+    async handleJoinHost(@MessageBody() data: { sessionId: string }, @ConnectedSocket() client: Socket) {
+        const user = client.data?.user;
+        if (!user?.userId) {
+            return { success: false, error: 'Unauthorized' };
+        }
+
+        if (!data?.sessionId) {
+            return { success: false, error: 'Session ID is required' };
+        }
+
+        try {
+            await this.sessionsService.checkHostAccess(data.sessionId, user.userId);
+            client.join(data.sessionId);
+            this.hostSockets.set(data.sessionId, client.id);
+            this.logger.log(`Host ${user.userId} joined room ${data.sessionId}`);
+            return { success: true };
+        } catch (error) {
+            this.logger.error(`Host access denied for user ${user.userId} in session ${data.sessionId}: ${error.message}`);
+            return { success: false, error: error.message };
+        }
     }
 
     @SubscribeMessage('submit_answer')
     async handleSubmitAnswer(
-        @MessageBody() data: { sessionId: string; playerId: string; questionId: string; optionId: string },
-        @ConnectedSocket() _client: Socket,
+        @MessageBody() data: { sessionId: string; questionId: string; optionId: string; playerId?: string },
+        @ConnectedSocket() client: Socket,
     ) {
-        const { sessionId, playerId, questionId, optionId } = data;
+        const user = client.data?.user;
+        if (!user?.userId) {
+            return { success: false, error: 'Unauthorized' };
+        }
+
+        const playerInfo = this.socketToPlayer.get(client.id);
+        const playerId = playerInfo?.playerId || data.playerId;
+
+        if (!playerId) {
+            return { success: false, error: 'Player ID required' };
+        }
+
+        const { sessionId, questionId, optionId } = data;
 
         try {
-            await this.sessionsService.submitAnswer(sessionId, questionId, { playerId, optionId });
+            await this.sessionsService.submitAnswer(sessionId, questionId, { playerId, optionId }, user.userId);
             return { success: true };
         } catch (error) {
             this.logger.error(`Error submitting answer via WS: ${error.message}`);
@@ -226,8 +325,10 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
 
     @OnEvent(SESSION_EVENTS.PLAYER_DISCONNECT)
     onPlayerDisconnect(payload: any) {
-        const { id } = payload as PlayerDisconnectPayload;
-        const socketId = this.playerToSocket.get(id);
+        const { playerId } = payload as PlayerDisconnectPayload;
+        if (!playerId) return;
+
+        const socketId = this.playerToSocket.get(playerId);
         if (!socketId) return;
 
         const nsp = this.getSessionsNamespace();
@@ -239,9 +340,9 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
             socket.disconnect(true);
         }
 
-        this.playerToSocket.delete(id);
+        this.playerToSocket.delete(playerId);
         this.socketToPlayer.delete(socketId);
-        this.logger.log(`Player ${id} forcefully disconnected`);
+        this.logger.log(`Player ${playerId} forcefully disconnected`);
     }
 
     @OnEvent(SESSION_EVENTS.SESSION_CLEANUP)

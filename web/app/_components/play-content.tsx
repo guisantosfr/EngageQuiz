@@ -81,6 +81,7 @@ export function PlayContent({ initialSession, initialPlayers, sessionId, quizId 
         const socket = io(`${process.env.NEXT_PUBLIC_API_URL}/sessions`, {
             transports: ["websocket"],
             autoConnect: true,
+            withCredentials: true,
         });
 
         setWebsocket(socket);
