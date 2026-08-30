@@ -831,7 +831,6 @@ export class SessionsService {
     }
 
     async getPlayerResults(sessionId: string, playerId: string, userId: string) {
-        await this.checkHostOrPlayerAccess(sessionId, userId);
         const session = await this.prisma.session.findUnique({
             where: { id: sessionId },
             include: {
@@ -852,6 +851,18 @@ export class SessionsService {
 
         if (!session) {
             throw new NotFoundException(`Session not found`);
+        }
+
+        const isHost = session.quiz.userId === userId;
+
+        if (!isHost) {
+            const player = await this.prisma.player.findUnique({
+                where: { id: playerId, sessionId }
+            })
+
+            if (!player || player.userId !== userId) {
+                throw new ForbiddenException("Access Denied");
+            }
         }
 
         if (session.status !== StatusType.FINISHED) {

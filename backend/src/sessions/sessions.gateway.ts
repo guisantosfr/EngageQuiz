@@ -36,11 +36,19 @@ interface PlayerSocketInfo {
 }
 
 const configService = new ConfigService();
-const frontendUrl = configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+const frontendUrl = configService.get<string>('FRONTEND_URL');
 
 @WebSocketGateway({
     cors: {
-        origin: [frontendUrl],
+        origin: (requestOrigin, callback) => {
+            const allowedOrigin = frontendUrl || 'http://localhost:3000';
+            const isDev = configService.get<string>('NODE_ENV') !== 'production';
+            if (isDev || !requestOrigin || requestOrigin === allowedOrigin) {
+                callback(null, true)
+            } else {
+                callback(new Error('Não permitido pelo CORS'));
+            }
+        },
         methods: ['GET', 'POST'],
         credentials: true,
     },
