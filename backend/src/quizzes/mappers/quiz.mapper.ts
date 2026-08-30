@@ -1,11 +1,22 @@
+import { Prisma } from "../../generated/prisma/client";
 import { GetQuizDto } from "../dto/get-quiz.dto";
 
+export type QuizWithQuestionsAndOptions = Prisma.QuizGetPayload<{
+  include: {
+    questions: {
+      include: {
+        options: true;
+      };
+    };
+  };
+}>;
+
 export class QuizMapper {
-  static toEditDto(quiz: any): GetQuizDto {
+  static toEditDto(quiz: QuizWithQuestionsAndOptions): GetQuizDto {
     return {
       id: quiz.id,
       title: quiz.title,
-      description: quiz.description,
+      description: quiz.description ?? undefined,
       questions: quiz.questions.map(q => {
         if (q.type === 'TRUE_FALSE') {
           return {
@@ -32,3 +43,4 @@ export class QuizMapper {
     };
   }
 }
+

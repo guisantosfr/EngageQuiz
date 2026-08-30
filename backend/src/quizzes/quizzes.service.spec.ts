@@ -21,6 +21,8 @@ jest.mock('@google/genai', () => {
   };
 });
 
+process.env.GEMINI_API_KEY = 'test_key';
+
 describe('QuizzesService', () => {
   let service: QuizzesService;
   let prisma: PrismaService;
