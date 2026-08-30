@@ -40,6 +40,7 @@ export default function BasicAIConfig({ control, disabled }: BasicAIConfigProps)
                                 disabled={disabled}
                                 autoComplete="off"
                                 required
+                                maxLength={50}
                                 {...field}
                             />
                         )}
@@ -57,6 +58,7 @@ export default function BasicAIConfig({ control, disabled }: BasicAIConfigProps)
                                 placeholder="Ex: Causas da revolução, Queda da Bastilha, Período do Terror..."
                                 rows={3}
                                 disabled={disabled}
+                                maxLength={200}
                                 {...field}
                             />
                         )}
@@ -73,6 +75,7 @@ export default function BasicAIConfig({ control, disabled }: BasicAIConfigProps)
                                 id="restrictions"
                                 placeholder="Ex: Não incluir datas específicas, evitar questões sobre biografias..."
                                 rows={2}
+                                maxLength={200}
                                 {...field}
                             />
                         )}
@@ -198,6 +201,7 @@ export default function BasicAIConfig({ control, disabled }: BasicAIConfigProps)
                                 id="generalComments"
                                 placeholder="Ex: Não incluir pegadinhas, não gerar questões subjetivas, priorizar questões práticas..."
                                 rows={3}
+                                maxLength={200}
                                 {...field}
                             />
                         )}

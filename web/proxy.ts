@@ -5,6 +5,7 @@ import { jwtDecode } from 'jwt-decode';
 interface JwtPayload {
   sub: string;
   email: string;
+  type?: 'access' | 'refresh';
   exp: number;
 }
 
@@ -39,6 +40,9 @@ export async function proxy(request: NextRequest) {
       const decoded = jwtDecode<JwtPayload>(t);
       if (decoded.exp && decoded.exp * 1000 < Date.now()) {
         return null; // Token expirado
+      }
+      if (decoded.type && decoded.type !== 'access') {
+        return null; // Token não é de acesso
       }
       return decoded;
     } catch {

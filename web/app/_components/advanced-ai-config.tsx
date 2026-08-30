@@ -64,6 +64,7 @@ export default function AdvancedAIConfig({ control, isOpen, onOpenChange, disabl
                                         placeholder="Ex: Avaliar compreensão dos eventos principais e suas consequências..."
                                         disabled={disabled}
                                         rows={2}
+                                        maxLength={200}
                                         {...field}
                                     />
                                 )}
