@@ -1,6 +1,7 @@
 // Internal event names — emitted by SessionsService, handled by SessionsGateway
 
 export const SESSION_EVENTS = {
+    PLAYER_JOINED: 'session.player_joined',
     QUIZ_STARTED: 'session.quiz_started',
     ANSWER_RESULT: 'session.answer_result',
     PLAYER_ANSWERED: 'session.player_answered',
@@ -111,4 +112,10 @@ export interface PlayerDisconnectPayload {
 
 export interface SessionCleanupPayload {
     sessionId: string;
+}
+
+export interface PlayerJoinedPayload {
+    sessionId: string;
+    player: { id: string; nickname: string; joinedAt: string };
+    timestamp: string;
 }

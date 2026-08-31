@@ -118,7 +118,7 @@ export class SessionsService {
     async join(code: string, joinSessionDto: JoinSessionDto, userId: string) {
         const { nickname } = joinSessionDto;
 
-        return this.prisma.$transaction(async (tx) => {
+        const result = await this.prisma.$transaction(async (tx) => {
             const session = await tx.session.findFirst({
                 where: {
                     code,
@@ -175,6 +175,18 @@ export class SessionsService {
                 },
             };
         });
+
+        this.eventEmitter.emit(SESSION_EVENTS.PLAYER_JOINED, {
+            sessionId: result.session.id,
+            player: {
+                id: result.player.id,
+                nickname: result.player.nickname,
+                joinedAt: result.player.joinedAt.toISOString(),
+            },
+            timestamp: new Date().toISOString(),
+        });
+
+        return result;
     }
 
     async getSessionPlayers(sessionId: string, userId: string) {
@@ -344,6 +356,14 @@ export class SessionsService {
             include: {
                 quiz: {
                     include: {
+                        questions: {
+                            orderBy: { createdAt: 'asc' },
+                            include: {
+                                options: {
+                                    select: { id: true, text: true }
+                                }
+                            }
+                        },
                         _count: {
                             select: { questions: true }
                         }
@@ -361,19 +381,33 @@ export class SessionsService {
             throw new NotFoundException(`Session/Quiz not found`);
         }
 
-        if (session.status !== StatusType.CREATED) {
-            throw new BadRequestException(`Session is already started or finished`);
+        if (session.status === StatusType.CANCELED) {
+            throw new BadRequestException(`Session was canceled`);
         }
 
         const { quiz, ...rest } = session;
-        const { _count, ...quizRest } = quiz;
+        const { _count, questions, ...quizRest } = quiz;
+
+        let currentQuestion = null;
+        if (session.status === StatusType.IN_PROGRESS && session.currentQuestionIndex !== null && questions[session.currentQuestionIndex]) {
+            const q = questions[session.currentQuestionIndex];
+            currentQuestion = {
+                index: session.currentQuestionIndex,
+                id: q.id,
+                text: q.text,
+                type: q.type,
+                timeLimit: q.timeLimit,
+                options: q.options,
+            };
+        }
 
         return {
             ...rest,
             quiz: {
                 ...quizRest,
                 numberOfQuestions: _count.questions
-            }
+            },
+            currentQuestion,
         };
     }
 
@@ -426,6 +460,14 @@ export class SessionsService {
         });
 
         const firstQuestion = session.quiz.questions[0];
+        const firstQuestionData = {
+            index: 0,
+            id: firstQuestion.id,
+            text: firstQuestion.text,
+            type: firstQuestion.type,
+            timeLimit: firstQuestion.timeLimit,
+            options: firstQuestion.options,
+        };
 
         this.closedQuestions.set(sessionId, new Set());
 
@@ -434,20 +476,18 @@ export class SessionsService {
             quizId: session.quiz.id,
             totalQuestions: session.quiz.questions.length,
             totalPlayers: session.players.length,
-            firstQuestion: {
-                index: 0,
-                id: firstQuestion.id,
-                text: firstQuestion.text,
-                type: firstQuestion.type,
-                timeLimit: firstQuestion.timeLimit,
-                options: firstQuestion.options,
-            },
+            firstQuestion: firstQuestionData,
             timestamp: new Date().toISOString(),
         });
 
         this.scheduleQuestionTimeout(sessionId, firstQuestion.id, 0, firstQuestion.timeLimit);
 
-        return updatedSession;
+        return {
+            ...updatedSession,
+            totalQuestions: session.quiz.questions.length,
+            totalPlayers: session.players.length,
+            firstQuestion: firstQuestionData,
+        };
     }
 
     async submitAnswer(sessionId: string, questionId: string, submitAnswerDto: SubmitAnswerDto, userId: string) {

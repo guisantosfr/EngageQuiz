@@ -16,6 +16,7 @@ import { SessionsService } from './sessions.service';
 import { SESSION_EVENTS } from './session.events';
 import type { AccessTokenPayload } from '../auth/types/auth.types';
 import type {
+    PlayerJoinedPayload,
     QuizStartedPayload,
     AnswerResultPayload,
     PlayerAnsweredPayload,
@@ -267,10 +268,17 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
 
     // ─── Internal Event Handlers (@OnEvent) ──────────────────────────────
 
+    @OnEvent(SESSION_EVENTS.PLAYER_JOINED)
+    onPlayerJoined(payload: any) {
+        const p = payload as PlayerJoinedPayload;
+        this.logger.log(`Player joined session ${p.sessionId}: ${p.player.nickname}`);
+        this.getSessionsNamespace().to(p.sessionId).emit('player_joined', p);
+    }
+
     @OnEvent(SESSION_EVENTS.QUIZ_STARTED)
     onQuizStarted(payload: any) {
         const p = payload as QuizStartedPayload;
-        this.server.to(p.sessionId).emit('quiz_started', p);
+        this.getSessionsNamespace().to(p.sessionId).emit('quiz_started', p);
     }
 
     @OnEvent(SESSION_EVENTS.ANSWER_RESULT)
@@ -297,41 +305,41 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
     @OnEvent(SESSION_EVENTS.QUESTION_CLOSED)
     onQuestionClosed(payload: any) {
         const p = payload as QuestionClosedPayload;
-        this.server.to(p.sessionId).emit('question_closed', p);
+        this.getSessionsNamespace().to(p.sessionId).emit('question_closed', p);
     }
 
     @OnEvent(SESSION_EVENTS.NEXT_QUESTION)
     onNextQuestion(payload: any) {
         const p = payload as NextQuestionPayload;
-        this.server.to(p.sessionId).emit('next_question', p);
+        this.getSessionsNamespace().to(p.sessionId).emit('next_question', p);
     }
 
     @OnEvent(SESSION_EVENTS.SESSION_CANCELED)
     onSessionCanceled(payload: any) {
         const p = payload as SessionCanceledPayload;
         this.logger.log(`Session canceled: ${p.sessionId}`);
-        this.server.to(p.sessionId).emit('session_canceled', p);
+        this.getSessionsNamespace().to(p.sessionId).emit('session_canceled', p);
     }
 
     @OnEvent(SESSION_EVENTS.SESSION_FINISHED)
     onSessionFinished(payload: any) {
         const p = payload as SessionFinishedPayload;
         this.logger.log(`Session finished: ${p.sessionId}`);
-        this.server.to(p.sessionId).emit('session_finished', p);
+        this.getSessionsNamespace().to(p.sessionId).emit('session_finished', p);
     }
 
     @OnEvent(SESSION_EVENTS.PLAYER_LEFT)
     onPlayerLeft(payload: any) {
         const p = payload as PlayerLeftPayload;
         this.logger.log(`Player left session ${p.sessionId}: ${p.player.nickname}`);
-        this.server.to(p.sessionId).emit('player_left', p);
+        this.getSessionsNamespace().to(p.sessionId).emit('player_left', p);
     }
 
     @OnEvent(SESSION_EVENTS.PLAYER_KICKED)
     onPlayerKicked(payload: any) {
         const p = payload as PlayerKickedPayload;
         this.logger.log(`Player kicked from session ${p.sessionId}: ${p.player.nickname}`);
-        this.server.to(p.sessionId).emit('player_kicked', p);
+        this.getSessionsNamespace().to(p.sessionId).emit('player_kicked', p);
     }
 
     @OnEvent(SESSION_EVENTS.PLAYER_DISCONNECT)

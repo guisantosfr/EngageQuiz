@@ -23,7 +23,7 @@ interface LobbyClientProps {
     sessionId: string;
     quizId: string;
     socket: Socket | null;
-    onStart?: () => void;
+    onStart?: (firstQuestion?: any) => void;
     onCancelSession?: () => void;
 }
 
@@ -65,7 +65,7 @@ export function LobbyClient({ initialSession, players, sessionId, quizId, socket
                 toast.error(result.error);
                 return;
             }
-            onStart?.();
+            onStart?.(result.session?.firstQuestion);
         });
     };
 

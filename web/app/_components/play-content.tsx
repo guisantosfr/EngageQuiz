@@ -37,7 +37,7 @@ export function PlayContent({ initialSession, initialPlayers, sessionId, quizId 
     const [ranking, setRanking] = useState<any[]>([]);
 
     // Question state
-    const [currentQuestion, setCurrentQuestion] = useState<QuestionData | null>(null);
+    const [currentQuestion, setCurrentQuestion] = useState<QuestionData | null>(initialSession.currentQuestion ?? null);
     const [totalQuestions, setTotalQuestions] = useState<number>(initialSession.quiz?.numberOfQuestions ?? 0);
     const [timeLeft, setTimeLeft] = useState<number>(0);
     const [totalAnswers, setTotalAnswers] = useState<number>(0);
@@ -76,6 +76,13 @@ export function PlayContent({ initialSession, initialPlayers, sessionId, quizId 
         setCorrectOptionId(null);
     }, []);
 
+    useEffect(() => {
+        if (initialSession.status === 'IN_PROGRESS' && initialSession.currentQuestion && !currentQuestion) {
+            showQuestion(initialSession.currentQuestion);
+            startCountdown(initialSession.currentQuestion.timeLimit);
+        }
+    }, [initialSession, showQuestion, startCountdown, currentQuestion]);
+
     // Socket centralizado — criado uma única vez no mount
     useEffect(() => {
         const socket = io(`${process.env.NEXT_PUBLIC_API_URL}/sessions`, {
@@ -91,7 +98,10 @@ export function PlayContent({ initialSession, initialPlayers, sessionId, quizId 
         });
 
         socket.on("player_joined", (data) => {
-            setPlayers(prev => [...prev, data.player])
+            setPlayers(prev => {
+                if (prev.some(p => p.id === data.player.id)) return prev;
+                return [...prev, data.player];
+            });
         })
 
         socket.on("player_left", (data) => {
@@ -181,7 +191,13 @@ export function PlayContent({ initialSession, initialPlayers, sessionId, quizId 
                         sessionId={sessionId}
                         quizId={quizId}
                         socket={websocket}
-                        onStart={() => setSessionStatus("IN_PROGRESS")}
+                        onStart={(firstQuestion) => {
+                            if (firstQuestion) {
+                                showQuestion(firstQuestion);
+                                startCountdown(firstQuestion.timeLimit);
+                            }
+                            setSessionStatus("IN_PROGRESS");
+                        }}
                         onCancelSession={handleConfirmLeave}
                     />
                 );
