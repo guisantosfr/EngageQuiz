@@ -44,7 +44,7 @@ export const useSessionStore = create<GameState>((set, get) => ({
             const accessToken = useAuthStore.getState().accessToken;
 
             const newSocket = io(`${process.env.EXPO_PUBLIC_API_URL}/sessions`, {
-                transports: ['websocket'],
+                transports: ['polling', 'websocket'],
                 autoConnect: true,
                 ...(accessToken
                     ? {

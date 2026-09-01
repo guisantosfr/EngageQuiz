@@ -42,12 +42,22 @@ const frontendUrl = configService.get<string>('FRONTEND_URL');
 @WebSocketGateway({
     cors: {
         origin: (requestOrigin, callback) => {
-            const allowedOrigin = frontendUrl || 'http://localhost:3000';
-            const isDev = configService.get<string>('NODE_ENV') !== 'production';
-            if (isDev || !requestOrigin || requestOrigin === allowedOrigin) {
-                callback(null, true)
+            const isDev = process.env.NODE_ENV !== 'production';
+            const allowedUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+            
+            // Em mobile (APK / React Native), requestOrigin pode ser undefined, 'null', ou 'file://'
+            const isMobileOrigin = !requestOrigin || requestOrigin === 'null' || requestOrigin.startsWith('file://');
+            
+            // Normaliza URLs removendo barras no final
+            const cleanOrigin = requestOrigin ? requestOrigin.replace(/\/$/, '') : '';
+            const cleanAllowed = allowedUrl.replace(/\/$/, '');
+            
+            const isAllowedWeb = cleanOrigin === cleanAllowed || cleanOrigin.endsWith('.vercel.app');
+
+            if (isDev || isMobileOrigin || isAllowedWeb) {
+                callback(null, true);
             } else {
-                callback(new Error('Não permitido pelo CORS'));
+                callback(new Error(`Não permitido pelo CORS: ${requestOrigin}`));
             }
         },
         methods: ['GET', 'POST'],
@@ -293,10 +303,7 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
     @OnEvent(SESSION_EVENTS.PLAYER_ANSWERED)
     onPlayerAnswered(payload: any) {
         const p = payload as PlayerAnsweredPayload;
-        const hostSocketId = this.hostSockets.get(p.sessionId);
-        if (!hostSocketId) return;
-        const hostSocket = this.getSocketById(hostSocketId);
-        hostSocket?.emit('player_answered', {
+        this.getSessionsNamespace().to(p.sessionId).emit('player_answered', {
             ...p,
             timestamp: new Date().toISOString(),
         });

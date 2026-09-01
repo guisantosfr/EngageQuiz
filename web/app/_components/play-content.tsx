@@ -86,7 +86,7 @@ export function PlayContent({ initialSession, initialPlayers, sessionId, quizId 
     // Socket centralizado — criado uma única vez no mount
     useEffect(() => {
         const socket = io(`${process.env.NEXT_PUBLIC_API_URL}/sessions`, {
-            transports: ["websocket"],
+            transports: ["polling", "websocket"],
             autoConnect: true,
             withCredentials: true,
         });
