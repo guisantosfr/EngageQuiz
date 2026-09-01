@@ -3,6 +3,7 @@ import { getSession } from "../_actions/session-queries";
 import { getPlayers } from "../_actions/session-queries";
 import { redirect } from "next/navigation";
 import { PlayContent } from "../_components/play-content";
+import { cookies } from "next/headers";
 
 interface PageProps {
     searchParams: Promise<{
@@ -17,6 +18,9 @@ export default async function PlayQuizPage({ searchParams }: PageProps) {
     if (!quizId || !sessionId) {
         redirect('/');
     }
+
+    const cookieStore = await cookies();
+    const token = cookieStore.get('accessToken')?.value;
 
     const [session, initialPlayers] = await Promise.all([
         getSession(sessionId, quizId),
@@ -38,6 +42,7 @@ export default async function PlayQuizPage({ searchParams }: PageProps) {
                 initialPlayers={initialPlayers}
                 sessionId={sessionId}
                 quizId={quizId}
+                token={token}
             />
         </ErrorBoundary>
     );

@@ -25,9 +25,10 @@ interface PlayContentProps {
     initialPlayers: Player[];
     sessionId: string;
     quizId: string;
+    token?: string;
 }
 
-export function PlayContent({ initialSession, initialPlayers, sessionId, quizId }: PlayContentProps) {
+export function PlayContent({ initialSession, initialPlayers, sessionId, quizId, token }: PlayContentProps) {
     const router = useRouter();
     const [websocket, setWebsocket] = useState<Socket | null>(null);
     const [sessionStatus, setSessionStatus] = useState<string>(initialSession.status);
@@ -85,10 +86,23 @@ export function PlayContent({ initialSession, initialPlayers, sessionId, quizId 
 
     // Socket centralizado — criado uma única vez no mount
     useEffect(() => {
-        const socket = io(`${process.env.NEXT_PUBLIC_API_URL}/sessions`, {
+        const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null);
+        const baseUrl = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/$/, '');
+
+        const socket = io(`${baseUrl}/sessions`, {
             transports: ["polling", "websocket"],
             autoConnect: true,
             withCredentials: true,
+            ...(authToken
+                ? {
+                    extraHeaders: {
+                        Authorization: `Bearer ${authToken}`,
+                    },
+                    auth: {
+                        token: authToken,
+                    },
+                }
+                : {}),
         });
 
         setWebsocket(socket);
